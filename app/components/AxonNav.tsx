@@ -77,7 +77,7 @@ const Navbar = () => {
                 fontWeight="200"
                 fill="url(#grad1)"
               >
-                Synapse
+                DevoLib
               </text>
             </svg>
           </div>

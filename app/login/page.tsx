@@ -40,7 +40,7 @@ export default function Auth() {
       const res = await login(userName, password);
       setUser(res);
       console.log("Logged in token:", res.token);
-      router.push(`${userName}-dashboard`);
+      router.push(`/dashboard`);
     }
   } catch (err) {
     console.error(err);

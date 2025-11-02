@@ -1,13 +1,8 @@
 "use client";
 import type { ReactNode } from "react";
-import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUser } from "@/app/provider/UserProvider";
-import FrontendPage from "./~/projects/frontend/page";
-import BackendPage from "./~/projects/backend/page";
-import DatabasePage from "./~/projects/database/page";
-import ProjectsPage from "./~/projects/page";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -53,7 +48,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 p-6">
+      <main className="flex-1">
         {/* Routed page content */}
         {children}
 
