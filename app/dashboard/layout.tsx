@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUser } from "@/app/provider/UserProvider";
+import ProjectsNav from "./~/projects/components/projectnav";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -20,11 +21,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     { name: "Settings", href: `/dashboard/~/settings` },
   ];
 
-  // Derive active tab from URL path
   const activeTab = pathname.split("/").pop();
 
   return (
-    <div className="bg-white/90 dashboard-wrapper flex min-h-screen pt-19">
+    <div className="dashboard-wrapper flex min-h-screen bg-white/90 pt-19">
       {/* Sidebar */}
       <aside className="w-[10vw] bg-gray-900 p-4">
         <h2 className="font-bold mb-4 text-white">Dashboard Sidebar</h2>
@@ -47,13 +47,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </ul>
       </aside>
 
-      {/* Main content */}
-      <main className="flex-1">
-        {/* Routed page content */}
-        {children}
+      {/* Content column */}
+      <div className="flex-1 flex flex-col">
+        {/* Projects sub-navbar at top of content column */}
+        <ProjectsNav />
 
-        {/* Additional manual components you want rendered */}
-      </main>
+        {/* Main content below ProjectsNav */}
+        <main className="flex-1">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

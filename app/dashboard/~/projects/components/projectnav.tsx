@@ -17,8 +17,8 @@ export default function ProjectsNav() {
   const activeTab = pathname.split("/").pop();
 
   return (
-    <div className="w-full">
-      <header className="sticky top-0 z-50 bg-black/70 backdrop-blur-xl border-b border-gray-800">
+    <div className="w-min-screen">
+      <header className="sticky top-0 z-50 bg-black/60 backdrop-blur-xl border-b border-gray-800">
         <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between">
           {/* Brand */}
           <a

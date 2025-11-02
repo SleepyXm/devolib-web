@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 
-
 export default function FrontendPage() {
-  const [code, setCode] = useState(`<h1>Hello Devolib</h1>\n<p>This is your live preview.</p>`);
+  const [code, setCode] = useState(
+    `<h1>Hello Devolib</h1>\n<p>This is your live preview.</p>`
+  );
   const [flipped, setFlipped] = useState(false);
   const [srcDoc, setSrcDoc] = useState("");
 
@@ -13,8 +14,21 @@ export default function FrontendPage() {
     const timeout = setTimeout(() => {
       setSrcDoc(code);
     }, 200); // debounce for smooth typing
+
     return () => clearTimeout(timeout);
   }, [code]);
+
+  // Listen for messages from iframe
+  useEffect(() => {
+    const listener = (e: MessageEvent) => {
+      if (e.data?.action === "test") {
+        alert("Button clicked via postMessage!");
+        console.log("Action received from iframe:", e.data.action);
+      }
+    };
+    window.addEventListener("message", listener);
+    return () => window.removeEventListener("message", listener);
+  }, []);
 
   return (
     <div className="flex flex-col h-full min-h-screen">
