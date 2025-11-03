@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Editor from "@monaco-editor/react";
 
 export default function FrontendPage() {
   const [code, setCode] = useState(
@@ -10,8 +11,8 @@ export default function FrontendPage() {
 
   // Update iframe srcdoc as code changes
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      setSrcDoc(`
+  const timeout = setTimeout(() => {
+    setSrcDoc(`
       <html>
         <head>
           <script src="https://cdn.tailwindcss.com"></script>
@@ -21,25 +22,30 @@ export default function FrontendPage() {
         </head>
         <body>
           ${code}
+
+          <script>
+            // Universal event listener: buttons, divs, etc.
+            document.body.addEventListener('click', (e) => {
+              if(e.target.dataset.action) {
+                window.parent.postMessage(
+                  { action: e.target.dataset.action, value: e.target.innerText },
+                  '*'
+                );
+              }
+            });
+
+            // Example: global alert function you can call from code
+            window.alertParent = (msg) => {
+              window.parent.postMessage({ action: 'alert', value: msg }, '*');
+            };
+          </script>
         </body>
       </html>
     `);
-  }, 200); // debounce for smooth typing
+  }, 200);
 
-    return () => clearTimeout(timeout);
-  }, [code]);
-
-  // Listen for messages from iframe
-  useEffect(() => {
-    const listener = (e: MessageEvent) => {
-      if (e.data?.action === "test") {
-        alert("Button clicked via postMessage!");
-        console.log("Action received from iframe:", e.data.action);
-      }
-    };
-    window.addEventListener("message", listener);
-    return () => window.removeEventListener("message", listener);
-  }, []);
+  return () => clearTimeout(timeout);
+}, [code]);
 
   return (
     <div className="flex flex-col h-full min-h-screen">
@@ -48,21 +54,28 @@ export default function FrontendPage() {
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        (
-          <>
-            <textarea
+        <>
+          <div className="w-1/2 h-full">
+            <Editor
+              height="100%"
+              defaultLanguage="html"
               value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="w-1/2 p-2 font-mono text-lg text-black border-r border-gray-300 focus:outline-none"
+              onChange={(value) => setCode(value || "")}
+              theme="vs-dark"
+              options={{
+                fontSize: 16,
+                minimap: { enabled: false },
+                wordWrap: "on",
+              }}
             />
-            <iframe
-              className="w-1/2"
-              srcDoc={srcDoc}
-              sandbox="allow-scripts"
-              title="preview"
-            />
-          </>
-        )
+          </div>
+          <iframe
+            className="w-1/2"
+            srcDoc={srcDoc}
+            sandbox="allow-scripts allow-same-origin"
+            title="preview"
+          />
+        </>
       </div>
     </div>
   );
