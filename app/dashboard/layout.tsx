@@ -24,7 +24,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const activeTab = pathname.split("/").pop();
 
   return (
-    <div className="dashboard-wrapper flex min-h-screen bg-white/90 pt-19">
+    <div className="dashboard-wrapper flex min-h-screen bg-white/90 pt-13">
       {/* Sidebar */}
       <aside className="w-[10vw] bg-gray-900 p-4">
         <h2 className="font-bold mb-4 text-white">Dashboard Sidebar</h2>

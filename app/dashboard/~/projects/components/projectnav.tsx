@@ -21,21 +21,11 @@ export default function ProjectsNav() {
       <header className="sticky top-0 z-50 bg-black/60 backdrop-blur-xl border-b border-gray-800">
         <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between">
           {/* Brand */}
-          <a
-            href="#"
-            className="inline-flex items-center w-[60px] h-[60px] rounded bg-cover bg-center"
-            style={{
-              backgroundImage:
-                "url(https://cdn.midjourney.com/3f5c16da-080f-427f-a80d-ee75c8f5a173/0_0.png?w=800&q=80)",
-            }}
-          >
-            {/* Logo placeholder */}
-          </a>
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-6">
             {links.map((link) => (
-            <li key={link.name}>
+            <b key={link.name}>
               <Link href={link.href} replace>
                 <button
                   className={`w-full text-left px-2 py-1 rounded ${
@@ -47,7 +37,7 @@ export default function ProjectsNav() {
                   {link.name}
                 </button>
               </Link>
-            </li>
+            </b>
           ))}
           </nav>
 
