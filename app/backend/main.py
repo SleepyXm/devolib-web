@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers.auth import auth
+from routers.projects import projects
 from database import database
 import os
 from dotenv import load_dotenv
@@ -17,9 +18,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
-
-
-
+app.include_router(projects.router, prefix="/projects", tags=["projects"])
 
 
 @app.get("/")

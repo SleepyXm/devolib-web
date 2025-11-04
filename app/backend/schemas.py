@@ -25,3 +25,8 @@ class UserOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class ProjectCreate(BaseModel):
+    user_id: str
+    name: str
+    
