@@ -1,6 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
-import { listProjects, handleCreateProject } from "@/app/handlers/projects";
+import {
+  listProjects,
+  handleCreateProject,
+  startProject,
+} from "@/app/handlers/projects";
 import { useUser } from "@/app/provider/UserProvider";
 
 export default function ProjectsPage() {
@@ -8,29 +12,31 @@ export default function ProjectsPage() {
   const username = user?.user?.username;
   const defaultProjectName = "Docker test";
 
-  const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
+  const [projects, setProjects] = useState<
+    { project_id: string; name: string; status: string }[]
+  >([]);
   const [loading, setLoading] = useState(false);
 
-  // Fetch projects on mount
+
   useEffect(() => {
-  if (!username) return; // wait for user to be loaded
+    if (!username) return;
 
-  const fetchProjects = async () => {
-    setLoading(true);
-    try {
-      const projectList = await listProjects();
-      setProjects(projectList);
-    } catch (err) {
-      console.error("Failed to fetch projects:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const fetchProjects = async () => {
+      setLoading(true);
+      try {
+        const projectList = await listProjects();
+        setProjects(projectList);
+      } catch (err) {
+        console.error("Failed to fetch projects:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  fetchProjects();
-}, [user]);
+    fetchProjects();
+  }, [user]);
 
-  // Optional: refresh list after creating a new project
+
   const refreshProjects = async () => {
     try {
       const projectList = await listProjects();
@@ -62,10 +68,14 @@ export default function ProjectsPage() {
         <ul className="space-y-2">
           {projects.map((project) => (
             <li
-              className="border p-2 rounded hover:bg-gray-100"
-              key={project.name}
+              key={project.project_id}
+              className="border p-2 rounded hover:bg-gray-100 cursor-pointer"
+              onClick={async () => {
+                const res = await startProject(project.project_id);
+                console.log("Project started:", res);
+              }}
             >
-              {project.name}
+              {project.name} {`(Status: ${project.status})`} 
             </li>
           ))}
         </ul>

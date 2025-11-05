@@ -4,7 +4,7 @@ const project_endpoint = `/projects`;
 
 
 export type Project = {
-    id: string;
+    project_id: string;
     name: string;
     user_id: string;
     container_id: string;
@@ -21,7 +21,7 @@ export async function createProject(user_id: string, name: string): Promise<Proj
 
 export async function listProjects(): Promise<Project[]> {
   const res = await request("/projects/list", { method: "GET" });
-  return res.projects; // extract the array
+  return res.projects;
 }
 
 export async function getProject(id: string): Promise<Project> {
@@ -37,7 +37,7 @@ export async function editProject(id: string, updates: Partial<Project>): Promis
   return res;
 }
 
-// Delete a project
+
 export async function deleteProject(id: string): Promise<{ success: boolean }> {
   const res = await request(`/${project_endpoint}/remove/${id}`, { method: "DELETE" });
   return res;
@@ -51,4 +51,19 @@ export const handleCreateProject = async (name: string, projectname: string) => 
     } catch (err) {
       console.error("Error creating project:", err);
     }
+}
+
+
+export async function startProject(project_id: string): Promise<{ ok: boolean; container_id: string; status: string }> {
+  const res = await request(`${project_endpoint}/start/${project_id}`, {
+    method: "POST",
+  });
+  return res;
+}
+
+export async function stopProject(project_id: string): Promise<{ ok: boolean; container_id: string; status: string }> {
+  const res = await request(`${project_endpoint}/stop/${project_id}`, {
+    method: "POST",
+  });
+  return res;
 }

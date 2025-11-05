@@ -1,6 +1,5 @@
 import uuid
-from fastapi import APIRouter, Depends, Body
-from schemas import ProjectCreate
+from fastapi import APIRouter, Depends, Body, HTTPException
 from database import database
 from routers.auth.auth_utils import get_current_user
 import docker
@@ -21,7 +20,7 @@ async def create_project_image(project_id: str, project_name: str):
 
     build_dir = f"/tmp/devolib_build_{project_id}"
     os.makedirs(build_dir, exist_ok=True)
-
+ 
 
     dockerfile_content = f"""
     FROM python:3.13-slim
@@ -93,3 +92,43 @@ async def create_project(
     image_id = await create_project_image(project_id, name)
 
     return {"ok": True, "project_id": project_id, "image_id": image_id, "name": name}
+
+@router.post("/start/{project_id}")
+async def start_project_container(project_id: str):
+    """
+    Starts the Docker container for a given project.
+    """
+    container_name = f"devolib_project_{project_id}"
+    
+    try:
+        # Check if container already exists
+        container = docker_client.containers.get(container_name)
+        if container.status != "running":
+            container.start()
+    except docker.errors.NotFound:
+        # If container doesn't exist, start it from image
+        image_tag = f"devolib_project_{project_id}"
+        try:
+            container = docker_client.containers.run(
+                image_tag,
+                name=container_name,
+                detach=True,
+                tty=True,
+                stdin_open=True,
+                command="sleep 20",  # keep it alive for (test limit i got scared when i couldnt figure out how to turn it off lol)
+            )
+        except docker.errors.ImageNotFound:
+            raise HTTPException(status_code=404, detail="Docker image not found")
+    
+    return {"ok": True, "container_id": container.id, "status": container.status}
+
+@router.post("/stop/{project_id}")
+async def stop_project_container(project_id: str):
+    container_name = f"devolib_project_{project_id}"
+    try:
+        container = docker_client.containers.get(container_name)
+        if container.status == "running":
+            container.stop()
+        return {"ok": True, "container_id": container.id, "status": container.status}
+    except docker.errors.NotFound:
+        raise HTTPException(status_code=404, detail="Container not found")
