@@ -19,6 +19,10 @@ export async function createProject(user_id: string, name: string): Promise<Proj
   return res;
 }
 
+export async function listProjects(): Promise<Project[]> {
+  const res = await request("/projects/list", { method: "GET" });
+  return res.projects; // extract the array
+}
 
 export async function getProject(id: string): Promise<Project> {
   const res = await request(`/${project_endpoint}/${id}`, { method: "GET" });
@@ -37,4 +41,14 @@ export async function editProject(id: string, updates: Partial<Project>): Promis
 export async function deleteProject(id: string): Promise<{ success: boolean }> {
   const res = await request(`/${project_endpoint}/remove/${id}`, { method: "DELETE" });
   return res;
+}
+
+
+export const handleCreateProject = async (name: string, projectname: string) => {
+    try {
+      const res = await createProject(name, projectname);
+      console.log("Project created:", res);
+    } catch (err) {
+      console.error("Error creating project:", err);
+    }
 }

@@ -32,3 +32,8 @@ async def startup():
 @app.on_event("shutdown")
 async def shutdown():
     await database.disconnect()
+
+
+@app.get("/hi")
+async def hi():
+    return {"message": "Auth router is working!"}

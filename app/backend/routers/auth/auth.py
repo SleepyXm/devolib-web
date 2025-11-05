@@ -88,3 +88,8 @@ async def me(current_user: dict = Depends(get_current_user)):
 async def logout(response: Response):
     response.delete_cookie("access_token") 
     return {"message": "Logged out successfully"}
+
+
+@router.get("/hi")
+async def hi():
+    return {"message": "Auth router is working!"}
