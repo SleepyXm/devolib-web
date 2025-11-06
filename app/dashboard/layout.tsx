@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUser } from "@/app/provider/UserProvider";
 import ProjectsNav from "./~/projects/components/projectnav";
+import { useRouter } from "next/navigation";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -13,6 +14,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const user = useUser();
   const name = user?.user?.username ?? "default";
+  const router = useRouter();
+
 
   const tabs = [
     { name: "Home", href: `/${name}s-dashboard/` },
@@ -22,6 +25,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   ];
 
   const activeTab = pathname.split("/").pop();
+
+  if (!name) {
+    router.push("/login")
+  }
 
   return (
     <div className="dashboard-wrapper flex min-h-screen bg-white/90 pt-13">

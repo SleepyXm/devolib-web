@@ -39,7 +39,13 @@ export async function editProject(id: string, updates: Partial<Project>): Promis
 
 
 export async function deleteProject(id: string): Promise<{ success: boolean }> {
-  const res = await request(`/${project_endpoint}/remove/${id}`, { method: "DELETE" });
+  const res = await request(`${project_endpoint}/delete`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ project_id: id }),
+  });
   return res;
 }
 

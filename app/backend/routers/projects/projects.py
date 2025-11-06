@@ -20,14 +20,33 @@ async def create_project_image(project_id: str, project_name: str):
 
     build_dir = f"/tmp/devolib_build_{project_id}"
     os.makedirs(build_dir, exist_ok=True)
- 
+
+    ENV_path_string = '/root/.cargo/bin:${PATH}'
 
     dockerfile_content = f"""
-    FROM python:3.13-slim
+    FROM python:3.14.0-alpine
     WORKDIR /app
     RUN mkdir -p /app/user_code/{project_id}
+
+    # Install dependencies for Python, Node.js, Rust
+    RUN apk update && apk add --no-cache \
+        curl \
+        build-base \
+        ca-certificates \
+        bash \
+        gnupg \
+        nodejs \
+        npm
+
+    # Install Node.js (latest LTS)
+    RUN apk add --no-cache nodejs npm
+
+    # Install Rust via rustup (non-interactive)
+    #RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
+    #ENV PATH="{ENV_path_string}"
+
     # Optional: copy pre-existing starter code here if you want
-    CMD ["sleep", "infinity"]
+    CMD ["sleep", "20"]
     """
     dockerfile_path = os.path.join(build_dir, "Dockerfile")
     with open(dockerfile_path, "w") as f:
@@ -58,6 +77,31 @@ async def create_project_image(project_id: str, project_name: str):
     )
 
     return image_id
+
+async def delete_project_image(project_id: str):
+    """
+    Deletes the Docker image (and optionally running container) associated with a project.
+    """
+    image_tag = f"devolib_project_{project_id}"
+
+    # Try to remove any running containers using this image
+    try:
+        containers = docker_client.containers.list(all=True, filters={"ancestor": image_tag})
+        for container in containers:
+            container.stop()
+            container.remove()
+    except Exception as e:
+        print(f"Error removing containers: {e}")
+
+    # Try to remove the image itself
+    try:
+        docker_client.images.remove(image=image_tag, force=True)
+        print(f"Deleted image {image_tag}")
+    except docker.errors.ImageNotFound:
+        print(f"No image found for {image_tag}")
+    except Exception as e:
+        print(f"Error deleting image: {e}")
+
 
 @router.get("/list")
 async def list_projects(current_user: dict = Depends(get_current_user)):
@@ -132,3 +176,31 @@ async def stop_project_container(project_id: str):
         return {"ok": True, "container_id": container.id, "status": container.status}
     except docker.errors.NotFound:
         raise HTTPException(status_code=404, detail="Container not found")
+    
+
+@router.delete("/delete")
+async def delete_project(
+    project_id: str = Body(..., embed=True),
+    current_user: dict = Depends(get_current_user)
+    ):
+
+    select_query = """
+    SELECT * FROM projects
+    WHERE project_id = :project_id AND user_id = :user_id
+    """
+    project = await database.fetch_one(
+        query=select_query,
+        values={"project_id": project_id, "user_id": current_user["id"]}
+    )
+
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found or not owned by user")
+
+
+    await delete_project_image(project_id)
+
+
+    delete_query = "DELETE FROM projects WHERE project_id = :project_id"
+    await database.execute(query=delete_query, values={"project_id": project_id})
+
+    return {"ok": True, "project_id": project_id, "deleted": True}
