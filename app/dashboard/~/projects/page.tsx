@@ -7,10 +7,12 @@ import {
   deleteProject,
 } from "@/app/handlers/projects";
 import { useUser } from "@/app/provider/UserProvider";
+import { useRouter } from "next/navigation";
 
 export default function ProjectsPage() {
   const user = useUser();
   const username = user?.user?.username;
+  const router = useRouter();
 
   const [projects, setProjects] = useState<
     { project_id: string; name: string; status: string }[]
@@ -102,6 +104,7 @@ export default function ProjectsPage() {
                 className="cursor-pointer"
                 onClick={async () => {
                   const res = await startProject(project.project_id);
+                  router.push (`/dashboard/~/${project.project_id}`)
                   console.log("Project started:", res);
                 }}
               >

@@ -73,3 +73,41 @@ export async function stopProject(project_id: string): Promise<{ ok: boolean; co
   });
   return res;
 }
+
+export type ProjectWS = {
+  sendCommand: (cmd: string) => void;
+  onOutput: (callback: (data: string) => void) => void;
+  close: () => void;
+};
+
+export function connectToProject(project_id: string): ProjectWS {
+  const ws = new WebSocket(`ws://localhost:8000${project_endpoint}/ws/${project_id}`);
+
+  let outputCallback: ((data: string) => void) | null = null;
+
+  ws.onmessage = (event) => {
+    if (outputCallback) outputCallback(event.data);
+  };
+
+  ws.onclose = () => {
+    console.log("WebSocket closed for project", project_id);
+  };
+
+  ws.onerror = (err) => {
+    console.error("WebSocket error:", err);
+  };
+
+  return {
+    sendCommand: (cmd: string) => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(cmd + "\n");
+      }
+    },
+    onOutput: (callback: (data: string) => void) => {
+      outputCallback = callback;
+    },
+    close: () => {
+      ws.close();
+    },
+  };
+}

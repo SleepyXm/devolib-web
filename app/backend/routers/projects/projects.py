@@ -1,9 +1,11 @@
 import uuid
-from fastapi import APIRouter, Depends, Body, HTTPException
+from fastapi import APIRouter, Depends, Body, HTTPException, WebSocket, WebSocketDisconnect
 from database import database
 from routers.auth.auth_utils import get_current_user
 import docker
 import os
+from datetime import datetime
+import asyncio
 
 router = APIRouter()
 
@@ -26,7 +28,7 @@ async def create_project_image(project_id: str, project_name: str):
     dockerfile_content = f"""
     FROM python:3.14.0-alpine
     WORKDIR /app
-    RUN mkdir -p /app/user_code/{project_id}
+    RUN mkdir -p /app/{project_id}/workspace
 
     # Install dependencies for Python, Node.js, Rust
     RUN apk update && apk add --no-cache \
@@ -46,7 +48,7 @@ async def create_project_image(project_id: str, project_name: str):
     #ENV PATH="{ENV_path_string}"
 
     # Optional: copy pre-existing starter code here if you want
-    CMD ["sleep", "20"]
+    CMD ["sleep", "2400"]
     """
     dockerfile_path = os.path.join(build_dir, "Dockerfile")
     with open(dockerfile_path, "w") as f:
@@ -159,12 +161,14 @@ async def start_project_container(project_id: str):
                 detach=True,
                 tty=True,
                 stdin_open=True,
-                command="sleep 20",  # keep it alive for (test limit i got scared when i couldnt figure out how to turn it off lol)
+                command = "sh -c 'echo Container started!; tail -f /dev/null'",  # keep it alive for (test limit i got scared when i couldnt figure out how to turn it off lol)
             )
         except docker.errors.ImageNotFound:
             raise HTTPException(status_code=404, detail="Docker image not found")
     
     return {"ok": True, "container_id": container.id, "status": container.status}
+
+
 
 @router.post("/stop/{project_id}")
 async def stop_project_container(project_id: str):
@@ -204,3 +208,43 @@ async def delete_project(
     await database.execute(query=delete_query, values={"project_id": project_id})
 
     return {"ok": True, "project_id": project_id, "deleted": True}
+
+
+@router.websocket("/ws/{project_id}")
+async def websocket_terminal(websocket: WebSocket, project_id: str):
+    await websocket.accept()
+
+    container_name = f"devolib_project_{project_id}"
+    try:
+        container = docker_client.containers.get(container_name)
+    except docker.errors.NotFound:
+        await websocket.close(code=1000)
+        return
+
+    await websocket.send_text(f"User connected at {datetime.utcnow().isoformat()}!\n")
+    current_dir = f"/app/{project_id}/workspace"  # starting directory inside container
+
+    while True:
+        try:
+            cmd = await websocket.receive_text()
+            if not cmd.strip():
+                continue
+
+            # Handle `cd` separately
+            if cmd.startswith("cd "):
+                target = cmd[3:].strip()
+                # Optionally validate path
+                current_dir = f"{current_dir}/{target}".replace("//", "/")
+                await websocket.send_text(f"Changed directory to {current_dir}\n")
+                continue
+
+            # Prepend current_dir for all other commands
+            result = container.exec_run(f"bash -c 'cd {current_dir} && {cmd}'", demux=True)
+            stdout, stderr = result.output
+            if stdout:
+                await websocket.send_text(stdout.decode())
+            if stderr:
+                await websocket.send_text(stderr.decode())
+
+        except WebSocketDisconnect:
+            break
