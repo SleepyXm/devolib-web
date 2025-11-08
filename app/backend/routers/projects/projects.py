@@ -5,7 +5,7 @@ from routers.auth.auth_utils import get_current_user
 import docker
 import os
 from datetime import datetime
-import asyncio
+import json
 
 router = APIRouter()
 
@@ -29,6 +29,9 @@ async def create_project_image(project_id: str, project_name: str):
     FROM python:3.14.0-alpine
     WORKDIR /app
     RUN mkdir -p /app/{project_id}/workspace
+    RUN mkdir -p /app/{project_id}/workspace/frontend
+    RUN mkdir -p /app/{project_id}/workspace/backend
+    RUN mkdir -p /app/{project_id}/workspace/database
 
     # Install dependencies for Python, Node.js, Rust
     RUN apk update && apk add --no-cache \
@@ -140,19 +143,19 @@ async def create_project(
     return {"ok": True, "project_id": project_id, "image_id": image_id, "name": name}
 
 @router.post("/start/{project_id}")
-async def start_project_container(project_id: str):
-    """
-    Starts the Docker container for a given project.
-    """
-    container_name = f"devolib_project_{project_id}"
+async def start_project_container(project_id: str, current_user: dict = Depends(get_current_user)):
+
+    select_query = "SELECT * FROM projects WHERE project_id = :project_id AND user_id = :user_id"
+    project = await database.fetch_one(query=select_query, values={"project_id": project_id, "user_id": current_user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found or not owned by user")
     
+    container_name = f"devolib_project_{project_id}"
     try:
-        # Check if container already exists
         container = docker_client.containers.get(container_name)
         if container.status != "running":
             container.start()
     except docker.errors.NotFound:
-        # If container doesn't exist, start it from image
         image_tag = f"devolib_project_{project_id}"
         try:
             container = docker_client.containers.run(
@@ -161,7 +164,7 @@ async def start_project_container(project_id: str):
                 detach=True,
                 tty=True,
                 stdin_open=True,
-                command = "sh -c 'echo Container started!; tail -f /dev/null'",  # keep it alive for (test limit i got scared when i couldnt figure out how to turn it off lol)
+                command="sh -c 'echo Container started!; tail -f /dev/null'",
             )
         except docker.errors.ImageNotFound:
             raise HTTPException(status_code=404, detail="Docker image not found")
@@ -222,29 +225,71 @@ async def websocket_terminal(websocket: WebSocket, project_id: str):
         return
 
     await websocket.send_text(f"User connected at {datetime.utcnow().isoformat()}!\n")
-    current_dir = f"/app/{project_id}/workspace"  # starting directory inside container
+    current_dir = f"/app/{project_id}/workspace"
+
+    async def handle_ws_command(container, cmd: str, current_dir: str):
+        cmd = cmd.strip()
+        if not cmd:
+            return "", current_dir
+
+        # Handle cd commands
+        if cmd.startswith("cd "):
+            target = cmd[3:].strip()
+            current_dir = os.path.normpath(os.path.join(current_dir, target))
+            return f"Changed directory to {current_dir}\n", current_dir
+
+        # Handle JSON payload commands
+        if cmd.startswith("{") and cmd.endswith("}"):
+            try:
+                payload = json.loads(cmd)
+                response = await handle_command(container, payload, current_dir)
+                return response, current_dir
+            except Exception as e:
+                return f"Error handling command: {str(e)}", current_dir
+
+        # Shell command fallback
+        result = container.exec_run(f"bash -c 'cd {current_dir} && {cmd}'", demux=True)
+        stdout, stderr = result.output
+        output = ""
+        if stdout:
+            output += stdout.decode()
+        if stderr:
+            output += stderr.decode()
+        return output, current_dir
 
     while True:
         try:
             cmd = await websocket.receive_text()
-            if not cmd.strip():
-                continue
-
-            # Handle `cd` separately
-            if cmd.startswith("cd "):
-                target = cmd[3:].strip()
-                # Optionally validate path
-                current_dir = f"{current_dir}/{target}".replace("//", "/")
-                await websocket.send_text(f"Changed directory to {current_dir}\n")
-                continue
-
-            # Prepend current_dir for all other commands
-            result = container.exec_run(f"bash -c 'cd {current_dir} && {cmd}'", demux=True)
-            stdout, stderr = result.output
-            if stdout:
-                await websocket.send_text(stdout.decode())
-            if stderr:
-                await websocket.send_text(stderr.decode())
-
+            output, current_dir = await handle_ws_command(container, cmd, current_dir)
+            if output:
+                await websocket.send_text(output)
         except WebSocketDisconnect:
             break
+
+
+async def handle_command(container, payload, current_dir):
+    target = payload["target"]
+    project_payload = payload["payload"]
+
+    if target == "frontend":
+        framework = project_payload["framework"]
+        name = project_payload["name"]
+
+        if framework == "html-css":
+            cmd = f"mkdir -p {current_dir}/{name} && echo '<h1>{name}</h1>' > {current_dir}/{name}/index.html"
+            container.exec_run(f"bash -c '{cmd}'")
+            return f"Frontend {name} (HTML+CSS) created!"
+        # Add React / Next.js scaffolding later
+
+    elif target == "backend":
+        framework = project_payload["framework"]
+        name = project_payload["name"]
+
+        if framework == "fastapi":
+            cmd = (
+                f"mkdir -p {current_dir}/{name} && "
+                f"echo 'from fastapi import FastAPI\napp = FastAPI()' > {current_dir}/{name}/main.py"
+            )
+            container.exec_run(f"bash -c '{cmd}'")
+            return f"Backend {name} (FastAPI) created!"
+        # Add Node/Express or other backend scaffolding later
