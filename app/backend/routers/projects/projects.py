@@ -11,52 +11,63 @@ router = APIRouter()
 
 docker_client = docker.from_env()
 
-async def create_project_image(project_id: str, project_name: str):
+BACKEND_PACKAGES = {
+    "python": [],
+    "node": ["nodejs", "npm"],
+    "rust": ["build-base", "curl"]
+}
+
+DATABASE_PACKAGES = {
+    "postgres": ["postgres", "postgresql-client"],
+    "mysql": ["mariadb", "mariadb-client"],
+    "sqlite": []
+}
+
+async def create_project_image(project_id: str, project_name: str, backend_services=None, frontend_services=None, db=None):
     """
-    1. Dynamically generates a Dockerfile for the project.
-    2. Builds a Docker image.
-    3. Saves the image ID in the projects table.
+    Dynamically generates a Dockerfile with optional backend, frontend, and database services.
+    Builds the image and saves the container ID in the database.
     """
+    backend_services = backend_services or []
+    frontend_services = frontend_services or []
+    db = db or []
+
     image_tag = f"devolib_project_{project_id}"
-
-
     build_dir = f"/tmp/devolib_build_{project_id}"
     os.makedirs(build_dir, exist_ok=True)
 
-    ENV_path_string = '/root/.cargo/bin:${PATH}'
+    # Base packages
+    apk_packages = ["curl", "bash", "ca-certificates", "gnupg"]
+    
+
+    for service in backend_services:
+        apk_packages.extend(BACKEND_PACKAGES.get(service, []))
+
+    # Add packages for databases
+    for db in db:
+        apk_packages.extend(DATABASE_PACKAGES.get(db, []))
+
+    apk_packages_str = " \\\n    ".join(set(apk_packages))
+
+    # Create directories
+    dirs = ["workspace", "workspace/frontend", "workspace/backend", "workspace/database"]
+    dir_commands = "\n".join([f"RUN mkdir -p /app/{project_id}/{d}" for d in dirs])
 
     dockerfile_content = f"""
     FROM python:3.14.0-alpine
     WORKDIR /app
-    RUN mkdir -p /app/{project_id}/workspace
-    RUN mkdir -p /app/{project_id}/workspace/frontend
-    RUN mkdir -p /app/{project_id}/workspace/backend
-    RUN mkdir -p /app/{project_id}/workspace/database
+    {dir_commands}
 
-    # Install dependencies for Python, Node.js, Rust
-    RUN apk update && apk add --no-cache \
-        curl \
-        build-base \
-        ca-certificates \
-        bash \
-        gnupg \
-        nodejs \
-        npm
+    # Install dependencies
+    RUN apk update && apk add --no-cache \\
+        {apk_packages_str}
 
-    # Install Node.js (latest LTS)
-    RUN apk add --no-cache nodejs npm
-
-    # Install Rust via rustup (non-interactive)
-    #RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
-    #ENV PATH="{ENV_path_string}"
-
-    # Optional: copy pre-existing starter code here if you want
     CMD ["sleep", "2400"]
     """
+    
     dockerfile_path = os.path.join(build_dir, "Dockerfile")
     with open(dockerfile_path, "w") as f:
         f.write(dockerfile_content)
-
 
     try:
         image, logs = docker_client.images.build(
@@ -69,7 +80,6 @@ async def create_project_image(project_id: str, project_name: str):
         for line in e.build_log:
             print(line.get("stream", ""))
         raise Exception(f"Docker build failed: {e}")
-
 
     update_query = """
     UPDATE projects
@@ -89,7 +99,7 @@ async def delete_project_image(project_id: str):
     """
     image_tag = f"devolib_project_{project_id}"
 
-    # Try to remove any running containers using this image
+    # stop and remove any running containers based on this image
     try:
         containers = docker_client.containers.list(all=True, filters={"ancestor": image_tag})
         for container in containers:
@@ -98,7 +108,7 @@ async def delete_project_image(project_id: str):
     except Exception as e:
         print(f"Error removing containers: {e}")
 
-    # Try to remove the image itself
+    # remove the image itself
     try:
         docker_client.images.remove(image=image_tag, force=True)
         print(f"Deleted image {image_tag}")
@@ -108,19 +118,45 @@ async def delete_project_image(project_id: str):
         print(f"Error deleting image: {e}")
 
 
+
+
+
+
+
+
+
+
+
 @router.get("/list")
 async def list_projects(current_user: dict = Depends(get_current_user)):
     query = "SELECT project_id, name, status, container_id, created_at FROM projects WHERE user_id = :user_id"
     projects = await database.fetch_all(query=query, values={"user_id": current_user["id"]})
     return {"projects": projects}
 
+
+
+
+
+
+
+
+
 @router.get("/hi")
 async def hi():
     return {"message": "Projects router is working!"}
 
+
+
+
+
+
+
 @router.post("/create")
 async def create_project(
     name: str = Body(..., embed=True),
+    backend: str = Body(None, embed=True),
+    frontend: str = Body(None, embed=True),
+    db: str = Body(None, embed=True),
     current_user: dict = Depends(get_current_user)
 ):
     project_id = str(uuid.uuid4())
@@ -138,9 +174,18 @@ async def create_project(
         },
     )
 
-    image_id = await create_project_image(project_id, name)
+    image_id = await create_project_image(project_id, name, backend_services=[backend] if backend else [],
+        frontend_services=[frontend] if frontend else [],
+        db=[db] if db else [])
 
     return {"ok": True, "project_id": project_id, "image_id": image_id, "name": name}
+
+
+
+
+
+
+
 
 @router.post("/start/{project_id}")
 async def start_project_container(project_id: str, current_user: dict = Depends(get_current_user)):

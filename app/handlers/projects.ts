@@ -6,15 +6,18 @@ const project_endpoint = `/projects`;
 export type Project = {
     project_id: string;
     name: string;
+    frontend: string;
+    backend: string;
+    db: string;
     user_id: string;
     container_id: string;
     status: string;
 }
 
-export async function createProject(user_id: string, name: string): Promise<Project> {
+export async function createProject(user_id: string, name: string, frontend?: string, backend?: string, db?: string): Promise<Project> {
   const res = await request("/projects/create", {
     method: "POST",
-    body: JSON.stringify({ user_id, name }),
+    body: JSON.stringify({ user_id, name, frontend, backend, db }),
   });
   return res;
 }
@@ -50,9 +53,9 @@ export async function deleteProject(id: string): Promise<{ success: boolean }> {
 }
 
 
-export const handleCreateProject = async (name: string, projectname: string) => {
+export const handleCreateProject = async (name: string, projectname: string, frontend?: string, backend?: string, db?: string ) => {
     try {
-      const res = await createProject(name, projectname);
+      const res = await createProject(name, projectname, frontend, backend, db);
       console.log("Project created:", res);
     } catch (err) {
       console.error("Error creating project:", err);
