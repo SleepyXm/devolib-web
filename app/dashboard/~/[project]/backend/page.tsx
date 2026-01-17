@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Editor, { useMonaco } from "@monaco-editor/react";
+import MonacoEditor from "@/app/components/monacoeditor";
+
 
 interface CommandPayload {
   type: string;
@@ -13,7 +14,6 @@ interface CommandPayload {
 }
 
 export default function BackendPage() {
-  const monaco = useMonaco();
 
   const [code, setCode] = useState(
     `# Backend Entry Point\n# Example: FastAPI route\nfrom fastapi import FastAPI\n\napp = FastAPI()\n\n@app.get("/")\ndef root():\n    return {"message": "Hello from your backend!"}`
@@ -22,20 +22,6 @@ export default function BackendPage() {
   const [framework, setFramework] = useState("fastapi");
   const [commandPayload, setCommandPayload] = useState<CommandPayload | null>(null);
 
-  // Define custom theme on mount
-  useEffect(() => {
-    if (monaco) {
-      monaco.editor.defineTheme("vs-dark-custom-bg", {
-        base: "vs-dark",
-        inherit: true,
-        rules: [], // keep all syntax colors
-        colors: {
-          "editor.background": "#1e1e2f", // lighter, less harsh than pure vs-dark
-          "editorLineNumber.foreground": "#888888", // optional line number color
-        },
-      });
-    }
-  }, [monaco]);
 
   const handleGeneratePayload = () => {
     const payload: CommandPayload = {
@@ -99,18 +85,7 @@ export default function BackendPage() {
 
       {/* Code editor */}
       <div className="flex flex-1 overflow-hidden">
-        <Editor
-          height="80%"
-          defaultLanguage="python"
-          value={code}
-          onChange={(value) => setCode(value || "")}
-          theme="vs-dark-custom-bg"
-          options={{
-            fontSize: 16,
-            minimap: { enabled: false },
-            wordWrap: "on",
-          }}
-        />
+        <MonacoEditor initialCode={code} language="python"/>
       </div>
     </div>
   );

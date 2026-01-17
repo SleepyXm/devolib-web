@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Editor from "@monaco-editor/react";
+import MonacoEditor from "@/app/components/monacoeditor";
 
 interface CommandPayload {
   type: string;
@@ -101,20 +101,11 @@ export default function FrontendPage() {
       {/* Code editor + preview */}
       <div className="flex flex-1 overflow-hidden">
         <>
-          <div className="w-1/2 h-full">
-            <Editor
-              height="100%"
-              defaultLanguage="html"
-              value={code}
-              onChange={(value) => setCode(value || "")}
-              theme="vs-dark"
-              options={{
-                fontSize: 16,
-                minimap: { enabled: false },
-                wordWrap: "on",
-              }}
+            <MonacoEditor
+              initialCode={code}
+              language="html"
+              onChange={(value) => setCode(value)}
             />
-          </div>
           <iframe
             className="w-1/2"
             srcDoc={srcDoc}
