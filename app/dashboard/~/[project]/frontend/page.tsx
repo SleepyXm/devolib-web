@@ -144,7 +144,7 @@ export default function FrontendPage() {
           <div className="relative w-1/2">
             {/* overlay */}
             <div
-              className="absolute inset-0 z-10"
+              className="absolute inset-0 z-10 pointer-events-none"
               onContextMenu={handleContextMenu}
               onClick={handleClick}
             />
