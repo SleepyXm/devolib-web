@@ -16,6 +16,13 @@ export default function MonacoEditor({
   const monaco = useMonaco();
   const [code, setCode] = useState(initialCode);
 
+  // ADD THIS: Update code when initialCode prop changes
+  useEffect(() => {
+    if (initialCode !== undefined && initialCode !== code) {
+      setCode(initialCode);
+    }
+  }, [initialCode]);
+
   const handleChange = (value: string | undefined) => {
     const newValue = value || "";
     setCode(newValue);
@@ -45,10 +52,10 @@ export default function MonacoEditor({
       monaco.editor.defineTheme("vs-dark-custom-bg", {
         base: "vs-dark",
         inherit: true,
-        rules: [], // keep all syntax colors
+        rules: [],
         colors: {
-          "editor.background": "#1e1e2f", // lighter, less harsh than pure vs-dark
-          "editorLineNumber.foreground": "#888888", // optional line number color
+          "editor.background": "#1e1e2f",
+          "editorLineNumber.foreground": "#888888",
         },
       });
     }

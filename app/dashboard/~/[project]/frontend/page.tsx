@@ -29,47 +29,82 @@ export default function FrontendPage() {
   const { contextMenu, handleContextMenu, handleClick } = useContextMenu();
 
   const handleMenuAction = (item: EditorMenuItem) => {
-  switch (item.action) {
-    case "copy":
-      navigator.clipboard.writeText(code);
-      alert("Copied!");
-      break;
+    switch (item.action) {
+      case "copy":
+        navigator.clipboard.writeText(code);
+        alert("Copied!");
+        break;
 
-    case "format":
-      setCode(code.toUpperCase()); // MVP formatting
-      break;
+      case "format":
+        setCode(code.toUpperCase()); // MVP formatting
+        break;
 
-    case "insert-element":
-      setCode(
-        code +
-          `<${item.payload.value} class="${item.payload.defaultClass}"></${item.payload.value}>\n`
-      );
-      break;
+      case "insert-element":
+        setCode(
+          code +
+            `<${item.payload.value} class="${item.payload.defaultClass}"></${item.payload.value}>\n`,
+        );
+        break;
 
-    case "set-class":
-      setCode(code + ` class="${item.payload.prefix}-${item.payload.color}"`);
-      break;
-  }
+      case "set-class":
+        setCode(code + ` class="${item.payload.prefix}-${item.payload.color}"`);
+        break;
+    }
 
-  handleClick(); // close menu
-};
+    handleClick(); // close menu
+  };
 
   // Update iframe srcdoc as code changes
   useEffect(() => {
     const timeout = setTimeout(() => {
       setSrcDoc(`
-        <html>
-          <head>
-            <script src="https://cdn.tailwindcss.com"></script>
-          </head>
-          <body>
-            ${code}
-          </body>
-        </html>
-      `);
+      <html>
+        <head>
+          <script src="https://cdn.tailwindcss.com"></script>
+          <script>
+            document.addEventListener('contextmenu', (e) => {
+              e.preventDefault();
+              window.parent.postMessage({
+                type: 'contextmenu',
+                x: e.pageX,
+                y: e.pageY
+              }, '*');
+            });
+          </script>
+        </head>
+        <body>
+          ${code}
+        </body>
+      </html>
+    `);
     }, 200);
     return () => clearTimeout(timeout);
   }, [code]);
+
+  useEffect(() => {
+    const handleMessage = (e: MessageEvent) => {
+      if (e.data.type === "contextmenu") {
+        const iframe = document.querySelector('iframe[title="preview"]');
+        const iframeRect = iframe?.getBoundingClientRect();
+
+        if (iframeRect) {
+          const finalX = iframeRect.left + e.data.x + window.scrollX;
+          const finalY = iframeRect.top + e.data.y + window.scrollY;
+
+          handleContextMenu({
+            clientX: iframeRect.left + e.data.x,
+            clientY: iframeRect.top + e.data.y,
+            pageX: finalX, // Add this!
+            pageY: finalY, // Add this!
+            preventDefault: () => {},
+          } as React.MouseEvent);
+        }
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [handleContextMenu]);
 
   // Generate payload
   const handleGeneratePayload = () => {
@@ -142,14 +177,6 @@ export default function FrontendPage() {
             onChange={(value) => setCode(value)}
           />
           <div className="relative w-1/2">
-            {/* overlay */}
-            <div
-              className="absolute inset-0 z-10 pointer-events-none"
-              onContextMenu={handleContextMenu}
-              onClick={handleClick}
-            />
-
-            {/* iframe */}
             <iframe
               className="w-full h-full"
               srcDoc={srcDoc}
@@ -159,20 +186,27 @@ export default function FrontendPage() {
           </div>
 
           {contextMenu.show && (
-            <div
-              className="absolute z-50 bg-gray-900 text-white rounded shadow-lg"
-              style={{ top: contextMenu.y, left: contextMenu.x }}
-            >
-              {editorMenuItems.map((item) => (
-                <button
-                  key={item.label}
-                  className="block px-4 py-2 hover:bg-gray-700 w-full text-left"
-                  onClick={() => handleMenuAction(item)}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
+            <>
+              <div className="fixed inset-0 z-40"/>
+
+              <div
+                className="fixed z-50 bg-gray-900 text-white rounded shadow-lg"
+                style={{
+                  top: contextMenu.y,
+                  left: contextMenu.x,
+                }}
+              >
+                {editorMenuItems.map((item) => (
+                  <button
+                    key={item.label}
+                    className="block px-4 py-2 hover:bg-gray-700 w-full text-left"
+                    onClick={() => handleMenuAction(item)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </>
           )}
         </>
       </div>
