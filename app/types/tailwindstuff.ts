@@ -113,7 +113,7 @@ positionalValues.forEach(prefix => {
 
 export const baseElements =
 [
-    { value: "div", label: "Div", defaultClass: "block" },
+  { value: "div", label: "Div", defaultClass: "block" },
   { value: "span", label: "Span", defaultClass: "inline" },
   { value: "button", label: "Button", defaultClass: "px-4 py-2 bg-blue-500 text-white rounded" },
   { value: "input", label: "Input", defaultClass: "border px-2 py-1 rounded" },
