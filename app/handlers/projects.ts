@@ -1,6 +1,7 @@
 import { request } from "../handlers/auth";
 
 const project_endpoint = `/projects`;
+const container_endpoint = `/container`;
 
 
 export type Project = {
@@ -64,14 +65,14 @@ export const handleCreateProject = async (name: string, projectname: string, fro
 
 
 export async function startProject(project_id: string): Promise<{ ok: boolean; container_id: string; status: string }> {
-  const res = await request(`${project_endpoint}/start/${project_id}`, {
+  const res = await request(`${container_endpoint}/start/${project_id}`, {
     method: "POST",
   });
   return res;
 }
 
 export async function stopProject(project_id: string): Promise<{ ok: boolean; container_id: string; status: string }> {
-  const res = await request(`${project_endpoint}/stop/${project_id}`, {
+  const res = await request(`${container_endpoint}/stop/${project_id}`, {
     method: "POST",
   });
   return res;
@@ -84,7 +85,7 @@ export type ProjectWS = {
 };
 
 export function connectToProject(project_id: string): ProjectWS {
-  const ws = new WebSocket(`ws://localhost:8000${project_endpoint}/ws/${project_id}`);
+  const ws = new WebSocket(`ws://localhost:8000${container_endpoint}/ws/${project_id}`);
 
   let outputCallback: ((data: string) => void) | null = null;
 
