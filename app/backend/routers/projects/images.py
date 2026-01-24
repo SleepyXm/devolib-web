@@ -1,0 +1,151 @@
+import uuid
+from fastapi import APIRouter, Depends, Body, HTTPException, WebSocket, WebSocketDisconnect
+from database import database
+from routers.auth.auth_utils import get_current_user
+import docker
+import os
+from datetime import datetime
+import json
+
+router = APIRouter()
+
+docker_client = docker.from_env()
+
+BACKEND_PACKAGES = {
+    "python": [],
+    "node": ["nodejs", "npm"],
+    "rust": ["build-base", "curl"]
+}
+
+DATABASE_PACKAGES = {
+    "postgres": ["postgres", "postgresql-client"],
+    "mysql": ["mariadb", "mariadb-client"],
+    "sqlite": []
+}
+
+FRONTEND_FRAMEWORKS = {
+    "html-css": [],
+    "react": ["nodejs", "npm"],
+    "nextjs": ["nodejs", "npm"]
+}
+
+FRONTEND_FRAMEWORKS_COMMANDS = {
+    "react": "npx create-react-app {name}",
+    "nextjs": "npx create-next-app@latest {name} --typescript --tailwind --app --eslint --no-git --import-alias '@/*' --no-src-dir --no-react-compiler --turbopack",
+    "html-css": "mkdir -p {name} && echo '<h1>{name}</h1>' > {name}/index.html"
+}
+
+async def create_project_image(project_id: str, project_name: str, backend_services=None, frontend_services=None, db=None):
+    """
+    Dynamically generates a Dockerfile with optional backend, frontend, and database services.
+    Builds the image and saves the container ID in the database.
+    """
+    backend_services = backend_services or []
+    frontend_services = frontend_services or []
+    db = db or []
+
+    image_tag = f"devolib_project_{project_id}"
+    build_dir = f"/tmp/devolib_build_{project_id}"
+    os.makedirs(build_dir, exist_ok=True)
+
+    # Base packages
+    apk_packages = ["curl", "bash", "ca-certificates", "gnupg"]
+    
+    for service in backend_services:
+        apk_packages.extend(BACKEND_PACKAGES.get(service, []))
+
+    # Add packages for databases
+    for db_service in db:
+        apk_packages.extend(DATABASE_PACKAGES.get(db_service, []))
+
+    for framework in frontend_services:
+        apk_packages.extend(FRONTEND_FRAMEWORKS.get(framework, []))
+
+    apk_packages_str = " \\\n    ".join(set(apk_packages))
+
+    # Create directories
+    dirs = ["workspace", "workspace/frontend", "workspace/backend", "workspace/database"]
+    dir_commands = "\n".join([f"RUN mkdir -p /app/{project_id}/{d}" for d in dirs])
+
+    # Generate frontend setup commands
+    frontend_setup_commands = ""
+    for framework in frontend_services:
+        cmd = FRONTEND_FRAMEWORKS_COMMANDS.get(framework)
+        if cmd:
+            # Format the command with project name
+            formatted_cmd = cmd.format(name=project_name)
+            frontend_setup_commands += f"""
+# Setup {framework} project
+WORKDIR /app/{project_id}/workspace/frontend
+RUN {formatted_cmd}
+"""
+
+    dockerfile_content = f"""
+FROM python:3.14.0-alpine
+WORKDIR /app
+{dir_commands}
+
+# Install dependencies
+RUN apk update && apk add --no-cache \\
+    {apk_packages_str}
+
+{frontend_setup_commands}
+
+# Reset working directory
+WORKDIR /app/{project_id}
+
+CMD ["sleep", "2400"]
+"""
+    
+    dockerfile_path = os.path.join(build_dir, "Dockerfile")
+    with open(dockerfile_path, "w") as f:
+        f.write(dockerfile_content)
+
+    try:
+        image, logs = docker_client.images.build(
+            path=build_dir,
+            tag=image_tag,
+            rm=True
+        )
+        image_id = image.id
+    except docker.errors.BuildError as e:
+        for line in e.build_log:
+            print(line.get("stream", ""))
+        raise Exception(f"Docker build failed: {e}")
+
+    update_query = """
+    UPDATE projects
+    SET container_id = :container_id
+    WHERE project_id = :project_id
+    """
+    await database.execute(
+        query=update_query,
+        values={"container_id": image_id, "project_id": project_id}
+    )
+
+    return image_id
+
+
+async def delete_project_image(project_id: str):
+    """
+    Deletes the Docker image (and optionally running container) associated with a project.
+    """
+    image_tag = f"devolib_project_{project_id}"
+
+    # stop and remove any running containers based on this image
+    try:
+        containers = docker_client.containers.list(all=True, filters={"ancestor": image_tag})
+        for container in containers:
+            container.stop()
+            container.remove()
+    except Exception as e:
+        print(f"Error removing containers: {e}")
+
+    # remove the image itself
+    try:
+        docker_client.images.remove(image=image_tag, force=True)
+        print(f"Deleted image {image_tag}")
+    except docker.errors.ImageNotFound:
+        print(f"No image found for {image_tag}")
+    except Exception as e:
+        print(f"Error deleting image: {e}")
