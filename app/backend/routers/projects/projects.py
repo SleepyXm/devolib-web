@@ -23,6 +23,18 @@ DATABASE_PACKAGES = {
     "sqlite": []
 }
 
+FRONTEND_FRAMEWORKS = {
+    "html-css": [],
+    "react": ["nodejs", "npm"],
+    "nextjs": ["nodejs", "npm"]
+}
+
+FRONTEND_FRAMEWORKS_COMMANDS = {
+    "react": "npx create-react-app {name}",
+    "nextjs": "npx create-next-app@latest {name} --typescript --tailwind --app --eslint --no-git --import-alias '@/*' --no-src-dir --no-react-compiler --turbopack",
+    "html-css": "mkdir -p {name} && echo '<h1>{name}</h1>' > {name}/index.html"
+}
+
 async def create_project_image(project_id: str, project_name: str, backend_services=None, frontend_services=None, db=None):
     """
     Dynamically generates a Dockerfile with optional backend, frontend, and database services.
@@ -39,13 +51,15 @@ async def create_project_image(project_id: str, project_name: str, backend_servi
     # Base packages
     apk_packages = ["curl", "bash", "ca-certificates", "gnupg"]
     
-
     for service in backend_services:
         apk_packages.extend(BACKEND_PACKAGES.get(service, []))
 
     # Add packages for databases
-    for db in db:
-        apk_packages.extend(DATABASE_PACKAGES.get(db, []))
+    for db_service in db:
+        apk_packages.extend(DATABASE_PACKAGES.get(db_service, []))
+
+    for framework in frontend_services:
+        apk_packages.extend(FRONTEND_FRAMEWORKS.get(framework, []))
 
     apk_packages_str = " \\\n    ".join(set(apk_packages))
 
@@ -53,17 +67,35 @@ async def create_project_image(project_id: str, project_name: str, backend_servi
     dirs = ["workspace", "workspace/frontend", "workspace/backend", "workspace/database"]
     dir_commands = "\n".join([f"RUN mkdir -p /app/{project_id}/{d}" for d in dirs])
 
+    # Generate frontend setup commands
+    frontend_setup_commands = ""
+    for framework in frontend_services:
+        cmd = FRONTEND_FRAMEWORKS_COMMANDS.get(framework)
+        if cmd:
+            # Format the command with project name
+            formatted_cmd = cmd.format(name=project_name)
+            frontend_setup_commands += f"""
+# Setup {framework} project
+WORKDIR /app/{project_id}/workspace/frontend
+RUN {formatted_cmd}
+"""
+
     dockerfile_content = f"""
-    FROM python:3.14.0-alpine
-    WORKDIR /app
-    {dir_commands}
+FROM python:3.14.0-alpine
+WORKDIR /app
+{dir_commands}
 
-    # Install dependencies
-    RUN apk update && apk add --no-cache \\
-        {apk_packages_str}
+# Install dependencies
+RUN apk update && apk add --no-cache \\
+    {apk_packages_str}
 
-    CMD ["sleep", "2400"]
-    """
+{frontend_setup_commands}
+
+# Reset working directory
+WORKDIR /app/{project_id}
+
+CMD ["sleep", "2400"]
+"""
     
     dockerfile_path = os.path.join(build_dir, "Dockerfile")
     with open(dockerfile_path, "w") as f:
@@ -120,13 +152,6 @@ async def delete_project_image(project_id: str):
 
 
 
-
-
-
-
-
-
-
 @router.get("/list")
 async def list_projects(current_user: dict = Depends(get_current_user)):
     query = "SELECT project_id, name, status, container_id, created_at FROM projects WHERE user_id = :user_id"
@@ -134,20 +159,9 @@ async def list_projects(current_user: dict = Depends(get_current_user)):
     return {"projects": projects}
 
 
-
-
-
-
-
-
-
 @router.get("/hi")
 async def hi():
     return {"message": "Projects router is working!"}
-
-
-
-
 
 
 
@@ -179,11 +193,6 @@ async def create_project(
         db=[db] if db else [])
 
     return {"ok": True, "project_id": project_id, "image_id": image_id, "name": name}
-
-
-
-
-
 
 
 
