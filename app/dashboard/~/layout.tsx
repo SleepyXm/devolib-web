@@ -8,11 +8,19 @@ interface ProjectContextType {
   logs: string;
   isConnected: boolean;
   isRunning: boolean;
+  serviceStatus: ServiceStatus;
   start: () => Promise<void>;
   connect: () => void;
   stop: () => Promise<void>;
   setProjectId: (id: string) => void;
   projectId: string | null;
+}
+
+export interface ServiceStatus {
+  frontend: boolean;
+  backend: boolean;
+  database: boolean;
+  container: boolean;
 }
 
 export const ProjectContext = createContext<ProjectContextType | null>(null);
@@ -24,6 +32,14 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
   const [isRunning, setIsRunning] = useState(false);
   const [projectId, setProjectId] = useState<string | null>(null);
 
+
+  const [serviceStatus, setServiceStatus] = useState<ServiceStatus>({
+    frontend: false,
+    backend: false,
+    database: false,
+    container: false,
+  })
+
   const start = async () => {
     if (!projectId) return;
     await startProject(projectId);
@@ -31,11 +47,16 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
   };
 
   const connect = () => {
-    if (!projectId) return;
-    projectWS.current = connectToProject(projectId);
-    projectWS.current.onOutput((data) => setLogs((prev) => prev + data));
-    setIsConnected(true);
-  };
+  if (!projectId) return;
+  projectWS.current = connectToProject(projectId);
+  
+  projectWS.current.onOutput((data) => setLogs((prev) => prev + data));
+  
+  // NEW - listen for service status
+  projectWS.current.onStatus((status) => setServiceStatus(status));
+  
+  setIsConnected(true);
+};
 
   const stop = async () => {
     if (!projectId) return;
@@ -47,7 +68,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
   };
 
   return (
-    <ProjectContext.Provider value={{ projectWS: projectWS.current, logs, isConnected, isRunning, start, connect, stop, setProjectId, projectId }}>
+    <ProjectContext.Provider value={{ projectWS: projectWS.current, logs, isConnected, isRunning, serviceStatus, start, connect, stop, setProjectId, projectId }}>
       {children}
     </ProjectContext.Provider>
   );
