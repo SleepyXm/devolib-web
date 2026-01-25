@@ -19,7 +19,7 @@ export type Project = {
 }
 
 export async function createProject(user_id: string, name: string, frontend?: string, backend?: string, db?: string): Promise<Project> {
-  const res = await request(`/${project_endpoint}/create`, {
+  const res = await request(`${project_endpoint}/create`, {
     method: "POST",
     body: JSON.stringify({ user_id, name, frontend, backend, db }),
   });
