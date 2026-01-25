@@ -10,13 +10,6 @@ export default function ProjectsNav() {
   const params = useParams();
   const project = Array.isArray(params?.project) ? params.project[0] : params?.project;
 
-  const links = [
-    { name: "Front-End", href: `/dashboard/~/${project}/frontend` },
-    { name: "Back-End", href: `/dashboard/~/${project}/backend` },
-    { name: "Database", href: `/dashboard/~/${project}/database` },
-  ];
-
-  const activeTab = pathname.split("/").pop();
 
   return (
     <div className="w-min-screen">
