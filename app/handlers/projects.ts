@@ -1,8 +1,10 @@
 import { request } from "../handlers/auth";
 import { ServiceStatus } from "../dashboard/~/layout";
+import { WSAPI_BASE } from "../handlers/auth";
 
 const project_endpoint = `/projects`;
 const container_endpoint = `/container`;
+
 
 
 export type Project = {
@@ -17,7 +19,7 @@ export type Project = {
 }
 
 export async function createProject(user_id: string, name: string, frontend?: string, backend?: string, db?: string): Promise<Project> {
-  const res = await request("/projects/create", {
+  const res = await request(`/${project_endpoint}/create`, {
     method: "POST",
     body: JSON.stringify({ user_id, name, frontend, backend, db }),
   });
@@ -25,17 +27,17 @@ export async function createProject(user_id: string, name: string, frontend?: st
 }
 
 export async function listProjects(): Promise<Project[]> {
-  const res = await request("/projects/list", { method: "GET" });
+  const res = await request(`${project_endpoint}/list`, { method: "GET" });
   return res.projects;
 }
 
 export async function getProject(id: string): Promise<Project> {
-  const res = await request(`/${project_endpoint}/${id}`, { method: "GET" });
+  const res = await request(`${project_endpoint}/${id}`, { method: "GET" });
   return res;
 }
 
 export async function editProject(id: string, updates: Partial<Project>): Promise<Project> {
-  const res = await request(`/${project_endpoint}/edit/${id}`, {
+  const res = await request(`${project_endpoint}/edit/${id}`, {
     method: "PUT",
     body: JSON.stringify(updates),
   });
@@ -87,7 +89,7 @@ export type ProjectWS = {
 };
 
 export function connectToProject(project_id: string): ProjectWS {
-  const ws = new WebSocket(`ws://localhost:8000${container_endpoint}/ws/${project_id}`);
+  const ws = new WebSocket(`${WSAPI_BASE}${container_endpoint}/ws/${project_id}`);
 
   let outputCallback: ((data: string) => void) | null = null;
   let statusCallback: ((data: ServiceStatus) => void) | null = null;

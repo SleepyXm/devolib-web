@@ -1,4 +1,5 @@
-export const API_BASE = "http://localhost:8000";
+export const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
+export const WSAPI_BASE = process.env.NEXT_PUBLIC_WS_API_BASE;
 
 export async function request(path: string, options: RequestInit) {
   const res = await fetch(`${API_BASE}${path}`, {
