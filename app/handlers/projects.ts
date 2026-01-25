@@ -1,5 +1,5 @@
 import { request } from "../handlers/auth";
-import { ServiceStatus } from "../dashboard/~/layout";
+import { ServiceStatus } from "../dashboard/[project]/layout";
 import { WSAPI_BASE } from "../handlers/auth";
 
 const project_endpoint = `/projects`;
