@@ -13,6 +13,7 @@ export default function ProjectsPage() {
   const user = useUser();
   const username = user?.user?.username;
   const router = useRouter();
+  const [error, setError] = useState("");
 
   const [projects, setProjects] = useState<
     { project_id: string; name: string; status: string }[]
@@ -38,7 +39,7 @@ export default function ProjectsPage() {
         const projectList = await listProjects();
         setProjects(projectList);
       } catch (err) {
-        console.error("Failed to fetch projects:", err);
+        setError("Failed to fetch projects:");
       } finally {
         setLoading(false);
       }
@@ -52,12 +53,13 @@ export default function ProjectsPage() {
       const projectList = await listProjects();
       setProjects(projectList);
     } catch (err) {
-      console.error("Failed to refresh projects:", err);
+      setError("Failed to refresh projects:");
     }
   };
 
   return (
     <div className="w-full text-black p-5">
+      {error && <p className="text-red-600 mb-4">{error}</p>}
       <div className="mb-4 flex items-center space-x-2">
         {/* NEW: input for project name */}
         <input
@@ -108,7 +110,7 @@ export default function ProjectsPage() {
               await refreshProjects();
               setProjectName("");
             } catch (err) {
-              console.error("Failed to create project:", err);
+              setError("Failed to create project:");
             } finally {
               setLoading(false);
             }
@@ -147,7 +149,7 @@ export default function ProjectsPage() {
                     await deleteProject(project.project_id);
                     await refreshProjects();
                   } catch (err) {
-                    console.error("Failed to delete project:", err);
+                    setError("Failed to delete project:");
                   }
                 }}
               >
