@@ -33,8 +33,8 @@ export default function MonacoEditor({
     {
       id: "node-1",
       type: "div",
-      classState: { p: "p-4", bg: "bg-white" },
-      content: "Sup bitch ass motherfucker",
+      classState: { p: "p-4" },
+      content: "Test content",
     },
   ]);
 

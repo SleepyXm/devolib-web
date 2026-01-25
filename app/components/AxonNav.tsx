@@ -24,8 +24,6 @@ const Navbar = () => {
 
   const links = [
     { label: "Home", url: "/" },
-    { label: "Guide", url: "/Bullshit" },
-    { label: "Stuff", url: "/alsobullshit" },
     ...(user
       ? [
           { label: `${user.username}`, url: "/users/" },
