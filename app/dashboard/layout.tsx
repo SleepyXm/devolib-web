@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUser } from "@/app/provider/UserProvider";
-import ProjectsNav from "./~/components/projectnav";
+import ProjectsNav from "./components/projectnav";
 import { useRouter } from "next/navigation";
 
 interface DashboardLayoutProps {
@@ -20,10 +20,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
 
   const tabs = [
-    { name: "Home", href: `/${name}s-dashboard/` },
-    { name: "Projects", href: `/dashboard/~/projects` },
-    { name: "Designs", href: `/dashboard/~/designs` },
-    { name: "Settings", href: `/dashboard/~/settings` },
+    { name: "Home", href: `/dashboard/` },
+    { name: "Projects", href: `/dashboard/projects` },
+    { name: "Designs", href: `/dashboard/designs` },
+    { name: "Settings", href: `/dashboard/settings` },
   ];
 
   const activeTab = pathname.split("/").pop();
