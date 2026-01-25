@@ -58,9 +58,9 @@ async def websocket_terminal(websocket: WebSocket, project_id: str):
         "type": "service-status",
         "data": {
             "container": True,  # We know it's running since we got it
-            "frontend": True,   # Test values
-            "backend": True,
-            "database": True
+            #"frontend": True,   # Test values
+            #"backend": True,
+            #"database": True
         }
     }))
     
@@ -116,6 +116,8 @@ async def stop_project_container(project_id: str):
         return {"ok": True, "container_id": container.id, "status": container.status}
     except docker.errors.NotFound:
         raise HTTPException(status_code=404, detail="Container not found")
+    
+    
     
 
 
