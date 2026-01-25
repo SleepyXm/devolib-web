@@ -52,6 +52,18 @@ async def websocket_terminal(websocket: WebSocket, project_id: str):
         return
 
     await websocket.send_text(f"User connected at {datetime.utcnow().isoformat()}!\n")
+    
+    # Send initial service status
+    await websocket.send_text(json.dumps({
+        "type": "service-status",
+        "data": {
+            "container": True,  # We know it's running since we got it
+            "frontend": True,   # Test values
+            "backend": True,
+            "database": True
+        }
+    }))
+    
     current_dir = f"/app/{project_id}/workspace"
 
     async def handle_ws_command(container, cmd: str, current_dir: str):
