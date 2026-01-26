@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef, useState, ReactNode, createContext } from "react";
+import { useRef, useState, ReactNode, createContext, useEffect } from "react";
 import {
   ProjectWS,
   connectToProject,
   startProject,
   stopProject,
+  fetchProjectDetails
 } from "@/app/handlers/projects";
 
 interface ProjectContextType {
@@ -37,6 +38,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
   const [isConnected, setIsConnected] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [projectId, setProjectId] = useState<string | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
 
   const [serviceStatus, setServiceStatus] = useState<ServiceStatus>({
     frontend: false,
@@ -45,6 +47,15 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
     container: false,
   });
 
+  useEffect(() => {
+    if (projectId) {
+
+      fetchProjectDetails(projectId).then((project) => {
+        setAccessToken(project.access_token);
+      });
+    }
+  }, [projectId]);
+
   const start = async () => {
     if (!projectId) return;
     await startProject(projectId);
@@ -52,8 +63,8 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
   };
 
   const connect = () => {
-    if (!projectId) return;
-    projectWS.current = connectToProject(projectId);
+    if (!projectId || !accessToken) return;
+    projectWS.current = connectToProject(projectId, accessToken);
 
     projectWS.current.onOutput((data) => setLogs((prev) => prev + data));
 
