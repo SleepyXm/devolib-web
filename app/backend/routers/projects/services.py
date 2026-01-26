@@ -21,8 +21,53 @@ async def check_service_health(container, service: str) -> bool:
     
     return bool(check_port.output)
 
+async def check_service_exists(container, project_id: str, service: str) -> dict:
+    """Check if service directory and required files exist"""
+    checks = {
+        'frontend': {
+            'dir': f'/app/{project_id}/workspace/frontend/test3-nextjs',
+            'required_files': ['package.json', 'next.config.ts']
+        },
+        'backend': {
+            'dir': f'/app/{project_id}/workspace/backend',
+            'required_files': ['main.py']
+        },
+        'database': {
+            'dir': f'/app/{project_id}/workspace/database/data',
+            'required_files': []
+        }
+    }
+    
+    if service not in checks:
+        return {'exists': False, 'error': 'Unknown service'}
+    
+    check = checks[service]
+    
+    # Check if directory exists
+    dir_check = container.exec_run(f"test -d {check['dir']}")
+    if dir_check.exit_code != 0:
+        return {'exists': False, 'error': f"Directory {check['dir']} not found"}
+    
+    # Check required files
+    for file in check['required_files']:
+        file_check = container.exec_run(f"test -f {check['dir']}/{file}")
+        if file_check.exit_code != 0:
+            return {'exists': False, 'error': f"Required file {file} not found"}
+    
+    return {'exists': True, 'error': None}
+
+
+
 async def start_service(container, project_id: str, service: str, websocket: WebSocket):
     """Start a specific service in the container"""
+    
+    # First, check if service actually exists
+    exists_check = await check_service_exists(container, project_id, service)
+    if not exists_check['exists']:
+        await websocket.send_text(f"❌ Cannot start {service}: {exists_check['error']}\n")
+        await send_service_status(websocket, {service: False})
+        return
+    
     service_commands = {
         'frontend': f"bash -c 'cd /app/{project_id}/workspace/frontend/test3-nextjs && nohup npm run dev > /tmp/frontend.log 2>&1 &'",
         'backend': f"bash -c 'cd /app/{project_id}/workspace/backend && nohup python main.py > /tmp/backend.log 2>&1 &'",
@@ -30,19 +75,26 @@ async def start_service(container, project_id: str, service: str, websocket: Web
     }
     
     if service in service_commands:
-        container.exec_run(service_commands[service], detach=True)
+        # Try to start the service
+        result = container.exec_run(service_commands[service], detach=True)
         await websocket.send_text(f"Starting {service} service...\n")
         print(f"Started {service} service for project {project_id}")
         
         # Wait for service to start and check health
-        await asyncio.sleep(2)
+        await asyncio.sleep(3)  # Give it more time
         is_running = await check_service_health(container, service)
         
         if is_running:
             await websocket.send_text(f"✅ {service.capitalize()} service is running!\n")
             await send_service_status(websocket, {service: True})
         else:
-            await websocket.send_text(f"⚠️ {service.capitalize()} service may not have started correctly\n")
+            # Check the logs to see why it failed
+            log_file = f'/tmp/{service}.log'
+            log_check = container.exec_run(f"tail -20 {log_file}")
+            log_output = log_check.output.decode() if log_check.output else "No logs available"
+            
+            await websocket.send_text(f"⚠️ {service.capitalize()} failed to start. Logs:\n{log_output}\n")
+            await send_service_status(websocket, {service: False})
     else:
         await websocket.send_text(f"Unknown service: {service}\n")
 

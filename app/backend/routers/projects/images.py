@@ -12,27 +12,27 @@ router = APIRouter()
 docker_client = docker.from_env()
 
 BACKEND_PACKAGES = {
-    "python": [],
-    "node": ["nodejs", "npm"],
-    "rust": ["build-base", "curl"]
+    "FastAPI": [],
+    "Node.js": ["nodejs", "npm"],
+    "Rust": ["build-base", "curl"]
 }
 
 DATABASE_PACKAGES = {
-    "postgres": ["postgres", "postgresql-client"],
-    "mysql": ["mariadb", "mariadb-client"],
-    "sqlite": []
+    "PostgreSQL": ["postgresql", "postgresql-client"],
+    "MySQL": ["mariadb", "mariadb-client"],
+    "SQLite": []
 }
 
 FRONTEND_FRAMEWORKS = {
-    "html-css": [],
-    "react": ["nodejs", "npm"],
-    "nextjs": ["nodejs", "npm"]
+    "HTML/CSS": [],
+    "React": ["nodejs", "npm"],
+    "Next.js": ["nodejs", "npm"]
 }
 
 FRONTEND_FRAMEWORKS_COMMANDS = {
-    "react": "npx create-react-app {name}",
-    "nextjs": "npx create-next-app@latest {name} --typescript --tailwind --app --eslint --no-git --import-alias '@/*' --no-src-dir --no-react-compiler --turbopack",
-    "html-css": "mkdir -p {name} && echo '<h1>{name}</h1>' > {name}/index.html"
+    "React": "npx create-react-app {name}",
+    "Next.js": "npx create-next-app@latest {name} --typescript --tailwind --app --eslint --no-git --import-alias '@/*' --no-src-dir --no-react-compiler --turbopack",
+    "HTML/CSS": "mkdir -p {name} && echo '<h1>{name}</h1>' > {name}/index.html"
 }
 
 async def create_project_image(project_id: str, project_name: str, backend_services=None, frontend_services=None, db=None):

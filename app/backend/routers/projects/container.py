@@ -6,7 +6,7 @@ import docker
 import os
 from datetime import datetime
 import json
-from .services import check_service_health, start_service, send_service_status, send_error, handle_cd_command, handle_json_command, handle_shell_command, process_command
+from .services import send_service_status, send_error, process_command
 
 router = APIRouter()
 docker_client = docker.from_env()
@@ -95,3 +95,4 @@ async def stop_project_container(project_id: str):
         return {"ok": True, "container_id": container.id, "status": container.status}
     except docker.errors.NotFound:
         raise HTTPException(status_code=404, detail="Container not found")
+    
