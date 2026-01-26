@@ -16,15 +16,15 @@ export default function ProjectsPage() {
   const [error, setError] = useState("");
 
   const [projects, setProjects] = useState<
-    { project_id: string; name: string; status: string }[]
+    { project_id: string; name: string; status: string; services?: { framework: string }[] }[]
   >([]);
   const [loading, setLoading] = useState(false);
 
   const [projectName, setProjectName] = useState("");
 
-  const BACKEND_OPTIONS = ["python", "node", "rust"];
-  const FRONTEND_OPTIONS = ["react", "html", "nextjs", "angular.js"];
-  const DATABASE_OPTIONS = ["mysql", "postgres", "sqlite"];
+  const BACKEND_OPTIONS = ["FastAPI", "Node.js", "Rust"];
+  const FRONTEND_OPTIONS = ["React", "HTML/CSS", "Next.js", "Angular.js"];
+  const DATABASE_OPTIONS = ["MySQL", "PostgreSQL", "SQLite"];
 
   const [backend, setBackend] = useState(BACKEND_OPTIONS[0]);
   const [frontend, setFrontend] = useState(FRONTEND_OPTIONS[0]);
@@ -70,7 +70,7 @@ export default function ProjectsPage() {
           className="border px-2 py-1 rounded flex-1"
         />
         <select value={backend} onChange={(e) => setBackend(e.target.value)}>
-          {["python", "node", "rust"].map((opt) => (
+          {["FastAPI", "Node.js", "Rust"].map((opt) => (
             <option key={opt} value={opt}>
               {opt}
             </option>
@@ -78,7 +78,7 @@ export default function ProjectsPage() {
         </select>
 
         <select value={frontend} onChange={(e) => setFrontend(e.target.value)}>
-          {["react", "html", "nextjs", "angular.js"].map((opt) => (
+          {["React", "HTML/CSS", "Next.js", "Angular.js"].map((opt) => (
             <option key={opt} value={opt}>
               {opt}
             </option>
@@ -86,7 +86,7 @@ export default function ProjectsPage() {
         </select>
 
         <select value={db} onChange={(e) => setDb(e.target.value)}>
-          {["postgres", "mysql", "sqlite"].map((opt) => (
+          {["PostgreSQL", "MySQL", "SQLite"].map((opt) => (
             <option key={opt} value={opt}>
               {opt}
             </option>
@@ -141,6 +141,9 @@ export default function ProjectsPage() {
               >
                 {project.name} {`(Status: ${project.status})`}
               </span>
+              <div className="text-sm text-gray-600 mt-1">
+                Stack: {project.services?.map(s => s.framework).join(", ") || "No services"}
+                </div>
               <button
                 className="text-red-600 font-bold px-2 py-1 rounded hover:bg-red-100"
                 onClick={async (e) => {
