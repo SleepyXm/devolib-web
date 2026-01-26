@@ -88,8 +88,13 @@ export type ProjectWS = {
   close: () => void;
 };
 
-export function connectToProject(project_id: string): ProjectWS {
-  const ws = new WebSocket(`${WSAPI_BASE}${container_endpoint}/ws/${project_id}`);
+export async function fetchProjectDetails(project_id: string): Promise<{ access_token: string }> {
+  const res = await request(`${project_endpoint}/${project_id}`, { method: "GET" });
+  return res;
+}
+
+export function connectToProject(project_id: string, access_token: string): ProjectWS {
+  const ws = new WebSocket(`${WSAPI_BASE}${container_endpoint}/ws/${project_id}?access_token=${access_token}`);
 
   let outputCallback: ((data: string) => void) | null = null;
   let statusCallback: ((data: ServiceStatus) => void) | null = null;
