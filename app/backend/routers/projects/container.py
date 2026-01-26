@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Body, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, Body, WebSocket, WebSocketDisconnect, Query
 from database import database
 from database import database
 from routers.auth.auth_utils import get_current_user
@@ -44,7 +44,20 @@ async def start_project_container(project_id: str, current_user: dict = Depends(
 
 # Main WebSocket handler
 @router.websocket("/ws/{project_id}")
-async def websocket_terminal(websocket: WebSocket, project_id: str):
+async def websocket_terminal(websocket: WebSocket, project_id: str, access_token: str = Query(None)):
+
+    if not access_token:
+        await websocket.close(code=1008, reason="Access token required")
+        return 
+    
+    query = "SELECT * FROM projects WHERE project_id = :project_id AND access_token = :access_token"
+    project = await database.fetch_one(query=query, values={"project_id": project_id, "access_token": access_token})
+    
+    if not project:
+        await websocket.close(code=1008, reason="Invalid access token or project not found")
+        return
+    
+    # NOW accept the connection
     await websocket.accept()
     
     # Get container

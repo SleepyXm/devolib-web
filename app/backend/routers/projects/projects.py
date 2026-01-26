@@ -4,12 +4,12 @@ from database import database
 from routers.auth.auth_utils import get_current_user
 from .images import create_project_image, delete_project_image
 import docker
+import secrets
 import json
 
 router = APIRouter()
 
 docker_client = docker.from_env()
-
 
 @router.get("/list")
 async def list_projects(current_user: dict = Depends(get_current_user)):
@@ -46,11 +46,12 @@ async def create_project(
     current_user: dict = Depends(get_current_user)
 ):
     project_id = str(uuid.uuid4())
-
-    # Insert project
+    access_token = secrets.token_urlsafe(32)
+    
+    # Insert project with access token
     insert_query = """
-    INSERT INTO projects (project_id, user_id, name, status, created_at)
-    VALUES (:project_id, :user_id, :name, 'created', NOW())
+    INSERT INTO projects (project_id, user_id, name, status, access_token, created_at)
+    VALUES (:project_id, :user_id, :name, 'created', :access_token, NOW())
     """
     await database.execute(
         query=insert_query,
@@ -58,9 +59,10 @@ async def create_project(
             "project_id": project_id,
             "user_id": current_user["id"],
             "name": name,
+            "access_token": access_token,
         },
     )
-
+    
     # Insert into project_services junction table
     service_frameworks = [s for s in [backend, frontend, db] if s]
     
@@ -72,9 +74,7 @@ async def create_project(
             query=services_query,
             values={"frameworks": service_frameworks}
         )
-
         print(f"Found {len(services)} services: {services}")
-
         for service in services:
             await database.execute(
                 query="""
@@ -87,7 +87,7 @@ async def create_project(
                     "service_id": service["id"],
                 },
             )
-
+    
     # Keep original function call exactly as is
     image_id = await create_project_image(
         project_id, 
@@ -96,11 +96,19 @@ async def create_project(
         frontend_services=[frontend] if frontend else [],
         db=[db] if db else []
     )
+    
+    return {"ok": True, "project_id": project_id, "image_id": image_id, "name": name, "access_token": access_token}
 
-    return {"ok": True, "project_id": project_id, "image_id": image_id, "name": name}
 
-
-
+@router.get("/{project_id}")
+async def get_project(project_id: str, current_user: dict = Depends(get_current_user)):
+    query = "SELECT project_id, name, access_token FROM projects WHERE project_id = :project_id AND user_id = :user_id"
+    project = await database.fetch_one(query=query, values={"project_id": project_id, "user_id": current_user["id"]})
+    
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    return dict(project)
 
 @router.delete("/delete")
 async def delete_project(
