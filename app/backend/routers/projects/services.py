@@ -21,11 +21,11 @@ async def check_service_health(container, service: str) -> bool:
     
     return bool(check_port.output)
 
-async def check_service_exists(container, project_id: str, service: str) -> dict:
+async def check_service_exists(container, project_id: str, project_name: str, service: str) -> dict:
     """Check if service directory and required files exist"""
     checks = {
         'frontend': {
-            'dir': f'/app/{project_id}/workspace/frontend/test3-nextjs',
+            'dir': f'/app/{project_id}/workspace/frontend/{project_name}',
             'required_files': ['package.json', 'next.config.ts']
         },
         'backend': {
@@ -58,18 +58,18 @@ async def check_service_exists(container, project_id: str, service: str) -> dict
 
 
 
-async def start_service(container, project_id: str, service: str, websocket: WebSocket):
+async def start_service(container, project_id: str, project_name: str, service: str, websocket: WebSocket):
     """Start a specific service in the container"""
     
     # First, check if service actually exists
-    exists_check = await check_service_exists(container, project_id, service)
+    exists_check = await check_service_exists(container, project_id, project_name, service)
     if not exists_check['exists']:
         await websocket.send_text(f"❌ Cannot start {service}: {exists_check['error']}\n")
         await send_service_status(websocket, {service: False})
         return
     
     service_commands = {
-        'frontend': f"bash -c 'cd /app/{project_id}/workspace/frontend/test3-nextjs && nohup npm run dev > /tmp/frontend.log 2>&1 &'",
+        'frontend': f"bash -c 'cd /app/{project_id}/workspace/frontend/{project_name} && nohup npm run dev > /tmp/frontend.log 2>&1 &'",
         'backend': f"bash -c 'cd /app/{project_id}/workspace/backend && nohup python main.py > /tmp/backend.log 2>&1 &'",
         'database': f"bash -c 'nohup pg_ctl start -D /app/{project_id}/workspace/database/data > /tmp/db.log 2>&1 &'"
     }
@@ -119,11 +119,11 @@ def handle_cd_command(cmd: str, current_dir: str) -> tuple[str, str]:
     new_dir = os.path.normpath(os.path.join(current_dir, target))
     return f"Changed directory to {new_dir}\n", new_dir
 
-async def handle_json_command(container, payload: dict, current_dir: str, websocket: WebSocket, project_id: str):
+async def handle_json_command(container, payload: dict, current_dir: str, websocket: WebSocket, project_id: str, project_name: str):
     """Handle JSON payload commands"""
     if payload.get('type') == 'START_SERVICE':
         service = payload.get('service')
-        await start_service(container, project_id, service, websocket)
+        await start_service(container, project_id, project_name, service, websocket)
         return "", current_dir
     
     # Fall back to existing handle_command (you'll need to import this)
@@ -143,7 +143,7 @@ def handle_shell_command(container, cmd: str, current_dir: str) -> tuple[str, st
         output += stderr.decode()
     return output, current_dir
 
-async def process_command(container, cmd: str, current_dir: str, websocket: WebSocket, project_id: str):
+async def process_command(container, cmd: str, current_dir: str, websocket: WebSocket, project_id: str, project_name: str):
     """Route command to appropriate handler"""
     cmd = cmd.strip()
     if not cmd:
@@ -158,7 +158,7 @@ async def process_command(container, cmd: str, current_dir: str, websocket: WebS
         try:
             payload = json.loads(cmd)
             print(f"Received JSON payload: {payload}")
-            return await handle_json_command(container, payload, current_dir, websocket, project_id)
+            return await handle_json_command(container, payload, current_dir, websocket, project_id, project_name)
         except Exception as e:
             print(f"Error handling JSON command: {e}")
             return f"Error handling command: {str(e)}\n", current_dir

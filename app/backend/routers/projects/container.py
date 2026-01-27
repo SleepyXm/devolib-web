@@ -56,7 +56,9 @@ async def websocket_terminal(websocket: WebSocket, project_id: str, access_token
     if not project:
         await websocket.close(code=1008, reason="Invalid access token or project not found")
         return
-    
+
+    project_name = project["name"]
+
     # NOW accept the connection
     await websocket.accept()
     
@@ -81,7 +83,7 @@ async def websocket_terminal(websocket: WebSocket, project_id: str, access_token
             cmd = await websocket.receive_text()
             print(f"Received command: {cmd}")
             
-            output, current_dir = await process_command(container, cmd, current_dir, websocket, project_id)
+            output, current_dir = await process_command(container, cmd, current_dir, websocket, project_id, project_name)
             
             if output:
                 await websocket.send_text(output)
