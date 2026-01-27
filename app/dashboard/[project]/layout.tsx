@@ -21,6 +21,7 @@ interface ProjectContextType {
   stop: () => Promise<void>;
   setProjectId: (id: string) => void;
   projectId: string | null;
+  projectName: string | null;
 }
 
 export interface ServiceStatus {
@@ -39,6 +40,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
   const [isRunning, setIsRunning] = useState(false);
   const [projectId, setProjectId] = useState<string | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [projectName, setProjectName] = useState<string | null>(null);
 
   const [serviceStatus, setServiceStatus] = useState<ServiceStatus>({
     frontend: false,
@@ -52,6 +54,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
 
       fetchProjectDetails(projectId).then((project) => {
         setAccessToken(project.access_token);
+        setProjectName(projectName);
       });
     }
   }, [projectId]);
@@ -68,7 +71,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
 
     projectWS.current.onOutput((data) => setLogs((prev) => prev + data));
 
-    // listen for service status
+
     projectWS.current.onStatus((status) => setServiceStatus(status));
 
     setIsConnected(true);
@@ -83,7 +86,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
     setIsRunning(false);
   };
 
-  // start services
+
   const startService = (service: "frontend" | "backend" | "database") => {
     if (!projectWS.current || !projectId) {
       console.log("Cannot start service: no WebSocket or projectId");
@@ -96,6 +99,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
         type: "START_SERVICE",
         service: service,
         projectId: projectId,
+        projectName: projectName,
       }),
     );
   };
@@ -114,6 +118,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
         stop,
         setProjectId,
         projectId,
+        projectName
       }}
     >
       {children}
