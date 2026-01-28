@@ -6,15 +6,6 @@ import { useContextMenu } from "@/app/components/Contextmenu";
 import { editorMenuItems } from "@/app/components/Contextmenu/menuitems";
 import { EditorMenuItem } from "@/app/components/Contextmenu/menuactions";
 
-interface CommandPayload {
-  type: string;
-  target: string;
-  payload: {
-    name: string;
-    framework: string;
-  };
-}
-
 export default function FrontendPage() {
   const [code, setCode] = useState(
     `<h1>Hello Devolib</h1>\n<p>This is your live preview.</p>`,

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { signup, login } from "@/app/handlers/auth";
 import { useUser } from "@/app/provider/UserProvider";
+import ErrorPopup from "@/app/components/ErrorPopup";
 
 
 export default function Auth() {
@@ -14,6 +15,7 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
+  const [error, setError] = useState("")
   const router = useRouter();
 
   useEffect(() => {
@@ -26,11 +28,11 @@ export default function Auth() {
   try {
     if (isSignUp) {
       if (password !== password2) {
-        alert("Passwords do not match!");
+        setError("Passwords do not match!");
         return; // stop execution
       }
       if (!email.includes("@")) {
-        alert("Please enter a valid email address.");
+        setError("Please enter a valid email address.");
         return; // stop execution
       }
 
@@ -43,11 +45,12 @@ export default function Auth() {
       router.push(`/dashboard`);
     }
   } catch (err) {
-    console.error(err);
+    setError("Username or Password was inccorect. Try again");
   }
 }
   return (
     <div className="bg-white grid grid-rows-[5vh_1fr_5vh] items-center justify-items-center min-h-screen gap-[5vh]">
+      <ErrorPopup message={error} onClose={() => setError("")} />
   <div className="flex flex-col gap-[4vh] row-start-2 items-center w-[30vw]">
     <div className="relative w-full max-w-5xl animate-in fade-in slide-in-from-bottom-8 duration-1000 mx-auto">
       <section className="order-1 lg:order-2 relative">

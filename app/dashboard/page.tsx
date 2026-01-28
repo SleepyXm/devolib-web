@@ -34,7 +34,6 @@ export default function DashboardPage() {
   return (
     <div>
       <h1 className="text-zinc-600">{loggedInUsername}'s Dashboard</h1>
-      {/* dashboard content */}
     </div>
   );
 }

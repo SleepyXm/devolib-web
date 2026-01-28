@@ -8,6 +8,7 @@ import {
 } from "@/app/handlers/projects";
 import { useUser } from "@/app/provider/UserProvider";
 import { useRouter } from "next/navigation";
+import ErrorPopup from "@/app/components/ErrorPopup";
 
 export default function ProjectsPage() {
   const user = useUser();
@@ -59,9 +60,8 @@ export default function ProjectsPage() {
 
   return (
     <div className="w-full text-black p-5">
-      {error && <p className="text-red-600 mb-4">{error}</p>}
+      <ErrorPopup message={error} onClose={() => setError("")} />
       <div className="mb-4 flex items-center space-x-2">
-        {/* NEW: input for project name */}
         <input
           type="text"
           value={projectName}
