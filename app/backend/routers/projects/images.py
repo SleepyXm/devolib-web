@@ -30,10 +30,12 @@ FRONTEND_FRAMEWORKS = {
 }
 
 FRONTEND_FRAMEWORKS_COMMANDS = {
-    "React": "npx create-react-app {name}",
+    "React": "npm create vite@latest {name} -- --template react-ts --yes",
     "Next.js": "npx create-next-app@latest {name} --typescript --tailwind --app --eslint --no-git --import-alias '@/*' --no-src-dir --no-react-compiler --turbopack",
     "HTML/CSS": "mkdir -p {name} && echo '<h1>{name}</h1>' > {name}/index.html"
 }
+
+NGINX_CONFIG_TEMPLATE = {"""No longer necessary"""}
 
 async def create_project_image(project_id: str, project_name: str, backend_services=None, frontend_services=None, db=None):
     """
@@ -49,7 +51,7 @@ async def create_project_image(project_id: str, project_name: str, backend_servi
     os.makedirs(build_dir, exist_ok=True)
 
     # Base packages
-    apk_packages = ["curl", "bash", "ca-certificates", "gnupg"]
+    apk_packages = ["curl", "bash", "ca-certificates", "gnupg", "nginx"]
     
     for service in backend_services:
         apk_packages.extend(BACKEND_PACKAGES.get(service, []))
@@ -94,6 +96,11 @@ RUN apk update && apk add --no-cache \\
 # Reset working directory
 WORKDIR /app/{project_id}
 
+# Traefik labels
+LABEL traefik.enable="true"
+LABEL traefik.http.routers.{project_id}.rule="Host(`{project_name}.localhost`)"
+LABEL traefik.http.services.{project_id}.loadbalancer.server.port="3000"
+
 CMD ["sleep", "2400"]
 """
     
@@ -108,6 +115,7 @@ CMD ["sleep", "2400"]
             rm=True
         )
         image_id = image.id
+        
     except docker.errors.BuildError as e:
         for line in e.build_log:
             print(line.get("stream", ""))

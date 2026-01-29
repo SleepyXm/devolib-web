@@ -30,17 +30,17 @@ async def start_project_container(project_id: str, current_user: dict = Depends(
             container = docker_client.containers.run(
                 image_tag,
                 name=container_name,
+                network="web",
                 detach=True,
                 tty=True,
                 stdin_open=True,
-                ports={'3000/tcp': 9000, '8000/tcp': 9001, '5432/tcp': 9002},
+                ports={'8000/tcp': 9001, '5432/tcp': 9002},
                 command="sh -c 'echo Container started!; tail -f /dev/null'",
             )
         except docker.errors.ImageNotFound:
             raise HTTPException(status_code=404, detail="Docker image not found")
     
     return {"ok": True, "container_id": container.id, "status": container.status, "ports": {
-            "frontend": "http://localhost:9000",
             "backend": "http://localhost:9001",
             "database": "http://localhost:9002"
         }}
