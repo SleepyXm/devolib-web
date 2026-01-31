@@ -23,6 +23,33 @@ export default function ProjectsPage() {
 
   const [projectName, setProjectName] = useState("");
 
+  const [creating, setCreating] = useState(false);
+  const [loaderStep, setLoaderStep] = useState(0);
+
+  const loaderMessages = [
+    "Downloading Node.js...",
+    "Downloading Python...",
+    "Downloading PostgreSQL...",
+    "Initializing container...",
+    "Setting up frontend...",
+    "Setting up backend...",
+    "Finalizing project..."
+  ];
+
+  const startFakeLoader = () => {
+  setCreating(true);
+  setLoaderStep(0);
+
+  const interval = setInterval(() => {
+    setLoaderStep((prev) => {
+      if (prev < loaderMessages.length - 1) return prev + 1;
+      return prev;
+    });
+  }, 4000);
+
+  return interval;
+  };
+
   const BACKEND_OPTIONS = ["FastAPI", "Node.js", "Rust"];
   const FRONTEND_OPTIONS = ["React", "HTML/CSS", "Next.js", "Angular.js"];
   const DATABASE_OPTIONS = ["MySQL", "PostgreSQL", "SQLite"];
@@ -60,6 +87,18 @@ export default function ProjectsPage() {
 
   return (
     <div className="w-full text-black p-5">
+      {creating && (
+  <div className="fixed inset-0 z-50 flex flex-col justify-center items-center bg-white bg-opacity-95">
+    <div className="text-lg font-bold mb-2">Creating your project...</div>
+    <div className="text-gray-700">{loaderMessages[loaderStep]}</div>
+    <div className="mt-4 w-64 h-2 bg-gray-200 rounded overflow-hidden">
+      <div
+        className="h-full bg-blue-600 transition-all duration-500"
+        style={{ width: `${((loaderStep + 1) / loaderMessages.length) * 100}%` }}
+      />
+    </div>
+  </div>
+)}
       <ErrorPopup message={error} onClose={() => setError("")} />
       <div className="mb-4 flex items-center space-x-2">
         <input
@@ -104,7 +143,7 @@ export default function ProjectsPage() {
           disabled={loading}
           onClick={async () => {
             if (!username) return;
-            setLoading(true);
+            const interval = startFakeLoader();
             try {
               await handleCreateProject(`${username}`, projectName, frontend, backend, db);
               await refreshProjects();
@@ -112,7 +151,9 @@ export default function ProjectsPage() {
             } catch (err) {
               setError("Failed to create project:");
             } finally {
-              setLoading(false);
+              clearInterval(interval);
+              setCreating(false);
+              setLoaderStep(0);
             }
           }}
         >
