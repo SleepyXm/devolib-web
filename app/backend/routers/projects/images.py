@@ -11,37 +11,6 @@ router = APIRouter()
 
 docker_client = docker.from_env()
 
-BACKEND_PACKAGES = {
-    "FastAPI": [],
-    "Node.js": ["nodejs", "npm"],
-    "Rust": ["build-base", "curl"]
-}
-
-DATABASE_PACKAGES = {
-    "PostgreSQL": ["postgresql", "postgresql-client"],
-    "MySQL": ["mariadb", "mariadb-client"],
-    "SQLite": []
-}
-
-FRONTEND_FRAMEWORKS = {
-    "HTML/CSS": [],
-    "React": ["nodejs", "npm"],
-    "Next.js": ["nodejs", "npm"]
-}
-
-FRONTEND_FRAMEWORKS_COMMANDS = {
-    "React": "npm create vite@latest {name} -- --template react-ts --yes && cd {name} && npm install",
-    "Next.js": "npx create-next-app@latest {name} --typescript --tailwind --app --eslint --no-git --import-alias '@/*' --no-src-dir --no-react-compiler --turbopack",
-    "HTML/CSS": "mkdir -p {name} && echo '<h1>{name}</h1>' > {name}/index.html"
-}
-
-FRONTEND_FRAMEWORK_PORTS = {
-    "React": 5173,
-    "Next.js": 3000,
-    "Vue.js" : 5173,
-    "Angular": 4200
-}
-
 NGINX_CONFIG_TEMPLATE = {"""No longer necessary"""}
 
 async def create_project_image(project_id: str, project_name: str, backend_services=None, frontend_services=None, db=None):
