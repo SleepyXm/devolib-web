@@ -30,9 +30,16 @@ FRONTEND_FRAMEWORKS = {
 }
 
 FRONTEND_FRAMEWORKS_COMMANDS = {
-    "React": "npm create vite@latest {name} -- --template react-ts --yes",
+    "React": "npm create vite@latest {name} -- --template react-ts --yes && cd {name} && npm install",
     "Next.js": "npx create-next-app@latest {name} --typescript --tailwind --app --eslint --no-git --import-alias '@/*' --no-src-dir --no-react-compiler --turbopack",
     "HTML/CSS": "mkdir -p {name} && echo '<h1>{name}</h1>' > {name}/index.html"
+}
+
+FRONTEND_FRAMEWORK_PORTS = {
+    "React": 5173,
+    "Next.js": 3000,
+    "Vue.js" : 5173,
+    "Angular": 4200
 }
 
 NGINX_CONFIG_TEMPLATE = {"""No longer necessary"""}
@@ -60,8 +67,11 @@ async def create_project_image(project_id: str, project_name: str, backend_servi
     for db_service in db:
         apk_packages.extend(DATABASE_PACKAGES.get(db_service, []))
 
+    frontend_port = None
     for framework in frontend_services:
         apk_packages.extend(FRONTEND_FRAMEWORKS.get(framework, []))
+        if frontend_port is None:
+            frontend_port = FRONTEND_FRAMEWORK_PORTS.get(framework)
 
     apk_packages_str = " \\\n    ".join(set(apk_packages))
 
@@ -99,7 +109,7 @@ WORKDIR /app/{project_id}
 # Traefik labels
 LABEL traefik.enable="true"
 LABEL traefik.http.routers.{project_id}.rule="Host(`{project_name}.localhost`)"
-LABEL traefik.http.services.{project_id}.loadbalancer.server.port="3000"
+LABEL traefik.http.services.{project_id}.loadbalancer.server.port="{frontend_port}"
 
 CMD ["sleep", "2400"]
 """
