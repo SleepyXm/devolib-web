@@ -29,10 +29,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const activeTab = pathname.split("/").pop();
 
   useEffect(() => {
-    if (!name) {
+    if (user && !user.user) {
       router.replace("/login");
     }
-  }, [name, router]);
+  }, [user, router]);
+
+  if (!user) {
+    return null;
+  }
 
 
   return (
