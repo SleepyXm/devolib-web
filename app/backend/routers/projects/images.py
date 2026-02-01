@@ -52,46 +52,61 @@ async def create_project_image(project_id: str, project_name: str, backend_servi
     backend_services = backend_services or []
     frontend_services = frontend_services or []
     db = db or []
-
     image_tag = f"devolib_project_{project_id}"
     build_dir = f"/tmp/devolib_build_{project_id}"
     os.makedirs(build_dir, exist_ok=True)
-
+    
+    # Fetch all service configs from DB in one query
+    all_services = backend_services + frontend_services + db
+    config_query = """
+    SELECT framework, default_port, scaffold_command, start_flags, packages
+    FROM services 
+    WHERE framework = ANY(:frameworks)
+    """
+    service_configs = await database.fetch_all(config_query, {"frameworks": all_services})
+    
+    # Build a lookup dict for easy access
+    configs_map = {config['framework']: config for config in service_configs}
+    
     # Base packages
     apk_packages = ["curl", "bash", "ca-certificates", "gnupg", "nginx"]
     
-    for service in backend_services:
-        apk_packages.extend(BACKEND_PACKAGES.get(service, []))
-
-    # Add packages for databases
-    for db_service in db:
-        apk_packages.extend(DATABASE_PACKAGES.get(db_service, []))
-
+    # Add packages from all services
+    for config in service_configs:
+        if config['packages']:
+            apk_packages.extend(config['packages'])
+    
+    # Get frontend port from first frontend service
     frontend_port = None
     for framework in frontend_services:
-        apk_packages.extend(FRONTEND_FRAMEWORKS.get(framework, []))
-        if frontend_port is None:
-            frontend_port = FRONTEND_FRAMEWORK_PORTS.get(framework)
-
+        if framework in configs_map and configs_map[framework]['default_port']:
+            frontend_port = configs_map[framework]['default_port']
+            break
+    
+    # Default to 80 if no frontend port found
+    if frontend_port is None:
+        frontend_port = 80
+    
     apk_packages_str = " \\\n    ".join(set(apk_packages))
-
+    
     # Create directories
     dirs = ["workspace", "workspace/frontend", "workspace/backend", "workspace/database"]
     dir_commands = "\n".join([f"RUN mkdir -p /app/{project_id}/{d}" for d in dirs])
-
-    # Generate frontend setup commands
+    
+    # Generate frontend setup commands from DB
     frontend_setup_commands = ""
     for framework in frontend_services:
-        cmd = FRONTEND_FRAMEWORKS_COMMANDS.get(framework)
-        if cmd:
-            # Format the command with project name
-            formatted_cmd = cmd.format(name=project_name)
-            frontend_setup_commands += f"""
+        if framework in configs_map:
+            scaffold_cmd = configs_map[framework]['scaffold_command']
+            if scaffold_cmd:
+                # Format the command with project name
+                formatted_cmd = scaffold_cmd.format(name=project_name)
+                frontend_setup_commands += f"""
 # Setup {framework} project
 WORKDIR /app/{project_id}/workspace/frontend
 RUN {formatted_cmd}
 """
-
+    
     dockerfile_content = f"""
 FROM python:3.14.0-alpine
 WORKDIR /app
@@ -117,7 +132,7 @@ CMD ["sleep", "2400"]
     dockerfile_path = os.path.join(build_dir, "Dockerfile")
     with open(dockerfile_path, "w") as f:
         f.write(dockerfile_content)
-
+    
     try:
         image, logs = docker_client.images.build(
             path=build_dir,
@@ -130,7 +145,7 @@ CMD ["sleep", "2400"]
         for line in e.build_log:
             print(line.get("stream", ""))
         raise Exception(f"Docker build failed: {e}")
-
+    
     update_query = """
     UPDATE projects
     SET container_id = :container_id
@@ -140,7 +155,7 @@ CMD ["sleep", "2400"]
         query=update_query,
         values={"container_id": image_id, "project_id": project_id}
     )
-
+    
     return image_id
 
 
