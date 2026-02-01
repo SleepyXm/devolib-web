@@ -86,19 +86,31 @@ export default function ProjectsPage() {
   };
 
   return (
-    <div className="w-full text-black p-5">
-      {creating && (
-  <div className="fixed inset-0 z-50 flex flex-col justify-center items-center bg-white bg-opacity-95">
-    <div className="text-lg font-bold mb-2">Creating your project...</div>
-    <div className="text-gray-700">{loaderMessages[loaderStep]}</div>
-    <div className="mt-4 w-64 h-2 bg-gray-200 rounded overflow-hidden">
-      <div
-        className="h-full bg-blue-600 transition-all duration-500"
-        style={{ width: `${((loaderStep + 1) / loaderMessages.length) * 100}%` }}
-      />
-    </div>
-  </div>
-)}
+     <div className="w-full h-full text-black p-5 relative">
+    {creating && (
+      <div className="absolute inset-0 z-50 flex items-center justify-center">
+        <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" />
+
+        <div className="relative z-10 bg-white rounded-xl shadow-lg p-6 w-full max-w-sm text-center">
+          <div className="text-lg font-semibold mb-1">
+            Creating your project…
+          </div>
+
+          <div className="text-sm text-gray-600 mb-4">
+            {loaderMessages[loaderStep]}
+          </div>
+
+          <div className="w-full h-2 bg-gray-200 rounded overflow-hidden">
+            <div
+              className="h-full bg-blue-600 transition-all duration-500"
+              style={{
+                width: `${((loaderStep + 1) / loaderMessages.length) * 100}%`,
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    )}
       <ErrorPopup message={error} onClose={() => setError("")} />
       <div className="mb-4 flex items-center space-x-2">
         <input
