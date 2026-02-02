@@ -58,31 +58,15 @@ export default function ProjectsPage() {
     return interval;
   };
 
-  const BACKEND_OPTIONS = [
-    { label: "FastAPI", icon: "fastapi" },
-    { label: "Node.js", icon: "nodejs" },
-    { label: "Rust", icon: "rust" },
-  ];
+  const BACKEND_OPTIONS = ["FastAPI", "Node.js", "Rust"];
 
-  const FRONTEND_OPTIONS = [
-    { label: "React", icon: "react" },
-    { label: "HTML/CSS", icon: "html" },
-    { label: "Next.js", icon: "nextjs" },
-    { label: "Angular.js", icon: "angular" },
-  ];
+  const FRONTEND_OPTIONS = ["React", "HTML/CSS", "Next.js", "Angular.js"];
 
-  const DATABASE_OPTIONS = [
-    { label: "PostgreSQL", icon: "postgres" },
-    { label: "MySQL", icon: "mysql" },
-    { label: "SQLite", icon: "sqlite" },
-  ];
+  const DATABASE_OPTIONS = ["MySQL", "PostgreSQL", "SQLite"];
 
-  const [backend, setBackend] = useState(BACKEND_OPTIONS[0].icon);
-  const [frontend, setFrontend] = useState(FRONTEND_OPTIONS[0].icon);
-  const [db, setDb] = useState(DATABASE_OPTIONS[0].icon);
-
-  const icons = [backend, frontend, db].join(",");
-  const iconUrl = `https://skillicons.dev/icons?i=${icons}`;
+  const [backend, setBackend] = useState(BACKEND_OPTIONS[0]);
+  const [frontend, setFrontend] = useState(FRONTEND_OPTIONS[0]);
+  const [db, setDb] = useState(DATABASE_OPTIONS[0]);
 
   useEffect(() => {
     if (!username) return;
@@ -114,16 +98,28 @@ export default function ProjectsPage() {
   return (
     <div className="w-full text-black p-5">
       {creating && (
-        <div className="absolute inset-0 z-50 flex flex-col justify-center items-center bg-white bg-opacity-95">
-          <div className="text-lg font-bold mb-2">Creating your project...</div>
-          <div className="text-gray-700">{loaderMessages[loaderStep]}</div>
-          <div className="mt-4 w-64 h-2 bg-gray-200 rounded overflow-hidden">
-            <div
-              className="h-full bg-blue-600 transition-all duration-500"
-              style={{
-                width: `${((loaderStep + 1) / loaderMessages.length) * 100}%`,
-              }}
-            />
+        <div className="absolute inset-0 z-50 flex items-center justify-center">
+          {/* dim background */}
+          <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-l" />
+
+          {/* modal card */}
+          <div className="relative z-10 bg-white rounded-xl shadow-lg p-6 w-full max-w-sm text-center">
+            <div className="text-lg font-semibold mb-1">
+              Creating your project…
+            </div>
+
+            <div className="text-sm text-gray-600 mb-4">
+              {loaderMessages[loaderStep]}
+            </div>
+
+            <div className="w-full h-2 bg-gray-200 rounded overflow-hidden">
+              <div
+                className="h-full bg-blue-600 transition-all duration-500"
+                style={{
+                  width: `${((loaderStep + 1) / loaderMessages.length) * 100}%`,
+                }}
+              />
+            </div>
           </div>
         </div>
       )}
@@ -136,34 +132,28 @@ export default function ProjectsPage() {
           placeholder="Enter project name"
           className="border px-2 py-1 rounded flex-1"
         />
-        <img
-    src={`https://skillicons.dev/icons?i=${backend}`}
-    className="h-5"/>
-        <select value={backend} onChange={(e) => setBackend(e.target.value)}>
+
+         <select value={backend} onChange={(e) => setBackend(e.target.value)}>
           {BACKEND_OPTIONS.map((opt) => (
-            <option key={opt.icon} value={opt.icon}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-    <img
-    src={`https://skillicons.dev/icons?i=${frontend}`}
-    className="h-5"/>
-        <select value={frontend} onChange={(e) => setFrontend(e.target.value)}>
-          {FRONTEND_OPTIONS.map((opt) => (
-            <option key={opt.icon} value={opt.icon}>
-              {opt.label}
+            <option key={opt} value={opt}>
+              {opt}
             </option>
           ))}
         </select>
 
-          <img
-    src={`https://skillicons.dev/icons?i=${db}`}
-    className="h-5"/>
+        <select value={frontend} onChange={(e) => setFrontend(e.target.value)}>
+          {FRONTEND_OPTIONS.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </select>
+
+
         <select value={db} onChange={(e) => setDb(e.target.value)}>
           {DATABASE_OPTIONS.map((opt) => (
-            <option key={opt.icon} value={opt.icon}>
-              {opt.label}
+            <option key={opt} value={opt}>
+              {opt}
             </option>
           ))}
         </select>
