@@ -63,7 +63,7 @@ async def start_service(container, project_id: str, project_name: str, service: 
     # Check if service actually exists
     exists_check = await check_service_exists(container, project_id, project_name, service)
     if not exists_check['exists']:
-        await websocket.send_text(f"❌ Cannot start {service}: {exists_check['error']}\n")
+        await websocket.send_text(f"[✗] Cannot start {service}: {exists_check['error']}\n")
         await send_service_status(websocket, {service: False})
         return
     
@@ -76,7 +76,7 @@ async def start_service(container, project_id: str, project_name: str, service: 
     if service in service_commands:
         # Try to start the service
         result = container.exec_run(service_commands[service], detach=True)
-        await websocket.send_text(f"Starting {service} service...\n")
+        await websocket.send_text(f"[→] Starting {service} service...\n")
         print(f"Started {service} service for project {project_id}")
         
         # Wait for service to start and check health
@@ -84,7 +84,7 @@ async def start_service(container, project_id: str, project_name: str, service: 
         is_running = await check_service_health(container, service)
         
         if is_running:
-            await websocket.send_text(f"✅ {service.capitalize()} service is running!\n")
+            await websocket.send_text(f"[✓] {service.capitalize()} service is running!\n")
             await send_service_status(websocket, {service: True})
         else:
             # Check the logs to see why it failed
@@ -92,7 +92,7 @@ async def start_service(container, project_id: str, project_name: str, service: 
             log_check = container.exec_run(f"tail -20 {log_file}")
             log_output = log_check.output.decode() if log_check.output else "No logs available"
             
-            await websocket.send_text(f"⚠️ {service.capitalize()} failed to start. Logs:\n{log_output}\n")
+            await websocket.send_text(f"[!] {service.capitalize()} failed to start. Logs:\n{log_output}\n")
             await send_service_status(websocket, {service: False})
     else:
         await websocket.send_text(f"Unknown service: {service}\n")

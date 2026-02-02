@@ -36,7 +36,7 @@ export default function Terminal() {
         <button onClick={stop} disabled={!isRunning} style={{ backgroundColor: "#dc3545", color: "#fff", border: "none", padding: "0px 14px", borderRadius: "50%", width: "40px", height: "40px", fontSize: "18px", cursor: !isRunning ? "not-allowed" : "pointer" }}>■</button>
       </div>
 
-      <pre style={{ background: "#111", color: "rgba(79, 234, 214, 1)", fontFamily: "monaco", padding: "10px", height: "400px", width: "80vw", overflowY: "auto", borderRadius: "6px", marginBottom: "10px" }}>
+      <pre style={{ background: "#111", color: "rgb(255, 255, 255)", fontFamily: "monaco", padding: "10px", height: "400px", width: "80vw", overflowY: "auto", borderRadius: "6px", marginBottom: "10px" }}>
         {logs || "Waiting for container output..."}
       </pre>
 
@@ -48,7 +48,7 @@ export default function Terminal() {
         onKeyDown={handleEnter}
         placeholder={isConnected ? "Type command and hit Enter" : "Connect or start container first"}
         disabled={!isConnected}
-        style={{ width: "80vw", fontFamily: "monaco", padding: "8px", borderRadius: "6px", border: "1px solid #444", backgroundColor: "#111", color: "rgba(137, 239, 203, 1)" }}
+        style={{ width: "80vw", fontFamily: "monaco", padding: "8px", borderRadius: "6px", border: "1px solid #444", backgroundColor: "#111", color: "rgb(255, 255, 255)" }}
       />
     </div>
   );
