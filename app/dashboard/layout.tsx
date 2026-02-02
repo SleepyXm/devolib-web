@@ -20,10 +20,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
 
   const tabs = [
-    { name: "Home", href: `/dashboard` },
+    { name: "Dashboard", href: `/dashboard` },
     { name: "Projects", href: `/dashboard/projects` },
     { name: "Designs", href: `/dashboard/designs` },
-    { name: "Settings", href: `/dashboard/settings` },
+    { name: "Profile", href: `/dashboard/profile` },
   ];
 
   const activeTab = pathname.split("/").pop();
@@ -41,7 +41,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="dashboard-wrapper flex min-h-screen bg-white/90 pt-13">
-      <aside className="w-[10vw] bg-gray-900 p-4">
+      <aside className="w-[10vw] bg-gray-600 p-2.5">
         <h2 className="font-bold mb-4 text-white">Dashboard Sidebar</h2>
         <ul className="space-y-2">
           {tabs.map((tab) => (
@@ -50,7 +50,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 <button
                   className={`w-full text-left px-2 py-1 rounded ${
                     activeTab === tab.href.split("/").pop()
-                      ? "bg-blue-500 text-white"
+                      ? "bg-yellow-500 text-white"
                       : "hover:bg-gray-700 text-white"
                   }`}
                 >
