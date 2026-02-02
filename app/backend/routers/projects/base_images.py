@@ -1,0 +1,220 @@
+from pathlib import Path
+import docker
+import shutil
+import structlog
+
+logger = structlog.get_logger()
+docker_client = docker.from_env()
+
+NETWORK_NAME = "web"
+
+BASE_IMAGES = {
+    'minimal': {
+        'tag': 'devolib_minimal:latest',
+        'description': 'Essentials only - ~300MB'
+    },
+    'python': {
+        'tag': 'devolib_python:latest',
+        'description': 'Python + common packages - ~500MB'
+    },
+    'node': {
+        'tag': 'devolib_node:latest',
+        'description': 'Node + cached npm packages - ~600MB'
+    },
+    'fullstack': {
+        'tag': 'devolib_fullstack:latest',
+        'description': 'Python + Node - ~1.2GB'
+    }
+}
+
+
+def build_minimal():
+    """Bare minimum - just package managers."""
+    dockerfile = """
+FROM python:3.14.0-alpine
+RUN apk update && apk add --no-cache \\
+    curl bash ca-certificates git build-base \\
+    && rm -rf /var/cache/apk/*
+RUN mkdir -p /app/workspace/frontend
+RUN mkdir -p /app/workspace/backend
+RUN mkdir -p /app/workspace/database
+WORKDIR /app/workspace
+CMD ["tail", "-f", "/dev/null"]
+"""
+    return _build('minimal', dockerfile)
+
+
+def build_python():
+    """Python backend stack."""
+    dockerfile = """
+FROM devolib_minimal:latest
+RUN pip install --no-cache-dir \\
+    fastapi \\
+    uvicorn[standard] \\
+    pydantic \\
+    sqlalchemy \\
+    psycopg2-binary \\
+    redis \\
+    httpx
+RUN apk add --no-cache postgresql-client mysql-client \\
+    && rm -rf /var/cache/apk/*
+WORKDIR /app/workspace
+CMD ["tail", "-f", "/dev/null"]
+"""
+    return _build('python', dockerfile)
+
+
+def build_node():
+    """Node stack with npm cache."""
+    dockerfile = """
+FROM node:20-alpine
+RUN apk update && apk add --no-cache \\
+    curl bash ca-certificates git python3 make g++ \\
+    && rm -rf /var/cache/apk/*
+
+# CRITICAL: Set npm to auto-confirm and disable update checks
+RUN npm config set yes true --global && \\
+    npm config set update-notifier false --global && \\
+    npm config set fund false --global
+
+# Global tools with --force to remove prompts
+RUN npm install -g --force \\
+    create-react-app@latest \\
+    create-next-app@latest \\
+    @vue/cli@latest \\
+    create-vite@latest \\
+    express-generator@latest \\
+    typescript@latest \\
+    && npm cache clean --force
+
+# Cache common packages
+RUN mkdir -p /tmp/cache && cd /tmp/cache && \\
+    npm init -y && \\
+    npm install \\
+        react@latest \\
+        react-dom@latest \\
+        react-router-dom \\
+        axios \\
+        @tanstack/react-query \\
+    && cd / && rm -rf /tmp/cache
+
+RUN mkdir -p /app/workspace/frontend
+RUN mkdir -p /app/workspace/backend
+RUN mkdir -p /app/workspace/database
+
+WORKDIR /app/workspace
+CMD ["tail", "-f", "/dev/null"]
+"""
+    return _build('node', dockerfile)
+
+
+def build_fullstack():
+    """Both ecosystems in one."""
+    dockerfile = """
+FROM python:3.14.0-alpine
+
+# System deps
+RUN apk update && apk add --no-cache \\
+    curl bash ca-certificates git build-base \\
+    nodejs npm postgresql-client mysql-client \\
+    python3 make g++ \\
+    && rm -rf /var/cache/apk/*
+
+# Python packages
+RUN pip install --no-cache-dir \\
+    fastapi uvicorn[standard] pydantic sqlalchemy \\
+    psycopg2-binary redis httpx
+
+# CRITICAL: Set npm to auto-confirm
+RUN npm config set yes true --global && \\
+    npm config set update-notifier false --global && \\
+    npm config set fund false --global
+
+# Node tools - with all the frameworks
+RUN npm install -g --force \\
+    create-react-app@latest \\
+    create-next-app@latest \\
+    @vue/cli@latest \\
+    create-vite@latest \\
+    express-generator@latest \\
+    typescript@latest \\
+    tailwindcss@latest \\
+    && npm cache clean --force
+
+# Cache npm packages
+RUN mkdir -p /tmp/cache && cd /tmp/cache && \\
+    npm init -y && \\
+    npm install \\
+        react@latest \\
+        react-dom@latest \\
+        react-router-dom \\
+        axios \\
+        @tanstack/react-query \\
+    && cd / && rm -rf /tmp/cache
+
+RUN mkdir -p /app/workspace/frontend
+RUN mkdir -p /app/workspace/backend
+RUN mkdir -p /app/workspace/database
+
+WORKDIR /app/workspace
+CMD ["tail", "-f", "/dev/null"]
+"""
+    return _build('fullstack', dockerfile)
+
+def _build(image_type: str, dockerfile: str):
+    """Build helper."""
+    tag = BASE_IMAGES[image_type]['tag']
+    build_dir = Path(f"/tmp/devolib_build_{image_type}")
+    build_dir.mkdir(exist_ok=True)
+    
+    try:
+        (build_dir / "Dockerfile").write_text(dockerfile)
+        
+        logger.info(f"Building {image_type} base image...")
+        image, logs = docker_client.images.build(
+            path=str(build_dir),
+            tag=tag,
+            rm=True,
+            forcerm=True
+        )
+        
+        size_mb = image.attrs['Size'] / 1024 / 1024
+        logger.info(f"✓ Built {tag} ({size_mb:.1f}MB)")
+        return image.id
+        
+    except Exception as e:
+        logger.error(f"✗ Failed to build {image_type}: {e}")
+        raise
+    finally:
+        shutil.rmtree(build_dir, ignore_errors=True)
+
+def build_all():
+    """Build all bases in order (minimal first, others depend on it)."""
+    logger.info("Building all base images...")
+    build_minimal()
+    build_python()
+    build_node()
+    build_fullstack()
+    logger.info("✓ All base images built")
+
+def ensure_exists(image_type: str) -> str:
+    """Check if image exists, build if not."""
+    tag = BASE_IMAGES[image_type]['tag']
+    try:
+        docker_client.images.get(tag)
+        logger.debug(f"✓ {tag} already exists")
+        return tag
+    except docker.errors.ImageNotFound:
+        logger.info(f"✗ {tag} not found, building...")
+        
+        if image_type == 'python':
+            ensure_exists('minimal')
+            build_python()
+        elif image_type == 'node':
+            build_node()
+        elif image_type == 'fullstack':
+            build_fullstack()
+        else:
+            build_minimal()
+        
+        return tag

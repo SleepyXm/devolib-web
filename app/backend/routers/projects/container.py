@@ -34,16 +34,12 @@ async def start_project_container(project_id: str, current_user: dict = Depends(
                 detach=True,
                 tty=True,
                 stdin_open=True,
-                ports={'8000/tcp': 9001, '5432/tcp': 9002},
                 command="sh -c 'echo Container started!; tail -f /dev/null'",
             )
         except docker.errors.ImageNotFound:
             raise HTTPException(status_code=404, detail="Docker image not found")
     
-    return {"ok": True, "container_id": container.id, "status": container.status, "ports": {
-            "backend": "http://localhost:9001",
-            "database": "http://localhost:9002"
-        }}
+    return {"ok": True, "container_id": container.id, "status": container.status}
 
 
 
@@ -64,7 +60,7 @@ async def websocket_terminal(websocket: WebSocket, project_id: str, access_token
 
     project_name = project["name"]
 
-    # NOW accept the connection
+ 
     await websocket.accept()
     
     # Get container
@@ -76,11 +72,11 @@ async def websocket_terminal(websocket: WebSocket, project_id: str, access_token
         await websocket.close(code=1000)
         return
     
-    # Send connection message and initial status
+    # Send connection message for confirmation
     await websocket.send_text(f"User connected at {datetime.utcnow().isoformat()}!\n")
     await send_service_status(websocket, {"container": True})
     
-    current_dir = f"/app/{project_id}/workspace"
+    current_dir = "/app/workspace"
     
     # Main command loop
     try:

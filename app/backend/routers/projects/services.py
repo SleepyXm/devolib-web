@@ -1,8 +1,7 @@
 import json
 import os
 import asyncio
-from datetime import datetime
-from fastapi import WebSocket, WebSocketDisconnect
+from fastapi import WebSocket
 
 
 async def check_service_health(container, service: str) -> bool:
@@ -25,15 +24,15 @@ async def check_service_exists(container, project_id: str, project_name: str, se
     """Check if service directory and required files exist"""
     checks = {
         'frontend': {
-            'dir': f'/app/{project_id}/workspace/frontend/{project_name}',
-            'required_files': ['package.json', 'next.config.ts']
+            'dir': f'/app/workspace/frontend/{project_name}',
+            'required_files': ['package.json']
         },
         'backend': {
-            'dir': f'/app/{project_id}/workspace/backend',
+            'dir': f'/app/workspace/backend',
             'required_files': ['main.py']
         },
         'database': {
-            'dir': f'/app/{project_id}/workspace/database/data',
+            'dir': f'/app/workspace/database/data',
             'required_files': []
         }
     }
@@ -61,7 +60,7 @@ async def check_service_exists(container, project_id: str, project_name: str, se
 async def start_service(container, project_id: str, project_name: str, service: str, websocket: WebSocket):
     """Start a specific service in the container"""
     
-    # First, check if service actually exists
+    # Check if service actually exists
     exists_check = await check_service_exists(container, project_id, project_name, service)
     if not exists_check['exists']:
         await websocket.send_text(f"❌ Cannot start {service}: {exists_check['error']}\n")
@@ -69,9 +68,9 @@ async def start_service(container, project_id: str, project_name: str, service: 
         return
     
     service_commands = {
-        'frontend': f"bash -c 'cd /app/{project_id}/workspace/frontend/{project_name} && nohup npm run dev > /tmp/frontend.log 2>&1 &'",
-        'backend': f"bash -c 'cd /app/{project_id}/workspace/backend && nohup python main.py > /tmp/backend.log 2>&1 &'",
-        'database': f"bash -c 'nohup pg_ctl start -D /app/{project_id}/workspace/database/data > /tmp/db.log 2>&1 &'"
+        'frontend': f"bash -c 'cd /app/workspace/frontend/{project_name} && nohup npm run dev > /tmp/frontend.log 2>&1 &'",
+        'backend': f"bash -c 'cd /app/workspace/backend && nohup python main.py > /tmp/backend.log 2>&1 &'",
+        'database': f"bash -c 'nohup pg_ctl start -D /app/workspace/database/data > /tmp/db.log 2>&1 &'"
     }
     
     if service in service_commands:
@@ -126,7 +125,7 @@ async def handle_json_command(container, payload: dict, current_dir: str, websoc
         await start_service(container, project_id, project_name, service, websocket)
         return "", current_dir
     
-    # Fall back to existing handle_command (you'll need to import this)
+    # TODO Fall back to existing handle_command
     # from your_module import handle_command
     # response = await handle_command(container, payload, current_dir)
     # return response, current_dir

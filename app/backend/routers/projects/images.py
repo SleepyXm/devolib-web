@@ -1,31 +1,50 @@
+import re
 import uuid
-from fastapi import APIRouter, Depends, Body, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter
 from database import database
 from routers.auth.auth_utils import get_current_user
 import docker
 import os
 from datetime import datetime
 import json
+from .base_images import ensure_exists, NETWORK_NAME
+import structlog
 
 router = APIRouter()
 
+logger = structlog.get_logger()
+
 docker_client = docker.from_env()
 
-NGINX_CONFIG_TEMPLATE = {"""No longer necessary"""}
+def pick_base_image(backend_services: list, frontend_services: list) -> str:
+    
+    has_be = bool(backend_services)
+    has_fe = bool(frontend_services)
+    
+    if has_be and has_fe:
+        return 'fullstack'
+    elif has_be:
+        return 'python'
+    elif has_fe:
+        return 'node'
+    else:
+        return 'minimal'
 
-async def create_project_image(project_id: str, project_name: str, backend_services=None, frontend_services=None, db=None):
+async def create_project_container(
+    project_id: str,
+    project_name: str,
+    backend_services=None,
+    frontend_services=None,
+    db=None
+):
     """
-    Dynamically generates a Dockerfile with optional backend, frontend, and database services.
-    Builds the image and saves the container ID in the database.
+    Create container from base image.
     """
     backend_services = backend_services or []
     frontend_services = frontend_services or []
     db = db or []
-    image_tag = f"devolib_project_{project_id}"
-    build_dir = f"/tmp/devolib_build_{project_id}"
-    os.makedirs(build_dir, exist_ok=True)
     
-    # Fetch all service configs from DB in one query
+    # Fetch service configs from DB (keeping your existing logic)
     all_services = backend_services + frontend_services + db
     config_query = """
     SELECT framework, default_port, scaffold_command, start_flags, packages
@@ -34,120 +53,180 @@ async def create_project_image(project_id: str, project_name: str, backend_servi
     """
     service_configs = await database.fetch_all(config_query, {"frameworks": all_services})
     
-    # Build a lookup dict for easy access
+    # Build lookup dict
     configs_map = {config['framework']: config for config in service_configs}
     
-    # Base packages
-    apk_packages = ["curl", "bash", "ca-certificates", "gnupg", "nginx"]
-    
-    # Add packages from all services
-    for config in service_configs:
-        if config['packages']:
-            apk_packages.extend(config['packages'])
-    
-    # Get frontend port from first frontend service
+    # Get port from DB
     frontend_port = None
     for framework in frontend_services:
         if framework in configs_map and configs_map[framework]['default_port']:
             frontend_port = configs_map[framework]['default_port']
             break
     
-    # Default to 80 if no frontend port found
+    # Final fallback
     if frontend_port is None:
-        frontend_port = 80
+        frontend_port = 3000
     
-    apk_packages_str = " \\\n    ".join(set(apk_packages))
+    # Pick base image
+    base_type = pick_base_image(backend_services, frontend_services)
+    base_tag = ensure_exists(base_type)
     
-    # Create directories
-    dirs = ["workspace", "workspace/frontend", "workspace/backend", "workspace/database"]
-    dir_commands = "\n".join([f"RUN mkdir -p /app/{project_id}/{d}" for d in dirs])
-    
-    # Generate frontend setup commands from DB
-    frontend_setup_commands = ""
-    for framework in frontend_services:
-        if framework in configs_map:
-            scaffold_cmd = configs_map[framework]['scaffold_command']
-            if scaffold_cmd:
-                # Format the command with project name
-                formatted_cmd = scaffold_cmd.format(name=project_name)
-                frontend_setup_commands += f"""
-# Setup {framework} project
-WORKDIR /app/{project_id}/workspace/frontend
-RUN {formatted_cmd}
-"""
-    
-    dockerfile_content = f"""
-FROM python:3.14.0-alpine
-WORKDIR /app
-{dir_commands}
-
-# Install dependencies
-RUN apk update && apk add --no-cache \\
-    {apk_packages_str}
-
-{frontend_setup_commands}
-
-# Reset working directory
-WORKDIR /app/{project_id}
-
-# Traefik labels
-LABEL traefik.enable="true"
-LABEL traefik.http.routers.{project_id}.rule="Host(`{project_name}.localhost`)"
-LABEL traefik.http.services.{project_id}.loadbalancer.server.port="{frontend_port}"
-
-CMD ["sleep", "2400"]
-"""
-    
-    dockerfile_path = os.path.join(build_dir, "Dockerfile")
-    with open(dockerfile_path, "w") as f:
-        f.write(dockerfile_content)
+    # Clean project name for DNS
+    clean_name = _clean_name(project_name)
     
     try:
-        image, logs = docker_client.images.build(
-            path=build_dir,
-            tag=image_tag,
-            rm=True
+        logger.info(
+            "Creating container",
+            project_id=project_id,
+            base=base_type,
+            port=frontend_port,
+            services=f"BE:{len(backend_services)} FE:{len(frontend_services)}"
         )
-        image_id = image.id
         
-    except docker.errors.BuildError as e:
-        for line in e.build_log:
-            print(line.get("stream", ""))
-        raise Exception(f"Docker build failed: {e}")
-    
-    update_query = """
-    UPDATE projects
-    SET container_id = :container_id
-    WHERE project_id = :project_id
-    """
-    await database.execute(
-        query=update_query,
-        values={"container_id": image_id, "project_id": project_id}
-    )
-    
-    return image_id
-
-
-async def delete_project_image(project_id: str):
-    """
-    Deletes the Docker image (and optionally running container) associated with a project.
-    """
-    image_tag = f"devolib_project_{project_id}"
-
-    # stop and remove any running containers based on this image
-    try:
-        containers = docker_client.containers.list(all=True, filters={"ancestor": image_tag})
-        for container in containers:
-            container.stop()
-            container.remove()
+        container = docker_client.containers.create(
+            image=base_tag,
+            name=f"devolib_project_{project_id}",
+            detach=True,
+            
+            # Traefik labels
+            labels={
+                "traefik.enable": "true",
+                f"traefik.http.routers.{project_id}.rule": f"Host(`{clean_name}.localhost`)",
+                f"traefik.http.services.{project_id}.loadbalancer.server.port": str(frontend_port),
+                
+                # Metadata for debugging
+                "devolib.project_id": project_id,
+                "devolib.project_name": project_name,
+                "devolib.base": base_type,
+                "devolib.backend_services": ",".join(backend_services),
+                "devolib.frontend_services": ",".join(frontend_services),
+                "devolib.db_services": ",".join(db),
+            },
+            
+            # Persistent workspace volume
+            volumes={
+                f"devolib_project_{project_id}": {
+                    'bind': '/app/workspace',
+                    'mode': 'rw'
+                }
+            },
+            
+            # Join the web network (same as Traefik)
+            network=NETWORK_NAME,
+            
+            # Resource limits
+            mem_limit='512m',
+            cpu_quota=50000,  # 50% of one core
+            
+            # Keep container alive
+            command=["tail", "-f", "/dev/null"]
+        )
+        
+        container.start()
+        
+        logger.info(
+            "Container started",
+            project_id=project_id,
+            container_id=container.short_id,
+            url=f"http://{clean_name}.localhost"
+        )
+        
+        # Scaffold the project structure
+        for framework in frontend_services:
+            if framework in configs_map and configs_map[framework]['scaffold_command']:
+                cmd = configs_map[framework]['scaffold_command'].replace('{name}', project_name)
+                logger.info("Scaffolding frontend", framework=framework, cmd=cmd)
+                container.exec_run(
+                    f"sh -c 'cd /app/workspace/frontend && {cmd}'",
+                    tty=True,
+                    detach=False
+                )
+        
+        for framework in backend_services:
+            if framework in configs_map and configs_map[framework]['scaffold_command']:
+                cmd = configs_map[framework]['scaffold_command'].replace('{name}', project_name)
+                logger.info("Scaffolding backend", framework=framework, cmd=cmd)
+                container.exec_run(
+                    f"sh -c 'cd /app/workspace/backend && {cmd}'",
+                    tty=True,
+                    detach=False
+                )
+        
+        for framework in db:
+            if framework in configs_map and configs_map[framework]['scaffold_command']:
+                cmd = configs_map[framework]['scaffold_command'].replace('{name}', project_name)
+                logger.info("Scaffolding database", framework=framework, cmd=cmd)
+                container.exec_run(
+                    f"sh -c 'cd /app/workspace/database && {cmd}'",
+                    tty=True,
+                    detach=False
+                )
+        
+        # Update DB with container ID
+        await database.execute(
+            query="""
+            UPDATE projects
+            SET container_id = :container_id
+            WHERE project_id = :project_id
+            """,
+            values={"container_id": container.id, "project_id": project_id}
+        )
+        
+        # Return both container ID and service configs for scaffolding later
+        return {
+            "project_id": project_id,
+            "container_id": container.id,
+            "configs_map": configs_map,  # So you can use scaffold_command/start_flags elsewhere
+            "port": frontend_port
+        }
+        
+    except docker.errors.APIError as e:
+        logger.error("Failed to create container", project_id=project_id, error=str(e))
+        raise
     except Exception as e:
-        print(f"Error removing containers: {e}")
+        logger.error("Unexpected error creating container", project_id=project_id, error=str(e))
+        raise
 
-    # remove the image itself
+
+def _clean_name(name: str) -> str:
+    """Make project name DNS-safe for Traefik routing."""
+    # Only allow alphanumeric and hyphens
+    clean = re.sub(r'[^a-z0-9-]', '-', name.lower())
+    # Remove consecutive hyphens
+    clean = re.sub(r'-+', '-', clean)
+    # Strip leading/trailing hyphens
+    clean = clean.strip('-')
+    # Fallback if empty
+    return clean or f"proj-{hash(name) % 10000}"
+
+
+async def delete_project_container(project_id: str):
+    """
+    Stop and remove container + volume.
+    Base images stay cached - no deletion needed.
+    """
+    container_name = f"devolib_project_{project_id}"
+    volume_name = f"devolib_project_{project_id}"
+    
+    # Remove container
     try:
-        docker_client.images.remove(image=image_tag, force=True)
-        print(f"Deleted image {image_tag}")
-    except docker.errors.ImageNotFound:
-        print(f"No image found for {image_tag}")
+        container = docker_client.containers.get(container_name)
+        logger.info("Stopping container", project_id=project_id)
+        container.stop(timeout=10)
+        container.remove()
+        logger.info("Container removed", project_id=project_id)
+    except docker.errors.NotFound:
+        logger.warning("Container not found", container_name=container_name)
     except Exception as e:
-        print(f"Error deleting image: {e}")
+        logger.error("Error removing container", project_id=project_id, error=str(e))
+        raise
+    
+    # Remove volume
+    try:
+        volume = docker_client.volumes.get(volume_name)
+        volume.remove()
+        logger.info("Volume removed", volume_name=volume_name)
+    except docker.errors.NotFound:
+        logger.warning("Volume not found", volume_name=volume_name)
+    except Exception as e:
+        logger.warning("Error removing volume", project_id=project_id, error=str(e))

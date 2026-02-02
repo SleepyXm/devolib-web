@@ -2,7 +2,7 @@ import uuid
 from fastapi import APIRouter, Depends, Body, HTTPException
 from database import database
 from routers.auth.auth_utils import get_current_user
-from .images import create_project_image, delete_project_image
+from .images import create_project_container, delete_project_container
 import docker
 import secrets
 import json
@@ -87,9 +87,7 @@ async def create_project(
                     "service_id": service["id"],
                 },
             )
-    
-    # Keep original function call exactly as is
-    image_id = await create_project_image(
+    container_info = await create_project_container(
         project_id, 
         name, 
         backend_services=[backend] if backend else [],
@@ -97,7 +95,7 @@ async def create_project(
         db=[db] if db else []
     )
     
-    return {"ok": True, "project_id": project_id, "image_id": image_id, "name": name, "access_token": access_token}
+    return {"ok": True, "project_id": project_id, "container_id": container_info["container_id"], "name": name, "access_token": access_token}
 
 
 @router.get("/{project_id}")
@@ -129,7 +127,7 @@ async def delete_project(
         raise HTTPException(status_code=404, detail="Project not found or not owned by user")
 
 
-    await delete_project_image(project_id)
+    await delete_project_container(project_id)
 
 
     delete_query = "DELETE FROM projects WHERE project_id = :project_id"
