@@ -31,7 +31,7 @@ BASE_IMAGES = {
 def build_minimal():
     """Bare minimum - just package managers."""
     dockerfile = """
-FROM python:3.14.0-alpine
+FROM python:3.14-alpine
 RUN apk update && apk add --no-cache \\
     curl bash ca-certificates git build-base \\
     && rm -rf /var/cache/apk/*
@@ -111,7 +111,7 @@ CMD ["tail", "-f", "/dev/null"]
 def build_fullstack():
     """Both ecosystems in one."""
     dockerfile = """
-FROM python:3.14.0-alpine
+FROM python:3.14-alpine
 
 # System deps
 RUN apk update && apk add --no-cache \\

@@ -16,12 +16,13 @@ logger = structlog.get_logger()
 
 docker_client = docker.from_env()
 
-def pick_base_image(backend_services: list, frontend_services: list) -> str:
+def pick_base_image(backend_services: list, frontend_services: list, db: list) -> str:
     
     has_be = bool(backend_services)
     has_fe = bool(frontend_services)
+    has_db = bool(db)
     
-    if has_be and has_fe:
+    if has_be and has_fe and has_db:
         return 'fullstack'
     elif has_be:
         return 'python'
@@ -68,7 +69,7 @@ async def create_project_container(
         frontend_port = 3000
     
     # Pick base image
-    base_type = pick_base_image(backend_services, frontend_services)
+    base_type = pick_base_image(backend_services, frontend_services, db)
     base_tag = ensure_exists(base_type)
     
     # Clean project name for DNS
