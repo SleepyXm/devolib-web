@@ -35,8 +35,8 @@ const Navbar = () => {
   // Desktop links
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-lg border-b-3 border-black/70">
-      <div className="max-w-7xl mx-auto px-6 md:px-8 py-2 flex items-center justify-between">
+    <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-lg border-b-3 border-black/70 py-2">
+      <div className="max-w-7xl mx-auto px-6 md:px-8 flex items-center justify-between">
         {/* Logo */}
         <a href="#" className="flex items-center gap-3">
           <svg
@@ -89,7 +89,7 @@ const Navbar = () => {
                 {link.url ? (
                   <a
                     href={link.url}
-                    className="text-black hover:text-white transition-colors duration-300 px-6 py-4 hover:bg-black"
+                    className="text-black hover:text-white transition-colors duration-300 px-6 py-7 hover:bg-black"
                   >
                     {link.label}
                   </a>
