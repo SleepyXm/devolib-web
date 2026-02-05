@@ -95,19 +95,19 @@ export default function ProjectsPage() {
   };
 
   return (
-    <div className="w-full text-black p-5">
+    <div className="w-full text-black dark:text-zinc-300 p-5">
       {creating && (
         <div className="absolute inset-0 z-50 flex items-center justify-center">
-          {/* dim background */}
+
           <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-l" />
 
-          {/* modal card */}
+
           <div className="relative z-10 bg-white rounded-xl shadow-lg p-6 w-full max-w-sm text-center">
             <div className="text-lg font-semibold mb-1">
               Creating your project…
             </div>
 
-            <div className="text-sm text-gray-600 mb-4">
+            <div className="text-sm text-gray-600 dark:text-zinc-300 mb-4">
               {loaderMessages[loaderStep]}
             </div>
 

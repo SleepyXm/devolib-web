@@ -1,23 +1,37 @@
 "use client";
 
 import { useState } from "react";
+import { Column, Row, Table } from "@/app/types/dbtypes";
+import { DBCommandBuilder, DBCommand } from "@/app/types/dbstuff";
 
-type Column = { name: string; type: string; expanded: boolean; linkedTableId?: number };
-type Table = { id: number; name: string; columns: Column[]; rows: Row[] };
-type Row = { [colName: string]: any };
+
 
 const COLUMN_TYPES = ["string", "number", "boolean", "date"];
 
 export default function DatabasePage() {
   const [tables, setTables] = useState<Table[]>([]);
-  const [tableCounter, setTableCounter] = useState(1);
 
-  const addTable = () => {
-    const newTable: Table = { id: tableCounter, name: `Table ${tableCounter}`, columns: [], rows: [] };
+  const [tableCounter, setTableCounter] = useState(1);
+  const [commandQueue, setCommandQueue] = useState<DBCommand[]>([]);
+  
+const addTable = () => {
+    const newTable: Table = { 
+      id: tableCounter, 
+      name: `Table_${tableCounter}`, 
+      columns: [], 
+      rows: [] 
+    };
+    
     setTables([...tables, newTable]);
     setTableCounter(tableCounter + 1);
+    
+    // Build command (ready for WS later)
+    const command = DBCommandBuilder.createTable(newTable.name, newTable.columns);
+    setCommandQueue([...commandQueue, command]);
+    console.log('CREATE TABLE command:', command);
   };
-
+  
+  
   const deleteTable = (tableId: number) => {
     setTables(tables
       .filter(t => t.id !== tableId)
@@ -29,10 +43,19 @@ export default function DatabasePage() {
   };
 
   const addColumn = (tableId: number) => {
-    const newCol: Column = { name: "New Column", type: "string", expanded: true };
-    setTables(tables.map(t => t.id === tableId ? { ...t, columns: [...t.columns, newCol] } : t));
+    const table = tables.find(t => t.id === tableId);
+    if (!table) return;
+    
+    const newCol: Column = { name: "new_column", type: "string", expanded: true };
+    setTables(tables.map(t => 
+      t.id === tableId ? { ...t, columns: [...t.columns, newCol] } : t
+    ));
+    
+    const command = DBCommandBuilder.addColumn(table.name, newCol);
+    setCommandQueue([...commandQueue, command]);
+    console.log('ADD COLUMN command:', command);
   };
-
+  
   const deleteColumn = (tableId: number, colIdx: number) => {
     const colName = tables.find(t => t.id === tableId)?.columns[colIdx]?.name;
     setTables(tables.map(t => ({

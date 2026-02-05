@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { signup, login } from "@/app/handlers/auth";
+import { signup, login, validateUser } from "@/app/handlers/auth";
 import { useUser } from "@/app/provider/UserProvider";
 import ErrorPopup from "@/app/components/ErrorPopup";
 
@@ -49,7 +49,7 @@ export default function Auth() {
   }
 }
   return (
-    <div className="bg-white grid grid-rows-[5vh_1fr_5vh] items-center justify-items-center min-h-screen gap-[5vh]">
+    <div className="grid grid-rows-[5vh_1fr_5vh] items-center justify-items-center min-h-screen gap-[5vh]">
       <ErrorPopup message={error} onClose={() => setError("")} />
   <div className="flex flex-col gap-[4vh] row-start-2 items-center w-[30vw]">
     <div className="relative w-full max-w-5xl animate-in fade-in slide-in-from-bottom-8 duration-1000 mx-auto">

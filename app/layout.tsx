@@ -34,7 +34,7 @@ export default function RootLayout({
     <html lang="en">
       <UserProvider>
       <body
-        className={`${Dm_Mono.className} antialiased`}
+        className={`${Dm_Mono.className} antialiased bg-white dark:bg-black`}
       >
         <Navbar />
         {children}

@@ -38,30 +38,30 @@ export default function DashboardPage() {
   }, [username]);
 
   return (
-    <div className="text-zinc-600 p-8">
-      <h1 className="text-zinc-600 text-2xl font-bold">
+    <div className="text-zinc-600 dark:text-zinc-300 p-8">
+      <h1 className="text-2xl font-bold">
         {loggedInUsername}'s Dashboard
       </h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
         <h1 className="text-xl mb-4">Welcome to your Dashboard</h1>
       </div>
-      <div className="mt-2 p-4 bg-white shadow border-3 border-black">
+      <div className="mt-2 p-4 shadow border-3 border-black dark:border-white">
         <h1 className="text-lg font-semibold mb-2">Recent Projects</h1>
 
         <div className="grid grid-cols-3 gap-3">
           {loading ? (
-            <div className="border-2 border-black p-4 py-16 col-span-3 text-center">
+            <div className="border-2 border-black dark:border-white p-4 py-16 col-span-3 text-center">
               Loading projects...
             </div>
           ) : projects.length === 0 ? (
-            <div className="border-2 border-black p-4 py-16 col-span-3 text-center">
+            <div className="border-2 border-black dark:border-white p-4 py-16 col-span-3 text-center">
               No projects yet.
             </div>
           ) : (
             projects.map((project) => (
               <div
                 key={project.project_id}
-                className="border-2 border-black p-4 py-16 hover:bg-gray-100 flex flex-col justify-between"
+                className="border-2 border-black dark:border-white p-4 py-16 hover:bg-gray-100 dark:hover:bg-zinc-800 flex flex-col justify-between"
               >
                 <span
                   className="cursor-pointer font-medium"

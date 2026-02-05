@@ -35,7 +35,7 @@ const Navbar = () => {
   // Desktop links
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-lg border-b-3 border-black/70">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/70 border-b-3 border-black/70 dark:border-white dark:bg-black">
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-4 flex items-center justify-between">
         {/* Logo */}
         <a href="#" className="flex items-center gap-3">
@@ -54,7 +54,7 @@ const Navbar = () => {
               strokeLinejoin="round"
             />
           </svg>
-          <div className="text-sm font-semibold text-white w-full flex items-center justify-center whitespace-nowrap">
+          <div className="text-sm font-semibold text-black dark:text-white w-full flex items-center justify-center whitespace-nowrap">
             {" "}
             <svg
               width="auto"
@@ -64,8 +64,8 @@ const Navbar = () => {
             >
               <defs>
                 <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="rgb(0, 0, 0)" />
-                  <stop offset="100%" stopColor="rgb(0, 0, 0)" />
+                  <stop offset="0%" stopColor="currentColor" />
+                  <stop offset="100%" stopColor="currentColor" />
                 </linearGradient>
               </defs>
               <text
@@ -90,14 +90,14 @@ const Navbar = () => {
                   <a
                     href={link.url}
                     onClick={link.onClick}
-                    className="text-black hover:text-white transition-colors duration-300 px-6 py-6 hover:bg-black/70"
+                    className="text-black dark:text-white hover:text-white dark:hover:text-black/70 transition-colors duration-300 px-6 py-6 hover:bg-black/70 dark:hover:bg-white"
                   >
                     {link.label}
                   </a>
                 ) : (
                   <button
                     onClick={link.onClick}
-                    className="text-black hover:text-white transition-colors duration-300 px-6 py-2 hover:bg-black/70"
+                    className="text-black dark:text-white hover:text-white transition-colors duration-300 px-6 py-2 hover:bg-black/70 dark:hover:bg-white dark:hover:text-black"
                   >
                     {link.label}
                   </button>
