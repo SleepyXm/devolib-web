@@ -2,6 +2,7 @@
 
 export default function Home() {
   return (
+    <>
     <div className="bg-white flex min-h-screen items-center justify-center">
       <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white sm:items-start lg:max-w-7xl">
         <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
@@ -57,5 +58,11 @@ export default function Home() {
         </div>
       </main>
     </div>
+    <div className="w-full">
+        <h1 className="text-7xl">
+          Stuff to be added: Extra Space for the landing page
+        </h1>
+      </div>
+    </>
   );
 }

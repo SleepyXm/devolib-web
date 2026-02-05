@@ -13,29 +13,50 @@ docker_client = docker.from_env()
 
 @router.get("/list")
 async def list_projects(current_user: dict = Depends(get_current_user)):
-    query = "SELECT project_id, name, status, container_id, created_at FROM projects WHERE user_id = :user_id"
-    projects = await database.fetch_all(query=query, values={"user_id": current_user["id"]})
+    # Aggregate query, removing N+1 query
+    query = """
+    SELECT 
+        p.project_id, 
+        p.name, 
+        p.status, 
+        p.container_id, 
+        p.created_at,
+        s.name as service_name,
+        s.framework as service_framework
+    FROM projects p
+    LEFT JOIN project_services ps ON p.project_id = ps.project_id
+    LEFT JOIN services s ON s.id = ps.service_id
+    WHERE p.user_id = :user_id
+    ORDER BY p.project_id
+    """
+    rows = await database.fetch_all(query=query, values={"user_id": current_user["id"]})
     
-    # Fetch services for each project
-    projects_with_services = []
-    for project in projects:
-        services_query = """
-        SELECT s.name, s.framework 
-        FROM services s
-        JOIN project_services ps ON s.id = ps.service_id
-        WHERE ps.project_id = :project_id
-        """
-        services = await database.fetch_all(
-            query=services_query,
-            values={"project_id": project["project_id"]}
-        )
+    # Aggregate services by project
+    projects_dict = {}
+    for row in rows:
+        project_id = row["project_id"]
         
-        projects_with_services.append({
-            **dict(project),
-            "services": [dict(s) for s in services]
-        })
+        if project_id not in projects_dict:
+            projects_dict[project_id] = {
+                "project_id": project_id,
+                "name": row["name"],
+                "status": row["status"],
+                "container_id": row["container_id"],
+                "created_at": row["created_at"],
+                "services": []
+            }
+        
+        # Add service if it exists for project
+        if row["service_name"] is not None:
+            projects_dict[project_id]["services"].append({
+                "name": row["service_name"],
+                "framework": row["service_framework"]
+            })
     
-    return {"projects": projects_with_services}
+    return {"projects": list(projects_dict.values())}
+
+
+
 
 @router.post("/create")
 async def create_project(

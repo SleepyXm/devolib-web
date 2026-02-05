@@ -24,6 +24,14 @@ BASE_IMAGES = {
     'fullstack': {
         'tag': 'devolib_fullstack:latest',
         'description': 'Python + Node - ~1.2GB'
+    },
+    'postgres': {
+        'tag': 'devolib_postgres:latest',
+        'description': 'PostgreSQL 16 - ~200MB'
+    },
+    'mysql': {
+        'tag': 'devolib_mysql:latest',
+        'description': 'MySQL 8 - ~400MB'
     }
 }
 
@@ -107,6 +115,29 @@ CMD ["tail", "-f", "/dev/null"]
 """
     return _build('node', dockerfile)
 
+def build_mysql():
+    """MySQL database image."""
+    dockerfile = """
+FROM mysql:8
+ENV MYSQL_ROOT_PASSWORD=devolib
+ENV MYSQL_DATABASE=devolib
+ENV MYSQL_USER=devolib
+ENV MYSQL_PASSWORD=devolib
+"""
+    return _build('mysql', dockerfile)
+
+def build_postgres():
+    """PostgreSQL database image."""
+    dockerfile = """
+FROM postgres:16-alpine
+ENV POSTGRES_USER=devolib
+ENV POSTGRES_PASSWORD=devolib
+ENV POSTGRES_DB=devolib
+RUN mkdir -p /docker-entrypoint-initdb.d
+WORKDIR /var/lib/postgresql/data
+"""
+    return _build('postgres', dockerfile)
+
 
 def build_fullstack():
     """Both ecosystems in one."""
@@ -179,11 +210,11 @@ def _build(image_type: str, dockerfile: str):
         )
         
         size_mb = image.attrs['Size'] / 1024 / 1024
-        logger.info(f"✓ Built {tag} ({size_mb:.1f}MB)")
+        logger.info(f"[✓] Built {tag} ({size_mb:.1f}MB)")
         return image.id
         
     except Exception as e:
-        logger.error(f"✗ Failed to build {image_type}: {e}")
+        logger.error(f"[✗] Failed to build {image_type}: {e}")
         raise
     finally:
         shutil.rmtree(build_dir, ignore_errors=True)
@@ -195,17 +226,19 @@ def build_all():
     build_python()
     build_node()
     build_fullstack()
-    logger.info("✓ All base images built")
+    build_postgres()
+    build_mysql()
+    logger.info("[✓] All base images built")
 
 def ensure_exists(image_type: str) -> str:
     """Check if image exists, build if not."""
     tag = BASE_IMAGES[image_type]['tag']
     try:
         docker_client.images.get(tag)
-        logger.debug(f"✓ {tag} already exists")
+        logger.debug(f"[✓] {tag} already exists")
         return tag
     except docker.errors.ImageNotFound:
-        logger.info(f"✗ {tag} not found, building...")
+        logger.info(f"[✗] {tag} not found, building...")
         
         if image_type == 'python':
             ensure_exists('minimal')
@@ -214,6 +247,10 @@ def ensure_exists(image_type: str) -> str:
             build_node()
         elif image_type == 'fullstack':
             build_fullstack()
+        elif image_type == 'postgres':
+            build_postgres()
+        elif image_type == 'mysql':
+            build_mysql()
         else:
             build_minimal()
         
