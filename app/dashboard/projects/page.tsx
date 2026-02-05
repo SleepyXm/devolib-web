@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import {
   listProjects,
   handleCreateProject,
-  startProject,
   deleteProject,
   Project,
 } from "@/app/handlers/projects";
@@ -84,7 +83,7 @@ export default function ProjectsPage() {
     };
 
     fetchProjects();
-  }, [user]);
+  }, [username]);
 
   const refreshProjects = async () => {
     try {
@@ -114,7 +113,7 @@ export default function ProjectsPage() {
 
             <div className="w-full h-2 bg-gray-200 rounded overflow-hidden">
               <div
-                className="h-full bg-blue-600 transition-all duration-500"
+                className="h-full bg-gradient-to-r from-blue-600 to-blue-300 transition-all duration-500"
                 style={{
                   width: `${((loaderStep + 1) / loaderMessages.length) * 100}%`,
                 }}
@@ -158,13 +157,13 @@ export default function ProjectsPage() {
           ))}
         </select>
         <button
-          className={`px-4 py-2 rounded text-white
+          className={`px-4 py-2 rounded text-white transition-all duration-700
             ${
               loading
                 ? "bg-gray-400 cursor-not-allowed"
-                : "bg-yellow-400 hover:bg-yellow-500 active:bg-yellow-800"
+                : "bg-yellow-400 hover:bg-gradient-to-r from-yellow-300 to-red-300 active:bg-yellow-800"
             }
-            transition-colors duration-150
+            transition-colors duration-300
             `}
           disabled={loading}
           onClick={async () => {
@@ -207,9 +206,7 @@ export default function ProjectsPage() {
               <span
                 className="cursor-pointer"
                 onClick={async () => {
-                  const res = await startProject(project.project_id);
                   router.push(`/dashboard/${project.project_id}`);
-                  console.log("Project started:", res);
                 }}
               >
                 {project.name} {`(Status: ${project.status})`}

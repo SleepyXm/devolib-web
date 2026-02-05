@@ -28,15 +28,15 @@ const Navbar = () => {
       ? [
           { label: `${user.username}`, url: "/users/" },
           { label: "Dashboard", url: "/dashboard" },
-          { label: "Sign out", onClick: handleLogout },
+          { label: "Sign out", onClick: handleLogout},
         ]
-      : [{ label: "Sign in", url: "/login" }]),
+      : [{ label: "Sign in", url: "/login", }]),
   ];
   // Desktop links
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-lg border-b-3 border-black/70 py-2">
-      <div className="max-w-7xl mx-auto px-6 md:px-8 flex items-center justify-between">
+    <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-lg border-b-3 border-black/70">
+      <div className="max-w-7xl mx-auto px-6 md:px-8 py-4 flex items-center justify-between">
         {/* Logo */}
         <a href="#" className="flex items-center gap-3">
           <svg
@@ -89,14 +89,15 @@ const Navbar = () => {
                 {link.url ? (
                   <a
                     href={link.url}
-                    className="text-black hover:text-white transition-colors duration-300 px-6 py-7 hover:bg-black"
+                    onClick={link.onClick}
+                    className="text-black hover:text-white transition-colors duration-300 px-6 py-6 hover:bg-black/70"
                   >
                     {link.label}
                   </a>
                 ) : (
                   <button
                     onClick={link.onClick}
-                    className="text-black hover:text-white transition-colors duration-300 px-6 py-4 hover:bg-black"
+                    className="text-black hover:text-white transition-colors duration-300 px-6 py-2 hover:bg-black/70"
                   >
                     {link.label}
                   </button>
