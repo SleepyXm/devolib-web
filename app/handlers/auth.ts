@@ -1,6 +1,8 @@
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
 export const WSAPI_BASE = process.env.NEXT_PUBLIC_WS_API_BASE;
 
+import ErrorPopup from "../components/ErrorPopup";
+
 export async function request(path: string, options: RequestInit) {
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
@@ -14,6 +16,7 @@ export async function request(path: string, options: RequestInit) {
   const data = await res.json();
 
   if (!res.ok) {
+    
     throw new Error(data.detail || `Request failed with status ${res.status}`);
   }
 

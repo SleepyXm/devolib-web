@@ -21,7 +21,7 @@ export default function Profile() {
   return (
     <div className="min-h-screen flex justify-center items-start py-8 relative text-black dark:text-zinc-200">
       <div className="w-[85vw] h-[85vh] border-3 border-black/70 dark:border-white p-6 shadow-2xl flex gap-6">
-        <div className="w-48 flex flex-col items-center border-r border-white/10 pr-4 gap-6">
+        <div className="w-48 flex flex-col items-center border-r border-black/20 dark:border-white/10 pr-4 gap-6">
           <div className="flex flex-col items-center">
             <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-xl font-medium text-black dark:text-zinc-200">
               {username ? username[0].toUpperCase() : "?"}
@@ -113,21 +113,21 @@ export default function Profile() {
         <div className="flex-1 overflow-auto flex flex-col gap-4">
           {activeTab === "account" && (
             <>
-              <h2 className="text-3xl font-semibold mt-6 transition-all hover:text-white hover:bg-black">
+              <h2 className="text-3xl font-semibold mt-6 transition-all">
                 Account Information
               </h2>
 
-              <div className="flex items-center justify-between border-2 border-black dark:border-white p-3  mt-[2%]">
+              <div className="flex items-center justify-between border-2 border-black rounded-lg dark:border-white p-3  mt-[2%]">
                 <span className="font-medium">Username:</span>
                 <span>{user.username}</span>
               </div>
 
-              <div className="flex items-center justify-between border-2 border-black dark:border-white p-3">
+              <div className="flex items-center justify-between border-2 border-black rounded-lg dark:border-white p-3">
                 <span className="font-medium">Password:</span>
                 <span className="tracking-widest">••••••••</span>
               </div>
 
-              <div className="flex items-center justify-between border-2 border-black dark:border-white p-3">
+              <div className="flex items-center justify-between border-2 border-black rounded-lg dark:border-white p-3">
                 <span className="font-medium">Email:</span>
                 
               </div>

@@ -1,20 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useContext, useEffect } from "react";
 import { Column, Row, Table } from "@/app/types/dbtypes";
 import { DBCommandBuilder, DBCommand } from "@/app/types/dbstuff";
+import { ProjectContext } from "../[project]/layout";
 
 
 
-const COLUMN_TYPES = ["string", "number", "boolean", "date"];
+const COLUMN_TYPES = ["STRING", "TEXT", "VARCHAR", "NUMBER", "BOOLEAN", "DATE", "UUID", "INT", "TIMESTAMPTZ"];
 
 export default function DatabasePage() {
   const [tables, setTables] = useState<Table[]>([]);
 
   const [tableCounter, setTableCounter] = useState(1);
   const [commandQueue, setCommandQueue] = useState<DBCommand[]>([]);
+  const { projectWS } = useContext(ProjectContext)!;
+
+  useEffect(() => {
+    if (!projectWS) return;
+    
+    projectWS.onSchema((data) => {
+      console.log('Received schema:', data);
+      
+      const loadedTables = Object.entries(data.tables).map(([tableName, columns]: [string, any], idx) => ({
+        id: idx + 1,
+        name: tableName,
+        columns: columns.map((col: any) => ({
+          name: col.column,
+          type: col.type.toUpperCase(),
+          expanded: false
+        })),
+        rows: []
+      }));
+      
+      setTables(loadedTables);
+      setTableCounter(loadedTables.length + 1);
+    });
+  }, [projectWS]);
   
-const addTable = () => {
+  const addTable = () => {
     const newTable: Table = { 
       id: tableCounter, 
       name: `Table_${tableCounter}`, 

@@ -148,7 +148,7 @@ async def create_project_container(
                 cmd = configs_map[framework]['scaffold_command'].replace('{name}', project_name)
                 logger.info("Scaffolding backend", framework=framework, cmd=cmd)
                 container.exec_run(
-                    f"sh -c 'cd /app/workspace/backend && {cmd}'",
+                    f"sh -c '{cmd}'",
                     tty=True,
                     detach=False
                 )

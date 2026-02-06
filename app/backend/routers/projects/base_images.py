@@ -64,7 +64,7 @@ RUN pip install --no-cache-dir \\
     psycopg2-binary \\
     redis \\
     httpx
-RUN apk add --no-cache postgresql-client mysql-client \\
+RUN apk add --no-cache postgresql mysql \\
     && rm -rf /var/cache/apk/*
 WORKDIR /app/workspace
 CMD ["tail", "-f", "/dev/null"]
@@ -147,7 +147,7 @@ FROM python:3.14-alpine
 # System deps
 RUN apk update && apk add --no-cache \\
     curl bash ca-certificates git build-base \\
-    nodejs npm postgresql-client mysql-client \\
+    nodejs npm postgresql mysql \\
     python3 make g++ \\
     && rm -rf /var/cache/apk/*
 
@@ -182,6 +182,17 @@ RUN mkdir -p /tmp/cache && cd /tmp/cache && \\
         axios \\
         @tanstack/react-query \\
     && cd / && rm -rf /tmp/cache
+
+# Initialize postgres database
+RUN mkdir -p /var/lib/postgresql/data && \\
+    chown -R postgres:postgres /var/lib/postgresql && \\
+    su - postgres -c "initdb -D /var/lib/postgresql/data"
+RUN mkdir -p /run/postgresql && \\
+    chown postgres:postgres /run/postgresql
+
+RUN su - postgres -c "pg_ctl -D /var/lib/postgresql/data start -w && \
+    psql -c 'CREATE DATABASE myapp;' && \
+    pg_ctl -D /var/lib/postgresql/data stop"
 
 RUN mkdir -p /app/workspace/frontend
 RUN mkdir -p /app/workspace/backend
