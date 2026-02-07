@@ -31,7 +31,7 @@ BASE_IMAGES = {
     },
     'mysql': {
         'tag': 'devolib_mysql:latest',
-        'description': 'MySQL 8 - ~400MB'
+        'description': 'MySQL - ~400MB'
     }
 }
 
@@ -118,7 +118,7 @@ CMD ["tail", "-f", "/dev/null"]
 def build_mysql():
     """MySQL database image."""
     dockerfile = """
-FROM mysql:8
+FROM alpine/mysql:latest
 ENV MYSQL_ROOT_PASSWORD=devolib
 ENV MYSQL_DATABASE=devolib
 ENV MYSQL_USER=devolib

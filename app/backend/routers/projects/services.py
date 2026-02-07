@@ -3,6 +3,7 @@ import os
 import asyncio
 from fastapi import WebSocket
 import structlog
+from database import database
 
 logger = structlog.get_logger()
 
@@ -69,17 +70,43 @@ async def start_service(container, project_id: str, project_name: str, service: 
         await send_service_status(websocket, {service: False})
         return
     
+    # Fetch service configuration from database
+    row = await database.fetch_one(
+        """
+        SELECT
+          s.name,
+          s.category,
+          s.default_start_command,
+          s.default_port,
+          ps.custom_start_command
+        FROM project_services ps
+        JOIN services s ON s.id = ps.service_id
+        WHERE ps.project_id = :project_id
+          AND s.category = :category
+        """,
+        {"project_id": project_id, "category": service},
+    )
+
+    if not row:
+        await websocket.send_text(f"[✗] No {service} service configured in database\n")
+        await send_service_status(websocket, {service: False})
+        return
+
+    # Get the command from DB default
+    command = row["custom_start_command"] or row["default_start_command"]
+    
+    # Build service commands using DB command
     service_commands = {
-        'frontend': f"bash -c 'cd /app/workspace/frontend/{project_name} && nohup npm run dev > /tmp/frontend.log 2>&1 &'",
-        'backend': f"bash -c 'cd /app/workspace/backend && nohup python main.py > /tmp/backend.log 2>&1 &'",
-        'database': f"bash -c 'su - postgres -c \"postgres -D /var/lib/postgresql/data > /tmp/db.log 2>&1 &\"'"
+        'frontend': f"bash -c 'cd /app/workspace/frontend/{project_name} && nohup {command} > /tmp/frontend.log 2>&1 &'",
+        'backend': f"bash -c 'cd /app/workspace/backend && nohup {command} > /tmp/backend.log 2>&1 &'",
+        'database': f"bash -c 'nohup {command} > /tmp/database.log 2>&1 &'"
     }
     
     if service in service_commands:
         # Try to start the service
         result = container.exec_run(service_commands[service], detach=True)
-        await websocket.send_text(f"[→] Starting {service} service...\n")
-        print(f"Started {service} service for project {project_id}")
+        await websocket.send_text(f"[→] Starting {row['name']} service...\n")
+        logger.info(f"Started {row['name']} service for project {project_id} with command: {service_commands[service]}")
         
         
         if service == 'database':
@@ -120,7 +147,7 @@ async def start_service(container, project_id: str, project_name: str, service: 
         is_running = await check_service_health(container, service)
         
         if is_running:
-            await websocket.send_text(f"[✓] {service.capitalize()} service is running!\n")
+            await websocket.send_text(f"[✓] {row['name']} service is running!\n")
             await send_service_status(websocket, {service: True})
         else:
             # Check the logs to see why it failed
@@ -128,10 +155,10 @@ async def start_service(container, project_id: str, project_name: str, service: 
             log_check = container.exec_run(f"tail -20 {log_file}")
             log_output = log_check.output.decode() if log_check.output else "No logs available"
             
-            await websocket.send_text(f"[!] {service.capitalize()} failed to start. Logs:\n{log_output}\n")
+            await websocket.send_text(f"[!] {row['name']} failed to start. Logs:\n{log_output}\n")
             await send_service_status(websocket, {service: False})
     else:
-        await websocket.send_text(f"Unknown service: {service}\n")
+        await websocket.send_text(f"Unknown service: {row['name']}\n")
 
 
 
