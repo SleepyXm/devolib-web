@@ -107,7 +107,7 @@ async def start_service(container, project_id: str, project_name: str, service: 
     if service == "frontend":
         container.exec_run(f"bash -c 'cd /app/workspace/frontend/{project_name} && nohup {command} >/tmp/{service}.log 2>&1 &'", detach=True)
     await websocket.send_text(f"[→] Starting {row['name']} ({service})...\n")
-    print(f"Started {service} for {project_name} with command: {command}")
+    logger.info(f"Started {service} for {project_name} with command: {command}")
 
     if service == "database":
         await asyncio.sleep(2)
@@ -239,7 +239,7 @@ async def process_command(container, cmd: str, current_dir: str, websocket: WebS
     if cmd.startswith("{") and cmd.endswith("}"):
         try:
             payload = json.loads(cmd)
-            print(f"Received JSON payload: {payload}")
+            logger.info(f"Received JSON payload: {payload}")
             return await handle_json_command(container, payload, current_dir, websocket, project_id, project_name)
         except Exception as e:
             print(f"Error handling JSON command: {e}")
