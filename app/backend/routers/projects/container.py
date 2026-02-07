@@ -39,6 +39,11 @@ async def start_project_container(project_id: str, current_user: dict = Depends(
         except docker.errors.ImageNotFound:
             raise HTTPException(status_code=404, detail="Docker image not found")
     
+    await database.execute(
+        "UPDATE projects SET last_online = NOW() WHERE project_id = :project_id",
+        {"project_id": project_id}
+    )
+    
     return {"ok": True, "container_id": container.id, "status": container.status}
 
 

@@ -21,13 +21,14 @@ async def list_projects(current_user: dict = Depends(get_current_user)):
         p.status, 
         p.container_id, 
         p.created_at,
+        p.last_online,
         s.name as service_name,
         s.framework as service_framework
     FROM projects p
     LEFT JOIN project_services ps ON p.project_id = ps.project_id
     LEFT JOIN services s ON s.id = ps.service_id
     WHERE p.user_id = :user_id
-    ORDER BY p.project_id
+    ORDER BY p.last_online DESC NULLS LAST, p.created_at DESC
     """
     rows = await database.fetch_all(query=query, values={"user_id": current_user["id"]})
     
@@ -43,7 +44,8 @@ async def list_projects(current_user: dict = Depends(get_current_user)):
                 "status": row["status"],
                 "container_id": row["container_id"],
                 "created_at": row["created_at"],
-                "services": []
+                "services": [],
+                "last_online": row["last_online"]
             }
         
         # Add service if it exists for project
@@ -108,6 +110,34 @@ async def create_project(
                     "service_id": service["id"],
                 },
             )
+    
+    default_envs = [
+        {"key": "FRONTEND_URL", "value": f"{name}.localhost", "is_secret": False},
+        {"key": "BACKEND_URL", "value": "http://localhost:8000", "is_secret": False},
+        {"key": "DATABASE_URL", "value": "postgresql://postgres@localhost:5432/myapp", "is_secret": True},
+    ]
+
+    default_endpoints = []
+    if frontend:
+        default_endpoints.append({"path": "/", "type": "frontend"})
+    if backend:
+        default_endpoints.extend([
+            {"method": "GET", "path": "/api/health", "type": "backend"},
+        ])
+
+    await database.execute(
+        """
+        INSERT INTO project_metadata (project_id, envs, db_schema, endpoints)
+        VALUES (:project_id, CAST(:envs AS jsonb), CAST(:db_schema AS jsonb), CAST(:endpoints AS jsonb))
+        """,
+        {
+            "project_id": project_id,
+            "envs": json.dumps(default_envs),
+            "db_schema": json.dumps({}),
+            "endpoints": json.dumps(default_endpoints)
+        }
+    )
+    
     container_info = await create_project_container(
         project_id, 
         name, 
@@ -136,7 +166,7 @@ async def delete_project(
     ):
 
     select_query = """
-    SELECT * FROM projects
+    SELECT project_id FROM projects
     WHERE project_id = :project_id AND user_id = :user_id
     """
     project = await database.fetch_one(
@@ -155,3 +185,52 @@ async def delete_project(
     await database.execute(query=delete_query, values={"project_id": project_id})
 
     return {"ok": True, "project_id": project_id, "deleted": True}
+
+@router.get("/metadata/{project_id}")
+async def get_metadata(
+    project_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    # Verify ownership
+    select_query = """
+    SELECT project_id FROM projects 
+    WHERE project_id = :project_id AND user_id = :user_id
+    """
+    project = await database.fetch_one(
+        select_query,
+        {"project_id": project_id, "user_id": current_user["id"]}
+    )
+    
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found or not owned by user")
+    
+    # Get metadata
+    query = """
+    SELECT envs, db_schema, endpoints, updated_at
+    FROM project_metadata
+    WHERE project_id = :project_id
+    """
+    metadata = await database.fetch_one(query, {"project_id": project_id})
+    
+    if not metadata:
+        # Create default metadata
+        await database.execute(
+            """
+            INSERT INTO project_metadata (project_id, envs, db_schema, endpoints)
+            VALUES (:project_id, '[]'::jsonb, '{}'::jsonb, '[]'::jsonb)
+            """,
+            {"project_id": project_id}
+        )
+        return {
+            "envs": [],
+            "db_schema": {},
+            "endpoints": [],
+            "updated_at": None
+        }
+    
+    return {
+        "envs": json.loads(metadata["envs"]) if isinstance(metadata["envs"], str) else metadata["envs"],
+        "db_schema": json.loads(metadata["db_schema"]) if isinstance(metadata["db_schema"], str) else metadata["db_schema"],
+        "endpoints": json.loads(metadata["endpoints"]) if isinstance(metadata["endpoints"], str) else metadata["endpoints"],
+        "updated_at": metadata["updated_at"]
+    }
