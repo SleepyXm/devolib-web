@@ -16,6 +16,14 @@ export type Project = {
     user_id: string;
     container_id: string;
     status: string;
+    last_online: string;
+}
+
+export type ProjectMetaData = {
+  envs: Array<{key: string; value: string; is_secret: boolean}>;
+  db_schema: Record<string, Array<{name: string; type: string; nullable: boolean}>>;
+  endpoints: Array<{method?: string; path: string; type: string}>;
+  updated_at: string | null;
 }
 
 export async function createProject(user_id: string, name: string, frontend?: string, backend?: string, db?: string): Promise<Project> {
@@ -35,6 +43,12 @@ export async function getProject(id: string): Promise<Project> {
   const res = await request(`${project_endpoint}/${id}`, { method: "GET" });
   return res;
 }
+
+export async function getProjectMetadata(id: string): Promise<ProjectMetaData> {
+  const res = await request(`${project_endpoint}/metadata/${id}`, { method: "GET" });
+  return res; 
+}
+
 
 export async function editProject(id: string, updates: Partial<Project>): Promise<Project> {
   const res = await request(`${project_endpoint}/edit/${id}`, {

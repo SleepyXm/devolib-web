@@ -1,22 +1,25 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { ProjectCard } from "./components/projectdisplay";
+import { ProjectModal } from "./components/projectmodal";
 import { useUser } from "@/app/provider/UserProvider";
 import { listProjects } from "../handlers/projects";
 
 export default function DashboardPage() {
   const user = useUser();
   const username = user?.user?.username;
-  const router = useRouter();
   const loggedInUsername = user?.user?.username;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [selectedProject, setSelectedProject] = useState("");
   const [projects, setProjects] = useState<
     {
       project_id: string;
       name: string;
       status: string;
       services?: { framework: string }[];
+      last_online: string;
     }[]
   >([]);
 
@@ -59,45 +62,23 @@ export default function DashboardPage() {
             </div>
           ) : (
             projects.map((project) => (
-              <div
+              <ProjectCard
                 key={project.project_id}
-                className="border-2 border-black dark:border-white p-4 py-16 hover:bg-gray-100 dark:hover:bg-zinc-800 flex flex-col justify-between"
-              >
-                <span
-                  className="cursor-pointer font-medium"
-                  onClick={() => {
-                    // fit the modal stuff in here
-                  }}
-                >
-                  {project.name} {`Status: ${project.status}`}
-                </span>
-
-                <div className="mt-2 flex flex-wrap gap-4">
-                  {project.services && project.services.length > 0 ? (
-                    project.services.map((s) => {
-                      const iconUrl = `https://skillicons.dev/icons?i=${s.framework.toLowerCase()}`;
-                      return (
-                        <div
-                          key={s.framework}
-                          className="flex flex-col items-center text-center text-sm"
-                        >
-                          <img
-                            src={iconUrl}
-                            alt={s.framework}
-                            className="h-8 w-8 mb-1"
-                          />
-                          <span>{s.framework}</span>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <span className="text-gray-400 text-sm">No services</span>
-                  )}
-                </div>
-              </div>
+                project={project}
+                onOpenModal={setSelectedProject}
+              />
             ))
           )}
         </div>
+
+        {selectedProject && (
+        <ProjectModal
+          projectId={selectedProject}
+          projectName={selectedProject}
+          onClose={() => setSelectedProject("")}
+        />
+      )}
+
       </div>
     </div>
   );

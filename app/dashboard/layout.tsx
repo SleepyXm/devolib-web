@@ -5,7 +5,6 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUser } from "@/app/provider/UserProvider";
-import ProjectsNav from "./components/projectnav";
 import { useRouter } from "next/navigation";
 
 interface DashboardLayoutProps {
@@ -64,7 +63,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
 
       <div className="flex-1 flex flex-col">
-        <ProjectsNav />
 
         <main className="flex-1">
           {children}
