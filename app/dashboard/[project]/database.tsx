@@ -1,143 +1,35 @@
 "use client";
 
-import { useState, useContext, useEffect } from "react";
-import { Column, Row, Table } from "@/app/types/dbtypes";
-import { DBCommandBuilder, DBCommand } from "@/app/types/dbstuff";
+import { useContext, useEffect } from "react";
 import { ProjectContext } from "../[project]/layout";
-
-
+import { useTableManager } from "./database/tablemanager";
 
 const COLUMN_TYPES = ["STRING", "TEXT", "VARCHAR", "NUMBER", "BOOLEAN", "DATE", "UUID", "INT", "TIMESTAMPTZ"];
 
 export default function DatabasePage() {
-  const [tables, setTables] = useState<Table[]>([]);
-
-  const [tableCounter, setTableCounter] = useState(1);
-  const [commandQueue, setCommandQueue] = useState<DBCommand[]>([]);
   const { projectWS } = useContext(ProjectContext)!;
+  
+  const {
+    tables,
+    loadSchema,
+    addTable,
+    deleteTable,
+    addColumn,
+    deleteColumn,
+    updateColumn,
+    toggleExpanded,
+    addRow,
+    updateRowValue
+  } = useTableManager(projectWS);
 
   useEffect(() => {
     if (!projectWS) return;
     
     projectWS.onSchema((data) => {
       console.log('Received schema:', data);
-      
-      const loadedTables = Object.entries(data.tables).map(([tableName, columns]: [string, any], idx) => ({
-        id: idx + 1,
-        name: tableName,
-        columns: columns.map((col: any) => ({
-          name: col.column,
-          type: col.type.toUpperCase(),
-          expanded: false
-        })),
-        rows: []
-      }));
-      
-      setTables(loadedTables);
-      setTableCounter(loadedTables.length + 1);
+      loadSchema(data);
     });
-  }, [projectWS]);
-  
-  const addTable = () => {
-    const newTable: Table = { 
-      id: tableCounter, 
-      name: `Table_${tableCounter}`, 
-      columns: [], 
-      rows: [] 
-    };
-    
-    setTables([...tables, newTable]);
-    setTableCounter(tableCounter + 1);
-    
-    // Build command (ready for WS later)
-    const command = DBCommandBuilder.createTable(newTable.name, newTable.columns);
-    setCommandQueue([...commandQueue, command]);
-    console.log('CREATE TABLE command:', command);
-  };
-  
-  
-  const deleteTable = (tableId: number) => {
-    setTables(tables
-      .filter(t => t.id !== tableId)
-      .map(t => ({
-        ...t,
-        columns: t.columns.map(c => c.linkedTableId === tableId ? { ...c, linkedTableId: undefined } : c)
-      }))
-    );
-  };
-
-  const addColumn = (tableId: number) => {
-    const table = tables.find(t => t.id === tableId);
-    if (!table) return;
-    
-    const newCol: Column = { name: "new_column", type: "string", expanded: true };
-    setTables(tables.map(t => 
-      t.id === tableId ? { ...t, columns: [...t.columns, newCol] } : t
-    ));
-    
-    const command = DBCommandBuilder.addColumn(table.name, newCol);
-    setCommandQueue([...commandQueue, command]);
-    console.log('ADD COLUMN command:', command);
-  };
-  
-  const deleteColumn = (tableId: number, colIdx: number) => {
-    const colName = tables.find(t => t.id === tableId)?.columns[colIdx]?.name;
-    setTables(tables.map(t => ({
-      ...t,
-      columns: t.id === tableId ? t.columns.filter((_, idx) => idx !== colIdx) : t.columns,
-      rows: t.rows.map(r => {
-        if (!colName) return r;
-        const { [colName]: _, ...rest } = r;
-        return rest;
-      })
-    })).map(t => ({
-      ...t,
-      columns: t.columns.map(c => c.linkedTableId && c.linkedTableId === tableId ? { ...c, linkedTableId: undefined } : c)
-    })));
-  };
-
-  const updateColumn = (tableId: number, colIdx: number, updated: Partial<Column>) => {
-    setTables(tables.map(t => {
-      if (t.id === tableId) {
-        const updatedCols = t.columns.map((col, idx) => idx === colIdx ? { ...col, ...updated } : col);
-        return { ...t, columns: updatedCols };
-      }
-      return t;
-    }));
-  };
-
-  const toggleExpanded = (tableId: number, colIdx: number) => {
-    setTables(tables.map(t => {
-      if (t.id === tableId) {
-        const updatedCols = t.columns.map((col, idx) => idx === colIdx ? { ...col, expanded: !col.expanded } : col);
-        return { ...t, columns: updatedCols };
-      }
-      return t;
-    }));
-  };
-
-  const addRow = (tableId: number) => {
-    setTables(tables.map(t => {
-      if (t.id === tableId) {
-        const newRow: Row = {};
-        t.columns.forEach(col => {
-          newRow[col.name] = "";
-        });
-        return { ...t, rows: [...t.rows, newRow] };
-      }
-      return t;
-    }));
-  };
-
-  const updateRowValue = (tableId: number, rowIdx: number, colName: string, value: any) => {
-    setTables(tables.map(t => {
-      if (t.id === tableId) {
-        const updatedRows = t.rows.map((row, idx) => idx === rowIdx ? { ...row, [colName]: value } : row);
-        return { ...t, rows: updatedRows };
-      }
-      return t;
-    }));
-  };
+  }, [projectWS, loadSchema]);
 
   return (
     <div className="p-6 space-y-4 w-[60vw]">
@@ -257,8 +149,8 @@ export default function DatabasePage() {
                           >
                             <option value="">Select</option>
                             {tables.find(t => t.id === col.linkedTableId)?.rows.map((r, i) => (
-                              <option key={i} value={r[ tables.find(t => t.id === col.linkedTableId)!.columns[0].name ]}>
-                                {r[ tables.find(t => t.id === col.linkedTableId)!.columns[0].name ]}
+                              <option key={i} value={r[tables.find(t => t.id === col.linkedTableId)!.columns[0].name]}>
+                                {r[tables.find(t => t.id === col.linkedTableId)!.columns[0].name]}
                               </option>
                             ))}
                           </select>
