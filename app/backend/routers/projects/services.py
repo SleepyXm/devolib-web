@@ -4,6 +4,7 @@ import asyncio
 from fastapi import WebSocket
 import structlog
 from database import database
+from .service_invoker import handle_db_command, DBoperations
 
 logger = structlog.get_logger()
 
@@ -206,6 +207,10 @@ async def handle_json_command(container, payload: dict, current_dir: str, websoc
     if payload.get('type') == 'START_SERVICE':
         service = payload.get('service')
         await start_service(container, project_id, project_name, service, websocket)
+        return "", current_dir
+    
+    if payload.get('operation') in DBoperations:
+        await handle_db_command(container, payload, websocket)
         return "", current_dir
     
     # TODO Fall back to existing handle_command
