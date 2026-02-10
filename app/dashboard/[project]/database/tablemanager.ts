@@ -10,7 +10,7 @@ export const useTableManager = (projectWS: any) => {
 
   const executeCommand = (command: DBCommand) => {
     console.log(`${command.operation}:`, command);
-    // TODO: projectWS?.send(command);
+    projectWS?.sendCommand(JSON.stringify(command));
   };
 
   const loadSchema = (schemaData: any) => {
