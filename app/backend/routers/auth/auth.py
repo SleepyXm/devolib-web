@@ -8,6 +8,11 @@ import uuid
 from schemas import UserCreate, UserLogin
 import json
 from uuid import uuid4
+import asyncio
+
+DUMMY_PASSWORD_HASH = (
+    "$2b$12$C6UzMDM.H6dfI/f/IKcEeO9u9wZK0s8AjtKoa6HgMHqmpYyqn1cG."
+)
 
 router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -50,12 +55,23 @@ async def signup(user: UserCreate):
 
 @router.post("/login")
 async def login(user: UserLogin, response: Response):
-    query = "SELECT * FROM users WHERE username = :username"
+
+    query = "SELECT id, password FROM users WHERE username = :username"
+
     db_user = await database.fetch_one(query=query, values={"username": user.username})
+    
+    password_hash = (
+    db_user["password"]
+    if db_user is not None
+    else DUMMY_PASSWORD_HASH
+    )
 
-    if not db_user or not verify_password(user.password, db_user["password"]):
-        raise HTTPException(status_code=400, detail="Username or Password Incorrect.")
+    password_ok = verify_password(user.password, password_hash)
 
+
+    if not password_ok or db_user is None:
+        raise HTTPException(400, "Username or Password Incorrect")
+    
     access_token = create_access_token(str(db_user["id"]))
 
     # Set JWT as HttpOnly cookie
@@ -64,11 +80,11 @@ async def login(user: UserLogin, response: Response):
         key="access_token",
         value=f"Bearer {access_token}",
         httponly=True,
-        max_age=60 * 60 * 24 * 7 * 100,  # 7 days expiry
-        expires=60 * 60 * 24 * 7 * 100,
+        max_age=60 * 60 * 24 * 7,
+        expires=60 * 60 * 24 * 7,
         path="/",
         secure=True,  # Set True in production with HTTPS
-        samesite="none",
+        samesite="lax",
     )
 
 

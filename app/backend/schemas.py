@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError, field_validator
 from datetime import datetime
 from typing import Optional, Any, Dict, List
 from uuid import UUID
@@ -8,6 +8,13 @@ class UserCreate(BaseModel):
     email: str
     password: str
     twofa: Optional[str] = None
+
+    @field_validator('email')
+    def email_must_contain_symbol(cls, v):
+        if '@' not in v:
+            raise ValueError('must contain @ symbol')
+        return v
+        
 
 
 class UserLogin(BaseModel):
