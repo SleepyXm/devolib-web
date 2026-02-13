@@ -11,6 +11,7 @@
   --border-color: #0a0a0a;
   --shadow-color: #0a0a0a;
   --subtext-opacity: 0.6;
+  --maintext-color: #ff5100;
 }
 
 @theme inline {
@@ -23,15 +24,16 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #0d0d0f;
-  --fg: #f0ece6;
+    --fg: #f0ece6;
   --card-bg: #1e1a2e;
   --input-bg: #13111a;
   --badge-bg: #2a1f00;
   --footer-bg: #130f0a;
-  --dot-color: #7474746c;
+  --dot-color: #4645459d;
   --border-color: #f0ece640;
   --shadow-color: #000000;
   --subtext-opacity: 0.5;
+  --maintext-color: #f5f0b8;
   }
 }
 
@@ -57,7 +59,7 @@ body {
 .dv-dot-grid {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 0;
   pointer-events: none;
   background-image: radial-gradient(
     circle,
@@ -188,8 +190,7 @@ body {
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #f5f0b8;
-  text-shadow: 0 0 18px #f5f0b840;
+  text-shadow: 0 0 18px var(--maintext-color);
   opacity: 0.9;
 }
 
