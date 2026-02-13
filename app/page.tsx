@@ -4,8 +4,9 @@ export default function Home() {
   return (
     <>
     <div className="scroll-smooth">
+    <div className="dv-dot-grid">
     <div className="flex min-h-screen items-center justify-center text-white">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start lg:max-w-7xl">
+      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 transparent sm:items-start lg:max-w-7xl">
         <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
           <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black">
             DevoLib
@@ -65,6 +66,7 @@ export default function Home() {
         </h1>
       </div>
       <LandingPage />
+      </div>
       </div>
     </>
   );
