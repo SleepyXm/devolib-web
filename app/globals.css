@@ -1,38 +1,28 @@
 @import "tailwindcss";
 
 :root {
-  --black: #0a0a0a;
-  --white: #f5f0eb;
-  --mint: #b8f5d8;
-  --lavender: #d4b8f5;
-  --peach: #f5d4b8;
-  --yellow: #f5f0b8;
-  --border: 2.5px solid var(--black);
-  --shadow: 5px 5px 0px var(--black);
+  --bg: #f5f0eb;
+  --fg: #0a0a0a;
+  --card-bg: #d4b8f5;
+  --input-bg: #f5f0eb;
+  --badge-bg: #f5f0b8;
+  --footer-bg: #f5d4b8;
+  --dot-color: #00000065;
+  --border-color: #0a0a0a;
+  --shadow-color: #0a0a0a;
+  --subtext-opacity: 0.6;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --black: #0a0a0a;
-    --white: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-[data-theme="dark"] {
-  --bg: #0d0d0f;
+    --bg: #0d0d0f;
   --fg: #f0ece6;
   --card-bg: #1e1a2e;
   --input-bg: #13111a;
@@ -42,20 +32,15 @@ body {
   --border-color: #f0ece640;
   --shadow-color: #000000;
   --subtext-opacity: 0.5;
+  }
 }
 
-[data-theme="light"] {
-  --bg: #f5f0eb;
-  --fg: #0a0a0a;
-  --card-bg: #d4b8f5;
-  --input-bg: #f5f0eb;
-  --badge-bg: #f5f0b8;
-  --footer-bg: #f5d4b8;
-  --dot-color: #00000055;
-  --border-color: #0a0a0a;
-  --shadow-color: #0a0a0a;
-  --subtext-opacity: 0.6;
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
 }
+
 
 .dv-wrap {
   background-color: var(--bg);
@@ -72,7 +57,7 @@ body {
 .dv-dot-grid {
   position: fixed;
   inset: 0;
-  z-index: 0;
+  z-index: 50;
   pointer-events: none;
   background-image: radial-gradient(
     circle,

@@ -19,7 +19,7 @@ export function ProjectCard({ project, onOpenModal }: ProjectCardProps) {
         {project.name} {`Status: ${project.status}`}
       </span>
 
-      <div className="mt-2 flex flex-wrap gap-4">
+      <div className="mt-2 flex flex-wrap gap-4 z-50">
         {project.services && project.services.length > 0 ? (
           project.services.map((s) => {
             const iconUrl = `https://skillicons.dev/icons?i=${s.framework.toLowerCase()}`;

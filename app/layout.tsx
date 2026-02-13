@@ -51,7 +51,6 @@ export default function RootLayout(
       <body
         className={`${Space_mono.className} ${syne.className} antialiased bg-white dark:bg-black`}
       >
-        <div data-theme={dark ? "light" : "dark"} style={{ minHeight: "100vh" }}>
         <div className="dv-wrap">
         <div className="dv-dot-grid" />
         <div className="dv-glow dv-glow-1" />
@@ -60,7 +59,6 @@ export default function RootLayout(
         <Navbar />
         
         {children}
-        </div>
         </div>
       </body>
       </UserProvider>

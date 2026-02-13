@@ -161,7 +161,7 @@ export default function ProjectsPage() {
             ${
               loading
                 ? "bg-gray-400 cursor-not-allowed"
-                : "bg-yellow-400 hover:bg-gradient-to-r from-yellow-300 to-red-300 active:bg-yellow-800"
+                : "bg-yellow-400 hover:bg-gradient-to-r from-yellow-300 to-red-300 active:bg-yellow-800 z-50"
             }
             transition-colors duration-300
             `}
