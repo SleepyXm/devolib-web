@@ -35,10 +35,10 @@ const Navbar = () => {
   // Desktop links
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/70 border-b-3 border-black/70 dark:border-white dark:bg-black">
+    <header className="fixed top-0 left-0 right-0 z-300 bg-white/70 border-b-3 border-black/70 dark:border-white dark:bg-black">
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-4 flex items-center justify-between">
         {/* Logo */}
-        <a href="#" className="flex items-center gap-3">
+        <a href="/" className="flex items-center gap-3">
           <svg
             width="36"
             height="36"
@@ -57,10 +57,10 @@ const Navbar = () => {
           <div className="text-sm font-semibold text-black dark:text-white w-full flex items-center justify-center whitespace-nowrap">
             {" "}
             <svg
-              width="auto"
-              height="20"
-              viewBox="0 0 400 80"
-              className="inline align-middle"
+              width="160"
+              height="40"
+              viewBox="0 0 540 80"
+              className="dv-accent"
             >
               <defs>
                 <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -74,6 +74,7 @@ const Navbar = () => {
                 fontSize="84"
                 fontWeight="500"
                 fill="url(#grad1)"
+                className="dv-headline"
               >
                 DevoLib
               </text>

@@ -1,28 +1,29 @@
-import LandingPage from "./components/units/gasptest";
+import LandingPage from "@/app/components/units/gsaptest";
 
 export default function Home() {
   return (
     <>
     <div className="scroll-smooth">
-    <div className="dv-dot-grid">
-    <div className="flex min-h-screen items-center justify-center text-white">
+    <div className="flex min-h-screen items-center justify-center">
       <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 transparent sm:items-start lg:max-w-7xl">
         <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black">
+          <div className="dv-accent">
+          <h1 className="dv-headline">
             DevoLib
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
+          </div>
+          <p className="dv-subtext">
             Looking for a starting point or more instructions? Hit{" "}
             <a
               href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-200"
+              className="dv-links"
             >
               Let's get started
             </a>{" "}
             or check out the{" "}
             <a
               href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-200"
+              className="dv-links"
             >
               Previews
             </a>{" "}
@@ -66,7 +67,6 @@ export default function Home() {
         </h1>
       </div>
       <LandingPage />
-      </div>
       </div>
     </>
   );

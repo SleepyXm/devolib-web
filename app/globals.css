@@ -10,8 +10,12 @@
   --dot-color: #00000065;
   --border-color: #0a0a0a;
   --shadow-color: #0a0a0a;
-  --subtext-opacity: 0.6;
+  --subtext-opacity: 0.8;
   --maintext-color: #ff5100;
+  --accent-bg: #b8f5d8;
+  --subtext-color: #2c2c2c;
+  --dv-links-color: #000000;
+  --dv-links-hover-color: #00904a;
 }
 
 @theme inline {
@@ -23,7 +27,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0d0d0f;
+    --bg: #18181a;
     --fg: #f0ece6;
   --card-bg: #1e1a2e;
   --input-bg: #13111a;
@@ -32,8 +36,12 @@
   --dot-color: #4645459d;
   --border-color: #f0ece640;
   --shadow-color: #000000;
-  --subtext-opacity: 0.5;
+  --subtext-opacity: 0.8;
   --maintext-color: #f5f0b8;
+  --accent-bg: #f96d3a;
+  --subtext-color: #afafaf;
+  --dv-links-color: #ffffff;
+  --dv-links-hover-color: #f96d3a;
   }
 }
 
@@ -176,11 +184,11 @@ body {
 
 .dv-accent {
   display: inline-block;
-  background: #b8f5d8;
+  background: var(--accent-bg);
   color: #0a0a0a;
   border: 2.5px solid var(--border-color);
   padding: 0 10px;
-  transform: rotate(-1deg);
+  z-index: 50;
 }
 
 .dv-maintext {
@@ -192,17 +200,32 @@ body {
   text-transform: uppercase;
   text-shadow: 0 0 18px var(--maintext-color);
   opacity: 0.9;
+  z-index: 50;
 }
 
 .dv-subtext {
   margin-top: 20px;
-  font-size: 14px;
+  font-size: 20px;
   line-height: 1.7;
   max-width: 420px;
   margin-left: auto;
   margin-right: auto;
   opacity: var(--subtext-opacity);
+  color: var(--subtext-color);
+  z-index: 50;
 }
+
+.dv-links {
+  font-weight: 500;
+  transition: color 200ms ease;
+  color: var(--dv-links-color);
+
+}
+
+.dv-links:hover {
+  color: var(--dv-links-hover-color)
+}
+
 
 .dv-card {
   background: var(--card-bg);
