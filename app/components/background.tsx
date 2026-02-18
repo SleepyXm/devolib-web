@@ -14,13 +14,6 @@ export default function Background({ children }: { children: React.ReactNode }) 
         <div className="dv-glow dv-glow-2" />
         <div className="dv-glow dv-glow-3" />
 
-        {/* navbar */}
-        <nav className="dv-nav">
-          <button className="dv-toggle" onClick={() => setDark(!dark)}>
-            {dark ? "☾ dark" : "☀ light"}
-          </button>
-        </nav>
-
         {/* page content */}
         {children}
 

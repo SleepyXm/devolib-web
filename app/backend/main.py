@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers.auth import auth
 from routers.projects import projects, images, container
+from routers.payments import payment
+from routers.products import products
 from database import database
 import os
 from dotenv import load_dotenv
@@ -21,6 +23,8 @@ app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(projects.router, prefix="/projects", tags=["projects"])
 app.include_router(container.router, prefix="/container", tags=["container"])
 app.include_router(images.router, prefix="/images", tags=["images"])
+app.include_router(payment.router, prefix="/payment", tags="payment")
+app.include_router(products.router, prefix="/products", tags="products")
 
 
 @app.get("/")
