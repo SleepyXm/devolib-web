@@ -3,22 +3,9 @@ import { Geist, Geist_Mono, DM_Mono, Space_Mono, Syne} from "next/font/google";
 import "./globals.css";
 import { UserProvider } from "./provider/UserProvider";
 import Navbar from "./components/AxonNav";
+import SmoothScroll from "./components/scrollsmooth";
+import Background from "./components/background";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const Dm_Mono = DM_Mono({
-  variable: "--font-dm-mono",
-  weight: ["300", "400", "500"],
-  subsets: ["latin"],
-});
 
 const syne = Syne({
   variable: "--font-dm-mono",
@@ -50,15 +37,11 @@ export default function RootLayout(
       <body
         className={`${Space_mono.className} ${syne.className} antialiased bg-white dark:bg-black`}
       >
-        <div className="dv-wrap">
-        <div className="dv-dot-grid" />
-        <div className="dv-glow dv-glow-1" />
-        <div className="dv-glow dv-glow-2" />
-        <div className="dv-glow dv-glow-3" />
         <Navbar />
+        <Background >
         
         {children}
-        </div>
+        </Background>
       </body>
       </UserProvider>
     </html>

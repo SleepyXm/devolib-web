@@ -54,7 +54,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-100 via-red-300 to-blue-300 scroll-smooth">
+    <div className="min-h-screen bg-gradient-to-br from-yellow-100 via-red-300 to-blue-300 scroll-smooth z-300">
       {/* Hero */}
       <section ref={heroRef} className="h-screen flex items-center justify-center snap-start snap-always">
         <div className="bg-white border-8 border-black p-12 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">

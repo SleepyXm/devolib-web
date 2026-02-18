@@ -36,4 +36,7 @@ class UserOut(BaseModel):
 class ProjectCreate(BaseModel):
     user_id: str
     name: str
+
+class CheckoutRequest(BaseModel):
+    price_id: str
     

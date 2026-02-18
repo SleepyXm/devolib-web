@@ -11,7 +11,7 @@ const colorMenuItems: EditorMenuItem[] = hardValues.flatMap((prefix) =>
   colourOptions.map((color) => ({
     label: `${prefix}-${color.value}`,
     action: "set-class",
-    payload: { prefix, color: color.value },
+    payload: { prefix, color: color.value, shade: color.defaultShade },
   }))
 );
 
