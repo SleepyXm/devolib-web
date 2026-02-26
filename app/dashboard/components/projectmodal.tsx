@@ -136,7 +136,7 @@ export function ProjectModal({ projectId, projectName, onClose }: ProjectModalPr
                         <tbody>
                           {(columns as any[]).map((col, idx) => (
                             <tr key={idx} className="border-b border-gray-200 dark:border-gray-800">
-                              <td className="py-2 px-3 font-mono">{col.name}</td>
+                              <td className="py-2 px-3 font-mono">{col.column}</td>
                               <td className="py-2 px-3 text-gray-600 dark:text-gray-400">{col.type}</td>
                               <td className="py-2 px-3 text-gray-600 dark:text-gray-400">
                                 {col.nullable ? "Yes" : "No"}
