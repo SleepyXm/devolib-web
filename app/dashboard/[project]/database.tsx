@@ -1,14 +1,35 @@
 "use client";
 
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { ProjectContext } from "../[project]/layout";
 import { useTableManager } from "./database/tablemanager";
 
-const COLUMN_TYPES = ["STRING", "TEXT", "VARCHAR", "NUMBER", "BOOLEAN", "DATE", "UUID", "INT", "TIMESTAMPTZ"];
+const COLUMN_TYPES = [
+  "STRING",
+  "TEXT",
+  "VARCHAR",
+  "NUMBER",
+  "BOOLEAN",
+  "DATE",
+  "UUID",
+  "INT",
+  "TIMESTAMPTZ",
+];
 
 export default function DatabasePage() {
   const { projectWS } = useContext(ProjectContext)!;
-  
+
+  const [savedCols, setSavedCols] = useState<Record<string, boolean>>({});
+
+  const handleColumnNameSave = (
+    tableId: number,
+    idx: number,
+    value: string,
+  ) => {
+    updateColumn(tableId, idx, { name: value });
+    setSavedCols((prev) => ({ ...prev, [`${tableId}-${idx}`]: true }));
+  };
+
   const {
     tables,
     loadSchema,
@@ -19,14 +40,14 @@ export default function DatabasePage() {
     updateColumn,
     toggleExpanded,
     addRow,
-    updateRowValue
+    updateRowValue,
   } = useTableManager(projectWS);
 
   useEffect(() => {
     if (!projectWS) return;
-    
+
     projectWS.onSchema((data) => {
-      console.log('Received schema:', data);
+      console.log("Received schema:", data);
       loadSchema(data);
     });
   }, [projectWS, loadSchema]);
@@ -41,7 +62,7 @@ export default function DatabasePage() {
         Add New Table
       </button>
 
-      {tables.map(table => (
+      {tables.map((table) => (
         <div key={table.id} className="border p-4 rounded space-y-2 relative">
           <div className="flex justify-between items-center text-black">
             <h3 className="font-semibold">{table.name}</h3>
@@ -74,10 +95,29 @@ export default function DatabasePage() {
                 <div className="flex justify-between items-center text-black">
                   <input
                     type="text"
-                    value={col.name}
-                    onChange={(e) => updateColumn(table.id, idx, { name: e.target.value })}
+                    defaultValue={col.name}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleColumnNameSave(
+                          table.id,
+                          idx,
+                          e.currentTarget.value,
+                        );
+                      } else {
+                        setSavedCols((prev) => ({
+                          ...prev,
+                          [`${table.id}-${idx}`]: false,
+                        }));
+                      }
+                    }}
                     className="border px-2 py-1 rounded w-1/2"
                   />
+                  {savedCols[`${table.id}-${idx}`] === false && (
+                    <span className="text-xs text-yellow-500">unsaved</span>
+                  )}
+                  {savedCols[`${table.id}-${idx}`] === true && (
+                    <span className="text-xs text-green-500">✓ saved</span>
+                  )}
                   <div className="flex gap-1 items-center">
                     <button
                       className="text-sm px-2 py-1 hover:bg-gray-200 rounded"
@@ -99,24 +139,38 @@ export default function DatabasePage() {
                     <span className="text-sm text-gray-600">Type:</span>
                     <select
                       value={col.type}
-                      onChange={(e) => updateColumn(table.id, idx, { type: e.target.value })}
+                      onChange={(e) =>
+                        updateColumn(table.id, idx, { type: e.target.value })
+                      }
                       className="border px-2 py-1 rounded text-gray-600"
                     >
-                      {COLUMN_TYPES.map(type => (
-                        <option key={type} value={type}>{type}</option>
+                      {COLUMN_TYPES.map((type) => (
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
                       ))}
                     </select>
 
-                    <span className="text-sm text-gray-600">Link to Table:</span>
+                    <span className="text-sm text-gray-600">
+                      Link to Table:
+                    </span>
                     <select
                       value={col.linkedTableId || ""}
-                      onChange={(e) => updateColumn(table.id, idx, { linkedTableId: Number(e.target.value) || undefined })}
+                      onChange={(e) =>
+                        updateColumn(table.id, idx, {
+                          linkedTableId: Number(e.target.value) || undefined,
+                        })
+                      }
                       className="border px-2 py-1 rounded text-gray-600"
                     >
                       <option value="">None</option>
-                      {tables.filter(t => t.id !== table.id).map(t => (
-                        <option key={t.id} value={t.id}>{t.name}</option>
-                      ))}
+                      {tables
+                        .filter((t) => t.id !== table.id)
+                        .map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.name}
+                          </option>
+                        ))}
                     </select>
                   </div>
                 )}
@@ -130,7 +184,10 @@ export default function DatabasePage() {
               <thead>
                 <tr>
                   {table.columns.map((col, idx) => (
-                    <th key={idx} className="border border-gray-300 px-2 py-1 text-left text-black">
+                    <th
+                      key={idx}
+                      className="border border-gray-300 px-2 py-1 text-left text-black"
+                    >
                       {col.name}
                     </th>
                   ))}
@@ -140,25 +197,59 @@ export default function DatabasePage() {
                 {table.rows.map((row, rowIdx) => (
                   <tr key={rowIdx}>
                     {table.columns.map((col, colIdx) => (
-                      <td key={colIdx} className="border border-gray-300 px-2 py-1">
+                      <td
+                        key={colIdx}
+                        className="border border-gray-300 px-2 py-1"
+                      >
                         {col.linkedTableId ? (
                           <select
                             value={row[col.name] || ""}
-                            onChange={(e) => updateRowValue(table.id, rowIdx, col.name, e.target.value)}
+                            onChange={(e) =>
+                              updateRowValue(
+                                table.id,
+                                rowIdx,
+                                col.name,
+                                e.target.value,
+                              )
+                            }
                             className="border px-1 py-0.5 rounded"
                           >
                             <option value="">Select</option>
-                            {tables.find(t => t.id === col.linkedTableId)?.rows.map((r, i) => (
-                              <option key={i} value={r[tables.find(t => t.id === col.linkedTableId)!.columns[0].name]}>
-                                {r[tables.find(t => t.id === col.linkedTableId)!.columns[0].name]}
-                              </option>
-                            ))}
+                            {tables
+                              .find((t) => t.id === col.linkedTableId)
+                              ?.rows.map((r, i) => (
+                                <option
+                                  key={i}
+                                  value={
+                                    r[
+                                      tables.find(
+                                        (t) => t.id === col.linkedTableId,
+                                      )!.columns[0].name
+                                    ]
+                                  }
+                                >
+                                  {
+                                    r[
+                                      tables.find(
+                                        (t) => t.id === col.linkedTableId,
+                                      )!.columns[0].name
+                                    ]
+                                  }
+                                </option>
+                              ))}
                           </select>
                         ) : (
                           <input
                             type="text"
                             value={row[col.name] || ""}
-                            onChange={(e) => updateRowValue(table.id, rowIdx, col.name, e.target.value)}
+                            onChange={(e) =>
+                              updateRowValue(
+                                table.id,
+                                rowIdx,
+                                col.name,
+                                e.target.value,
+                              )
+                            }
                             className="border px-1 py-0.5 rounded w-full"
                           />
                         )}

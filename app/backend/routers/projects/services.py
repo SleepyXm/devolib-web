@@ -4,7 +4,7 @@ import asyncio
 from fastapi import WebSocket
 import structlog
 from database import database
-from .service_invoker import handle_db_command, DBoperations
+from .service_invoker import handle_db_command, DBoperations, push_schema
 
 logger = structlog.get_logger()
 
@@ -120,31 +120,7 @@ async def start_service(container, project_id: str, project_name: str, service: 
         check_result = container.exec_run(check_db_cmd)
 
         if b"exists" in check_result.output:
-            schema_cmd = (
-                f'su - postgres -c "psql -d {project_db} -t -A -F\'|\' '
-                f'-c \\"SELECT table_name, column_name, data_type, is_nullable '
-                f'FROM information_schema.columns '
-                f'WHERE table_schema=\'public\' '
-                f'ORDER BY table_name, ordinal_position;\\""'
-            )
-            schema_result = container.exec_run(schema_cmd)
-
-            tables = {}
-            for line in schema_result.output.decode().strip().split("\n"):
-                if not line:
-                    continue
-                table, column, dtype, nullable = line.split("|")
-                tables.setdefault(table, []).append({
-                    "column": column,
-                    "type": dtype,
-                    "nullable": nullable == "YES",
-                })
-
-            await websocket.send_json({
-                "type": "DATABASE_SCHEMA",
-                "database": project_db,
-                "tables": tables,
-            })
+            await push_schema(container, project_id, websocket)
         else:
             await websocket.send_text(f"[ℹ] Database '{project_db}' not found\n")
 
@@ -210,7 +186,7 @@ async def handle_json_command(container, payload: dict, current_dir: str, websoc
         return "", current_dir
     
     if payload.get('operation') in DBoperations:
-        await handle_db_command(container, payload, websocket)
+        await handle_db_command(container, payload, websocket, project_id)
         return "", current_dir
     
     # TODO Fall back to existing handle_command

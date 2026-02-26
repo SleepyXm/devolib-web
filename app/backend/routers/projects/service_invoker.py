@@ -1,5 +1,7 @@
 from fastapi import WebSocket
 import tempfile, os, tarfile, io
+import json
+from database import database
 
 DBoperations = {
     'CREATE_TABLE', 
@@ -19,7 +21,7 @@ FileOperations = {
 }
 
 
-async def handle_db_command(container, command: dict, websocket: WebSocket):
+async def handle_db_command(container, command: dict, websocket: WebSocket, project_id: str):
     """Handle database operations"""
     if command['operation'] not in DBoperations:
         raise ValueError(f"Invalid operation: {command['operation']}")
@@ -37,6 +39,7 @@ async def handle_db_command(container, command: dict, websocket: WebSocket):
         return False
     
     await websocket.send_text(f"[✓] Executed: {command['operation']} on {command['target']}\n")
+    await push_schema(container, project_id, websocket)
     return True
 
 
@@ -99,3 +102,34 @@ async def handle_file_command(container, command: dict, websocket: WebSocket):
             return False
         await websocket.send_text(f"[✓] Deleted: {path}\n")
         return True
+    
+
+async def push_schema(container, project_id, websocket):
+    schema_cmd = (
+        'su - postgres -c "psql -d myapp -t -A -F\'|\' '
+        '-c \\"SELECT table_name, column_name, data_type, is_nullable '
+        'FROM information_schema.columns '
+        'WHERE table_schema=\'public\' '
+        'ORDER BY table_name, ordinal_position;\\""'
+    )
+    result = container.exec_run(schema_cmd)
+    tables = {}
+    for line in result.output.decode().strip().split("\n"):
+        if not line:
+            continue
+        table, column, dtype, nullable = line.split("|")
+        tables.setdefault(table, []).append({
+            "column": column,
+            "type": dtype,
+            "nullable": nullable == "YES",
+        })
+    await database.execute(
+        """
+        UPDATE project_metadata 
+        SET db_schema = :schema, updated_at = NOW()
+        WHERE project_id = :project_id
+        """,
+        {"schema": json.dumps(tables), "project_id": project_id}
+    )
+
+    await websocket.send_json({"type": "DATABASE_SCHEMA", "tables": tables})
