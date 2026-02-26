@@ -4,7 +4,7 @@ import asyncio
 from fastapi import WebSocket
 import structlog
 from database import database
-from .service_invoker import handle_db_command, DBoperations, push_schema
+from .service_invoker import handle_db_command, DBoperations, FileOperations, handle_file_command, push_schema
 
 logger = structlog.get_logger()
 
@@ -123,7 +123,7 @@ async def start_service(container, project_id: str, project_name: str, service: 
             await push_schema(container, project_id, websocket)
         else:
             await websocket.send_text(f"[ℹ] Database '{project_db}' not found\n")
-
+    
     # Health check
     await asyncio.sleep(3)
     is_running = await check_service_health(container, service)
@@ -188,6 +188,11 @@ async def handle_json_command(container, payload: dict, current_dir: str, websoc
     if payload.get('operation') in DBoperations:
         await handle_db_command(container, payload, websocket, project_id)
         return "", current_dir
+    
+    if payload.get('type') in FileOperations:  # NEW
+        await handle_file_command(container, payload, websocket)
+        return "", current_dir
+
     
     # TODO Fall back to existing handle_command
     # from your_module import handle_command
