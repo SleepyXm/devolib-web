@@ -6,7 +6,8 @@ import {
   connectToProject,
   startProject,
   stopProject,
-  fetchProjectDetails
+  fetchProjectDetails,
+  getProjectMetadata,
 } from "@/app/handlers/projects";
 
 interface ProjectContextType {
@@ -23,6 +24,7 @@ interface ProjectContextType {
   projectId: string | null;
 }
 
+
 export interface ServiceStatus {
   frontend: boolean;
   backend: boolean;
@@ -31,6 +33,19 @@ export interface ServiceStatus {
 }
 
 export const ProjectContext = createContext<ProjectContextType | null>(null);
+
+
+interface ProjectMetaContextType {
+  db_schema: Record<string, { column: string; type: string; nullable: boolean }[]>;
+  endpoints: { path: string; type: string; method?: string }[];
+  envs: { key: string; value: string; is_secret: boolean }[];
+  updated_at: string | null;
+  fetchMeta: () => Promise<void>;
+  setDbSchema: (schema: ProjectMetaContextType["db_schema"]) => void;
+}
+
+export const ProjectMetaContext = createContext<ProjectMetaContextType | null>(null);
+
 
 export default function ProjectLayout({ children }: { children: ReactNode }) {
   const projectWS = useRef<ProjectWS | null>(null);
@@ -46,6 +61,29 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
     database: false,
     container: false,
   });
+
+  const [db_schema, setDbSchema] = useState<ProjectMetaContextType["db_schema"]>({});
+  const [endpoints, setEndpoints] = useState<ProjectMetaContextType["endpoints"]>([]);
+  const [envs, setEnvs] = useState<ProjectMetaContextType["envs"]>([]);
+  const [updated_at, setUpdatedAt] = useState<string | null>(null);
+
+  const fetchMeta = async () => {
+    if (!projectId) return;
+    const meta = await getProjectMetadata(projectId);
+    setDbSchema(meta.db_schema);
+    setEndpoints(meta.endpoints);
+    setEnvs(meta.envs);
+    setUpdatedAt(meta.updated_at);
+  };
+
+  useEffect(() => {
+    if (projectId) {
+      fetchProjectDetails(projectId).then((project) => {
+        setAccessToken(project.access_token);
+      });
+      fetchMeta();
+    }
+  }, [projectId]);
 
   useEffect(() => {
     if (projectId) {
@@ -63,16 +101,13 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
   };
 
   const connect = () => {
-    if (!projectId || !accessToken) return;
-    projectWS.current = connectToProject(projectId, accessToken);
-
-    projectWS.current.onOutput((data) => setLogs((prev) => prev + data));
-
-    // listen for service status
-    projectWS.current.onStatus((status) => setServiceStatus(status));
-
-    setIsConnected(true);
-  };
+  if (!projectId || !accessToken) return;
+  projectWS.current = connectToProject(projectId, accessToken);
+  projectWS.current.onOutput((data) => setLogs((prev) => prev + data));
+  projectWS.current.onStatus((status) => setServiceStatus(status));
+  projectWS.current.onSchema((data) => setDbSchema(data.tables));
+  setIsConnected(true);
+};
 
   const stop = async () => {
     if (!projectId) return;
@@ -116,7 +151,11 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
         projectId,
       }}
     >
+      <ProjectMetaContext.Provider value={{
+        db_schema, endpoints, envs, updated_at, fetchMeta, setDbSchema
+      }}>
       {children}
+      </ProjectMetaContext.Provider>
     </ProjectContext.Provider>
   );
 }

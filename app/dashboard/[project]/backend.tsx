@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import MonacoEditor from "@/app/components/monacoeditor";
+import BackendEditor from "./backend/backendeditor";
+import { useFileManager } from "./frontend/frontendmanager";
+import { resolveRoute } from "./backend/backendstuff";
 
 
 interface CommandPayload {
@@ -14,14 +16,14 @@ interface CommandPayload {
 }
 
 export default function BackendPage() {
-
   const [code, setCode] = useState(
-    `# Backend Entry Point\n# Example: FastAPI route\nfrom fastapi import FastAPI\n\napp = FastAPI()\n\n@app.get("/")\ndef root():\n    return {"message": "Hello from your backend!"}`
+    `# Backend Entry Point\n# Example: FastAPI route\nfrom fastapi import FastAPI\n\napp = FastAPI()\n\n@app.get("/")\ndef root():\n    return {"message": "Hello from your backend!"}`,
   );
   const [projectName, setProjectName] = useState("");
   const [framework, setFramework] = useState("fastapi");
-  const [commandPayload, setCommandPayload] = useState<CommandPayload | null>(null);
-
+  const [commandPayload, setCommandPayload] = useState<CommandPayload | null>(
+    null,
+  );
 
   const handleGeneratePayload = () => {
     const payload: CommandPayload = {
@@ -35,6 +37,21 @@ export default function BackendPage() {
     setCommandPayload(payload);
     console.log("Generated Backend Payload:", payload);
   };
+
+  useEffect(() => {
+    const result = resolveRoute({
+      route: { method: "POST", path: "/auth/signup" },
+      definition: { name: "signup", auth: "none", inputs: ["body"] },
+      query: {
+        operation: "execute",
+        table: "users",
+        columns: ["id", "username", "email", "password"],
+      },
+      response: { type: "message", key: "message" },
+    });
+    console.log(result);
+    setCode(result);
+  }, []);
 
   return (
     <div className="flex flex-col h-full min-h-screen bg-gray-200 text-white">
@@ -85,7 +102,7 @@ export default function BackendPage() {
 
       {/* Code editor */}
       <div className="flex flex-1 overflow-hidden">
-        <MonacoEditor initialCode={code} language="python"/>
+        <BackendEditor initialCode={code} language="python" />
       </div>
     </div>
   );

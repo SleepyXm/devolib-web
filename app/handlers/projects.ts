@@ -21,7 +21,7 @@ export type Project = {
 
 export type ProjectMetaData = {
   envs: Array<{key: string; value: string; is_secret: boolean}>;
-  db_schema: Record<string, Array<{name: string; type: string; nullable: boolean}>>;
+  db_schema: Record<string, Array<{column: string; type: string; nullable: boolean}>>;
   endpoints: Array<{method?: string; path: string; type: string}>;
   updated_at: string | null;
 }
