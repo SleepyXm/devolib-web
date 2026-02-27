@@ -96,7 +96,7 @@ export function resolveRoute(payload: RoutePayload): string {
 
 
 export function resolveSnippetToPlain(snippet: string) {
-  const placeholders: { tabStop: number; options: string[]; line: number; col: number; end: number }[] = [];
+  const placeholders: { tabStop: number; options: string[]; line: number; col: number; end: number; type: "dropdown" | "text" }[] = [];
   
   let text = snippet;
   let offset = 0;
@@ -117,9 +117,10 @@ export function resolveSnippetToPlain(snippet: string) {
     placeholders.push({ 
       tabStop, 
       options, 
-      line, // relative line in snippet
-      col,  // relative column in snippet
-      end: col + defaultValue.length 
+      line,
+      col,
+      end: col + defaultValue.length,
+      type: options.length > 1 ? "dropdown" : "text"
     });
 
     text = text.slice(0, (match.index ?? 0) - offset) + defaultValue + text.slice((match.index ?? 0) + match[0].length - offset);
@@ -133,7 +134,7 @@ export function resolveSnippetToPlain(snippet: string) {
 
 export function activatePlaceholder(
   ed: any,
-  placeholders: { tabStop: number; options: string[]; line: number; col: number; end: number }[],
+  placeholders: { tabStop: number; options: string[]; line: number; col: number; end: number; type: "dropdown" | "text" }[],
   index: number,
   insertPosition: { lineNumber: number; column: number }
 ) {
@@ -141,7 +142,6 @@ export function activatePlaceholder(
 
   const placeholder = placeholders[index];
 
-  // resolve absolute position from relative snippet position
   const absLine = insertPosition.lineNumber + placeholder.line;
   const absCol = placeholder.line === 0
     ? insertPosition.column + placeholder.col
@@ -153,7 +153,6 @@ export function activatePlaceholder(
   const startPos = { lineNumber: absLine, column: absCol };
   const endPos = { lineNumber: absLine, column: absEnd };
 
-  // highlight the current placeholder
   ed.setSelection({
     startLineNumber: startPos.lineNumber,
     startColumn: startPos.column,
@@ -164,31 +163,54 @@ export function activatePlaceholder(
   const domNode = document.createElement("div");
   domNode.className = "bg-gray-900 border border-gray-700 rounded shadow-lg z-50";
 
-  placeholder.options.forEach((option) => {
-    const item = document.createElement("div");
-    item.textContent = option;
-    item.className = "px-3 py-1 text-sm text-white hover:bg-gray-700 cursor-pointer";
-    item.onclick = () => {
-      ed.executeEdits("", [{
-        range: {
-          startLineNumber: startPos.lineNumber,
-          startColumn: startPos.column,
-          endLineNumber: endPos.lineNumber,
-          endColumn: endPos.column,
-        },
-        text: option,
-      }]);
+  const applyValue = (value: string) => {
+    ed.executeEdits("", [{
+      range: {
+        startLineNumber: startPos.lineNumber,
+        startColumn: startPos.column,
+        endLineNumber: endPos.lineNumber,
+        endColumn: endPos.column,
+      },
+      text: value,
+    }]);
 
-      const diff = option.length - (placeholder.end - placeholder.col);
-      const adjusted = placeholders.map((p, pi) =>
-        pi > index ? { ...p, col: p.line === placeholder.line ? p.col + diff : p.col, end: p.line === placeholder.line ? p.end + diff : p.end } : p
-      );
+    const diff = value.length - (placeholder.end - placeholder.col);
+    const adjusted = placeholders.map((p, pi) =>
+      pi > index ? { 
+        ...p, 
+        col: p.line === placeholder.line ? p.col + diff : p.col, 
+        end: p.line === placeholder.line ? p.end + diff : p.end 
+      } : p
+    );
 
-      widget.dispose();
-      activatePlaceholder(ed, adjusted, index + 1, insertPosition);
+    widget.dispose();
+    activatePlaceholder(ed, adjusted, index + 1, insertPosition);
+  };
+
+  if (placeholder.type === "text") {
+    const input = document.createElement("input");
+    input.type = "text";
+    input.placeholder = placeholder.options[0];
+    input.className = "bg-gray-800 text-white px-2 py-1 text-sm rounded border border-gray-600 outline-none w-40";
+    input.onkeydown = (e) => {
+      if (e.key === "Enter") {
+        applyValue(input.value || placeholder.options[0]);
+      }
+      if (e.key === "Escape") {
+        widget.dispose();
+      }
     };
-    domNode.appendChild(item);
-  });
+    domNode.appendChild(input);
+    setTimeout(() => input.focus(), 50);
+  } else {
+    placeholder.options.forEach((option) => {
+      const item = document.createElement("div");
+      item.textContent = option;
+      item.className = "px-3 py-1 text-sm text-white hover:bg-gray-700 cursor-pointer";
+      item.onclick = () => applyValue(option);
+      domNode.appendChild(item);
+    });
+  }
 
   const widget = {
     getId: () => `placeholder-widget-${index}`,
