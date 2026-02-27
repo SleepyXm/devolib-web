@@ -25,6 +25,10 @@ BASE_IMAGES = {
         'tag': 'devolib_fullstack:latest',
         'description': 'Python + Node - ~1.2GB'
     },
+    'fullstacktest': {
+        'tag': 'devolib_fullstacktest:latest',
+        'description': 'Python + Node - ~1.2GB'
+    },
     'postgres': {
         'tag': 'devolib_postgres:latest',
         'description': 'PostgreSQL 16 - ~200MB'
@@ -156,6 +160,12 @@ RUN pip install --no-cache-dir \\
     fastapi uvicorn[standard] pydantic sqlalchemy \\
     psycopg2-binary redis httpx
 
+# Install Bun
+RUN curl -fsSL https://bun.sh/install | bash
+ENV BUN_INSTALL="/root/.bun"
+ENV PATH="$BUN_INSTALL/bin:$PATH"
+
+
 # CRITICAL: Set npm to auto-confirm
 RUN npm config set yes true --global && \\
     npm config set update-notifier false --global && \\
@@ -202,6 +212,77 @@ WORKDIR /app/workspace
 CMD ["tail", "-f", "/dev/null"]
 """
     return _build('fullstack', dockerfile)
+
+
+def build_fullstacktest():
+    """Both ecosystems in one."""
+    dockerfile = """
+FROM python:3.14-alpine
+
+# System deps
+RUN apk update && apk add --no-cache \\
+    curl bash ca-certificates git build-base \\
+    nodejs npm postgresql mysql \\
+    python3 make g++ \\
+    && rm -rf /var/cache/apk/*
+
+# Python packages
+RUN pip install --no-cache-dir \\
+    fastapi uvicorn[standard] pydantic sqlalchemy \\
+    psycopg2-binary redis httpx
+
+# Install Bun
+RUN curl -fsSL https://bun.sh/install | bash
+ENV BUN_INSTALL="/root/.bun"
+ENV PATH="$BUN_INSTALL/bin:$PATH"
+
+
+# CRITICAL: Set npm to auto-confirm
+RUN npm config set yes true --global && \\
+    npm config set update-notifier false --global && \\
+    npm config set fund false --global
+
+# Node tools - with all the frameworks
+RUN npm install -g --force \\
+    create-react-app@latest \\
+    create-next-app@latest \\
+    @vue/cli@latest \\
+    create-vite@latest \\
+    express-generator@latest \\
+    typescript@latest \\
+    tailwindcss@latest \\
+    && npm cache clean --force
+
+# Cache npm packages
+RUN mkdir -p /tmp/cache && cd /tmp/cache && \\
+    npm init -y && \\
+    npm install \\
+        react@latest \\
+        react-dom@latest \\
+        react-router-dom \\
+        axios \\
+        @tanstack/react-query \\
+    && cd / && rm -rf /tmp/cache
+
+# Initialize postgres database
+RUN mkdir -p /var/lib/postgresql/data && \\
+    chown -R postgres:postgres /var/lib/postgresql && \\
+    su - postgres -c "initdb -D /var/lib/postgresql/data"
+RUN mkdir -p /run/postgresql && \\
+    chown postgres:postgres /run/postgresql
+
+RUN su - postgres -c "pg_ctl -D /var/lib/postgresql/data start -w && \
+    psql -c 'CREATE DATABASE myapp;' && \
+    pg_ctl -D /var/lib/postgresql/data stop"
+
+RUN mkdir -p /app/workspace/frontend
+RUN mkdir -p /app/workspace/backend
+RUN mkdir -p /app/workspace/database
+
+WORKDIR /app/workspace
+CMD ["tail", "-f", "/dev/null"]
+"""
+    return _build('fullstacktest', dockerfile)
 
 def _build(image_type: str, dockerfile: str):
     """Build helper."""
@@ -258,6 +339,8 @@ def ensure_exists(image_type: str) -> str:
             build_node()
         elif image_type == 'fullstack':
             build_fullstack()
+        elif image_type == 'fullstacktest':
+            build_fullstacktest()
         elif image_type == 'postgres':
             build_postgres()
         elif image_type == 'mysql':

@@ -104,7 +104,8 @@ async def start_service(container, project_id: str, project_name: str, service: 
     port = row["default_port"] or 0
 
     # Start service
-    container.exec_run(["sh", "-c", f"{command} >/tmp/{service}.log 2>&1 &"], detach=True)
+    if service == "backend":
+        container.exec_run(["sh", "-c", f"cd /app/workspace/backend && {command} >/tmp/{service}.log 2>&1 &"],detach=True)
     if service == "frontend":
         container.exec_run(["sh", "-c", f"cd /app/workspace/frontend/{project_name} && {command} >/tmp/{service}.log 2>&1 &"],detach=True)
     await websocket.send_text(f"[→] Starting {row['name']} ({service})...\n")

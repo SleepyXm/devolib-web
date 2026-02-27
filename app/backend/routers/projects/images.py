@@ -23,7 +23,7 @@ def pick_base_image(backend_services: list, frontend_services: list, db: list) -
     has_db = bool(db)
     
     if has_be and has_fe and has_db:
-        return 'fullstack'
+        return 'fullstacktest'
     elif has_be:
         return 'python'
     elif has_fe:
