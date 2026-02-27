@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import BackendEditor from "./backend/backendeditor";
 import { useFileManager } from "./frontend/frontendmanager";
 import { resolveRoute } from "./backend/backendstuff";
+import WireframeView from "./backend/wireframeview";
 
 
 interface CommandPayload {
@@ -103,6 +104,7 @@ export default function BackendPage() {
       {/* Code editor */}
       <div className="flex flex-1 overflow-hidden">
         <BackendEditor initialCode={code} language="python" />
+        <div className="relative w-1/2"><WireframeView /></div>
       </div>
     </div>
   );
