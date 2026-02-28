@@ -110,6 +110,8 @@ async def create_project(
                     "service_id": service["id"],
                 },
             )
+
+    
     
     default_envs = [
         {"key": "FRONTEND_URL", "value": f"{name}.localhost", "is_secret": False},
@@ -117,23 +119,46 @@ async def create_project(
         {"key": "DATABASE_URL", "value": "postgresql://postgres@localhost:5432/myapp", "is_secret": True},
     ]
 
+    default_pages = []
     default_endpoints = []
-    if frontend:
-        default_endpoints.append({"path": "/", "type": "frontend"})
-    if backend:
-        default_endpoints.extend([
-            {"method": "GET", "path": "/api/health", "type": "backend"},
-        ])
+
+    if frontend == "React":
+        default_pages.append({
+            "route": "/",
+            "file": "src/App.jsx"
+        })
+    elif frontend == "Next.js":
+        default_pages.append({
+            "route": "/",
+            "file": "src/app/page.tsx"
+        })
+
+    if backend == "Express":
+        default_endpoints.append({
+            "method": "GET",
+            "path": "/api/health",
+            "file": "routes/health.js"
+        })
+
+    elif backend == "FastAPI":
+        default_endpoints.append({
+            "method": "GET",
+            "path": "/api/health",
+            "file": "main.py"
+        })
+
+    print(f"frontend: '{frontend}', backend: '{backend}'")
 
     await database.execute(
         """
-        INSERT INTO project_metadata (project_id, envs, db_schema, endpoints)
-        VALUES (:project_id, CAST(:envs AS jsonb), CAST(:db_schema AS jsonb), CAST(:endpoints AS jsonb))
+        INSERT INTO project_metadata (project_id, envs, db_schema, pages, endpoints)
+        VALUES (:project_id, CAST(:envs AS jsonb), CAST(:db_schema AS jsonb), CAST(:pages AS jsonb), CAST(:endpoints AS jsonb))
         """,
         {
             "project_id": project_id,
             "envs": json.dumps(default_envs),
             "db_schema": json.dumps({}),
+            "pages": json.dumps(default_pages),
             "endpoints": json.dumps(default_endpoints)
         }
     )
@@ -206,7 +231,7 @@ async def get_metadata(
     
     # Get metadata
     query = """
-    SELECT envs, db_schema, endpoints, updated_at
+    SELECT envs, db_schema, endpoints, pages, updated_at
     FROM project_metadata
     WHERE project_id = :project_id
     """
@@ -216,21 +241,23 @@ async def get_metadata(
         # Create default metadata
         await database.execute(
             """
-            INSERT INTO project_metadata (project_id, envs, db_schema, endpoints)
-            VALUES (:project_id, '[]'::jsonb, '{}'::jsonb, '[]'::jsonb)
+            INSERT INTO project_metadata (project_id, envs, db_schema, pages, endpoints)
+            VALUES (:project_id, '[]'::jsonb, '{}'::jsonb, '[]'::jsonb, '[]'::jsonb)
             """,
             {"project_id": project_id}
         )
         return {
             "envs": [],
             "db_schema": {},
+            "pages": [],
             "endpoints": [],
             "updated_at": None
         }
     
     return {
-        "envs": json.loads(metadata["envs"]) if isinstance(metadata["envs"], str) else metadata["envs"],
-        "db_schema": json.loads(metadata["db_schema"]) if isinstance(metadata["db_schema"], str) else metadata["db_schema"],
-        "endpoints": json.loads(metadata["endpoints"]) if isinstance(metadata["endpoints"], str) else metadata["endpoints"],
+        "envs": json.loads(metadata["envs"]) if isinstance(metadata["envs"], str) else (metadata["envs"] or []),
+        "db_schema": json.loads(metadata["db_schema"]) if isinstance(metadata["db_schema"], str) else (metadata["db_schema"] or {}),
+        "pages": json.loads(metadata["pages"]) if isinstance(metadata["pages"], str) else (metadata["pages"] or []),
+        "endpoints": json.loads(metadata["endpoints"]) if isinstance(metadata["endpoints"], str) else (metadata["endpoints"] or []),
         "updated_at": metadata["updated_at"]
     }

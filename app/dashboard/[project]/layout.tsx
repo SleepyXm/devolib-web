@@ -38,12 +38,24 @@ export const ProjectContext = createContext<ProjectContextType | null>(null);
 
 interface ProjectMetaContextType {
   db_schema: Record<string, { column: string; type: string; nullable: boolean }[]>;
-  endpoints: { path: string; type: string; method?: string }[];
+  
+  pages: {
+    route: string;  // "/" | "/about" etc.
+    file: string;  // "src/App.jsx" — relative to /app/workspace/frontend/{name}/
+  }[];
+  
+  endpoints: {
+    method: string;  // "GET" | "POST" etc. — no longer optional, backend routes always have a method
+    path: string;   // "/api/health"
+    file: string;  // "routes/health.py" — relative to /app/workspace/backend/{name}/
+  }[];
+  
   envs: { key: string; value: string; is_secret: boolean }[];
   updated_at: string | null;
   fetchMeta: () => Promise<void>;
   setDbSchema: (schema: ProjectMetaContextType["db_schema"]) => void;
 }
+
 
 export const ProjectMetaContext = createContext<ProjectMetaContextType | null>(null);
 
@@ -65,6 +77,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
   });
 
   const [db_schema, setDbSchema] = useState<ProjectMetaContextType["db_schema"]>({});
+  const [pages, setPages] = useState<ProjectMetaContextType["pages"]>([]);
   const [endpoints, setEndpoints] = useState<ProjectMetaContextType["endpoints"]>([]);
   const [envs, setEnvs] = useState<ProjectMetaContextType["envs"]>([]);
   const [updated_at, setUpdatedAt] = useState<string | null>(null);
@@ -72,9 +85,10 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
   const fetchMeta = async () => {
     if (!projectId) return;
     const meta = await getProjectMetadata(projectId);
-    setDbSchema(meta.db_schema);
-    setEndpoints(meta.endpoints);
     setEnvs(meta.envs);
+    setPages(meta.pages);
+    setEndpoints(meta.endpoints);
+    setDbSchema(meta.db_schema);
     setUpdatedAt(meta.updated_at);
   };
 
@@ -148,7 +162,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
       }}
     >
       <ProjectMetaContext.Provider value={{
-        db_schema, endpoints, envs, updated_at, fetchMeta, setDbSchema
+        db_schema, pages, endpoints, envs, updated_at, fetchMeta, setDbSchema
       }}>
       {children}
       </ProjectMetaContext.Provider>

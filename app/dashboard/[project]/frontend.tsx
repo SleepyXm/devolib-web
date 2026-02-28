@@ -142,7 +142,7 @@ export default function FrontendPage() {
               onClick={saveFile}
               className="px-4 py-2 rounded bg-blue-500 hover:bg-blue-600"
             >
-              Save •
+              Save Changes
             </button>
           )}
         </div>
