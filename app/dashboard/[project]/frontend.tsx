@@ -9,7 +9,7 @@ import { ProjectContext } from "../[project]/layout";
 import { useFileManager } from "./frontend/frontendmanager";
 
 export default function FrontendPage() {
-  const { projectWS } = useContext(ProjectContext)!;
+  const { projectWS, projectName } = useContext(ProjectContext)!;
   const [srcDoc, setSrcDoc] = useState("");
   const [iframeMode, setIframeMode] = useState<'srcDoc' | 'live'>('srcDoc');
 
@@ -44,7 +44,8 @@ export default function FrontendPage() {
 
   // Check if container is running
   useEffect(() => {
-    fetch('http://test1-react.localhost')
+    if (!projectName) return;
+    fetch(`http://${projectName}.localhost`)
       .then(res => {
         if (res.ok) setIframeMode('live');
         else setIframeMode('srcDoc');
@@ -54,9 +55,9 @@ export default function FrontendPage() {
 
   // Fetch file content from container
   useEffect(() => {
-    if (!projectWS || iframeMode === 'live') return;
+    if (!projectWS || !projectName || iframeMode === 'live') return;
 
-    readFile('/app/workspace/frontend/test1-react/src/App.jsx');
+    readFile(`/app/workspace/frontend/${projectName}/src/App.jsx`);
 
     projectWS.onOutput((data: string) => {
       try {
@@ -161,7 +162,7 @@ export default function FrontendPage() {
           {iframeMode === 'live' ? (
             <iframe
               className="w-full h-full"
-              src="http://test1-react.localhost"
+              src={`http://${projectName}.localhost`}
               title="preview"
             />
           ) : (

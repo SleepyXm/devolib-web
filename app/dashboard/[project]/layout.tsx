@@ -22,6 +22,7 @@ interface ProjectContextType {
   stop: () => Promise<void>;
   setProjectId: (id: string) => void;
   projectId: string | null;
+  projectName: string | null;
 }
 
 
@@ -53,6 +54,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
   const [isConnected, setIsConnected] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [projectId, setProjectId] = useState<string | null>(null);
+  const [projectName, setProjectName] = useState<string | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
 
   const [serviceStatus, setServiceStatus] = useState<ServiceStatus>({
@@ -80,28 +82,21 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
     if (projectId) {
       fetchProjectDetails(projectId).then((project) => {
         setAccessToken(project.access_token);
+        setProjectName(project.name);
       });
       fetchMeta();
     }
   }, [projectId]);
 
-  useEffect(() => {
-    if (projectId) {
-
-      fetchProjectDetails(projectId).then((project) => {
-        setAccessToken(project.access_token);
-      });
-    }
-  }, [projectId]);
 
   const start = async () => {
-    if (!projectId) return;
+    if (!projectId || !projectName) return;
     await startProject(projectId);
     setIsRunning(true);
   };
 
   const connect = () => {
-  if (!projectId || !accessToken) return;
+  if (!projectId || !projectName || !accessToken) return;
   projectWS.current = connectToProject(projectId, accessToken);
   projectWS.current.onOutput((data) => setLogs((prev) => prev + data));
   projectWS.current.onStatus((status) => setServiceStatus(status));
@@ -149,6 +144,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
         stop,
         setProjectId,
         projectId,
+        projectName,
       }}
     >
       <ProjectMetaContext.Provider value={{

@@ -103,7 +103,7 @@ export type ProjectWS = {
   close: () => void;
 };
 
-export async function fetchProjectDetails(project_id: string): Promise<{ access_token: string }> {
+export async function fetchProjectDetails(project_id: string): Promise<Project & { access_token: string }> {
   const res = await request(`${project_endpoint}/${project_id}`, { method: "GET" });
   return res;
 }

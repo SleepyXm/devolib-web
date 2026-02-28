@@ -106,8 +106,10 @@ async def start_service(container, project_id: str, project_name: str, service: 
     # Start service
     if service == "backend":
         container.exec_run(["sh", "-c", f"cd /app/workspace/backend && {command} >/tmp/{service}.log 2>&1 &"],detach=True)
-    if service == "frontend":
+    elif service == "frontend":
         container.exec_run(["sh", "-c", f"cd /app/workspace/frontend/{project_name} && {command} >/tmp/{service}.log 2>&1 &"],detach=True)
+    elif service == "database":
+        container.exec_run(["sh", "-c", f"{command} >/tmp/{service}.log 2>&1"], detach=True)
     await websocket.send_text(f"[→] Starting {row['name']} ({service})...\n")
     logger.info(f"Started {service} for {project_name} with command: {command}")
 
