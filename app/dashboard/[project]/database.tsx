@@ -3,6 +3,7 @@
 import { useContext, useEffect, useState } from "react";
 import { ProjectContext } from "../[project]/layout";
 import { useTableManager } from "./database/tablemanager";
+import { DBCommandBuilder } from "./database/dbstuff";
 
 const COLUMN_TYPES = [
   "STRING",
@@ -44,13 +45,15 @@ export default function DatabasePage() {
   } = useTableManager(projectWS);
 
   useEffect(() => {
-    if (!projectWS) return;
+  if (!projectWS) return;
 
-    projectWS.onSchema((data) => {
-      console.log("Received schema:", data);
-      loadSchema(data);
-    });
-  }, [projectWS, loadSchema]);
+  projectWS.onSchema((data) => {
+    loadSchema(data);
+  });
+
+  const cmd = DBCommandBuilder.build('GET_SCHEMA', 'public');
+  projectWS.sendCommand(JSON.stringify(cmd));
+}, [projectWS]);
 
   return (
     <div className="p-6 space-y-4 w-[60vw]">

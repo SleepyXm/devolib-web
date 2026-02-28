@@ -6,7 +6,9 @@ export type DBOperationType =
   | 'ALTER_TABLE'
   | 'INSERT'
   | 'UPDATE'
-  | 'DELETE';
+  | 'DELETE'
+  | 'GET_SCHEMA'
+  | 'PUSH_SCHEMA'
 
 export type DBCommand = {
   operation: DBOperationType;
@@ -27,6 +29,12 @@ export const DBCommandBuilder = {
 
   generateSQL: (operation: DBOperationType, target: string, payload?: any): string => {
     switch (operation) {
+
+      case 'GET_SCHEMA':
+        return'';      
+      case 'PUSH_SCHEMA':
+        return '';
+
       case 'CREATE_TABLE':
         return DBCommandBuilder.createTable(target, payload);
       

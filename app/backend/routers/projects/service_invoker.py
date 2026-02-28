@@ -10,6 +10,8 @@ DBoperations = {
     'INSERT',
     'UPDATE',
     'DELETE',
+    'GET_SCHEMA',
+    'PUSH_SCHEMA'
 }
 
 FileOperations = {
@@ -25,6 +27,10 @@ async def handle_db_command(container, command: dict, websocket: WebSocket, proj
     """Handle database operations"""
     if command['operation'] not in DBoperations:
         raise ValueError(f"Invalid operation: {command['operation']}")
+
+    if command['operation'] in ('GET_SCHEMA', 'PUSH_SCHEMA'):
+        await push_schema(container, project_id, websocket)
+        return True
     
     sql = command['sql']
     
