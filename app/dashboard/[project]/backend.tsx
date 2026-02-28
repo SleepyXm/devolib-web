@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import BackendEditor from "./backend/backendeditor";
 import { useFileManager } from "./frontend/frontendmanager";
-import { resolveRoute } from "./backend/backendpayloads";
+import { ProjectContext } from "../[project]/layout";
 import WireframeView from "./backend/wireframeview";
 
 
@@ -17,11 +17,18 @@ interface CommandPayload {
 }
 
 export default function BackendPage() {
-  const [code, setCode] = useState(
-    `# Backend Entry Point\n# Example: FastAPI route\nfrom fastapi import FastAPI\n\napp = FastAPI()\n\n@app.get("/")\ndef root():\n    return {"message": "Hello from your backend!"}`,
-  );
+  const { projectWS } = useContext(ProjectContext)!;
   const [projectName, setProjectName] = useState("");
   const [framework, setFramework] = useState("fastapi");
+  const { 
+    fileContent, 
+    writeFile, 
+    saveFile, 
+    readFile, 
+    loadFileContent,
+    hasUnsavedChanges 
+  } = useFileManager(projectWS);
+
   const [commandPayload, setCommandPayload] = useState<CommandPayload | null>(
     null,
   );
@@ -40,25 +47,38 @@ export default function BackendPage() {
   };
 
   useEffect(() => {
-    const result = resolveRoute({
-      route: { method: "POST", path: "/auth/signup" },
-      definition: { name: "signup", auth: "none", inputs: ["body"] },
-      query: {
-        operation: "execute",
-        table: "users",
-        columns: ["id", "username", "email", "password"],
-      },
-      response: { type: "message", key: "message" },
+    if (!projectWS) return;
+
+    readFile(`/app/workspace/backend/main.py`);
+
+    projectWS.onOutput((data: string) => {
+      try {
+        const msg = JSON.parse(data);
+        if (msg.type === 'FILE_CONTENT') {
+          loadFileContent(msg.content); // Use hook method
+        }
+      } catch {
+        // Handle non-JSON messages
+        if (data.includes('FILE_CONTENT:')) {
+          loadFileContent(data.replace('FILE_CONTENT:', ''));
+        }
+      }
     });
-    console.log(result);
-    setCode(result);
-  }, []);
+  }, [projectWS]);
 
   return (
     <div className="flex flex-col h-full min-h-screen bg-gray-200 text-white">
       {/* Header */}
       <div className="p-2 bg-gray-900 flex justify-between items-center">
         <h2>Backend Project Setup</h2>
+        {hasUnsavedChanges && (
+            <button
+              onClick={saveFile}
+              className="px-4 py-2 rounded bg-blue-500 hover:bg-blue-600"
+            >
+              Save Changes
+            </button>
+          )}
       </div>
 
       {/* Input section */}
@@ -103,7 +123,7 @@ export default function BackendPage() {
 
       {/* Code editor */}
       <div className="flex flex-1 overflow-hidden">
-        <BackendEditor initialCode={code} language="python" />
+        <BackendEditor initialCode={fileContent} onChange={(value) => writeFile(value)} language="python" />
         <div className="relative w-1/2"><WireframeView /></div>
       </div>
     </div>
