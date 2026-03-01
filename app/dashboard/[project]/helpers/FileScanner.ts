@@ -13,7 +13,7 @@ export type Page = {
 
 export const WORKSPACE_PATHS = {
   backend: (projectName: string) => `/app/workspace/backend/${projectName}/main.py`,
-  frontend: (projectName: string) => `/app/workspace/frontend/${projectName}/src/App.jsx`,
+  frontend: (projectName: string) => `/app/workspace/frontend/${projectName}/src/Routes.jsx`,
 } as const;
 
 const FRAMEWORK_PATTERNS: Record<string, RegExp> = {
