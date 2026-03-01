@@ -38,22 +38,6 @@ async def health():
     return {"message": "Hello World"}
 """,
     },
-    "React": {
-        "path": "/app/workspace/frontend/{name}/src/App.jsx",
-        "content": """import { Routes, Route } from 'react-router-dom'
-import Home from './pages/Home.jsx'
-
-function App() {
-  return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-    </Routes>
-  )
-}
-
-export default App
-""",
-    },
     "vite.config": {
         "path": "/app/workspace/frontend/{name}/vite.config.js",
         "content": """import { defineConfig } from 'vite'
@@ -73,16 +57,29 @@ export default defineConfig({
         "content": """import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { HashRouter } from 'react-router-dom'
-import App from './App.jsx'
+import AppRoutes from './Routes.jsx'
 import './index.css'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <HashRouter>
-      <App />
+      <AppRoutes />
     </HashRouter>
   </StrictMode>
 )"""
+    },
+    "Routes.jsx": {
+        "path": "/app/workspace/frontend/{name}/src/Routes.jsx",
+        "content": """import { Routes, Route } from 'react-router-dom'
+import App from './App.jsx'
+
+export default function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/" element={<App />} />
+    </Routes>
+  )
+}"""
     }
 }
 
@@ -235,6 +232,12 @@ async def create_project_container(
                     info.size = len(encoded)
                     tar.addfile(info, io.BytesIO(encoded))
                     logger.info("Added main.jsx with HashRouter to enable project page routing")
+
+                    encoded = TEMPLATES["Routes.jsx"]["content"].encode("utf-8")
+                    info = tarfile.TarInfo(name="src/Routes.jsx")
+                    info.size = len(encoded)
+                    tar.addfile(info, io.BytesIO(encoded))
+                    logger.info("Added Routes.jsx to store pages that have been created and enable access via routing")
                     
                 tar_stream.seek(0)
             container.put_archive(f"/app/workspace/frontend/{project_name}", tar_stream)
