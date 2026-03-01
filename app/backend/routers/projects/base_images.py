@@ -250,8 +250,7 @@ RUN npm install -g --force \\
     create-vite@latest \\
     express-generator@latest \\
     typescript@latest \\
-    tailwindcss@latest \\
-    && npm cache clean --force
+    tailwindcss@latest
 
 # Cache npm packages
 RUN mkdir -p /tmp/cache && cd /tmp/cache && \\

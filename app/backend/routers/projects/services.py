@@ -8,6 +8,14 @@ from .service_invoker import handle_db_command, DBoperations, FileOperations, ha
 
 logger = structlog.get_logger()
 
+
+async def check_container_health(container) -> bool:
+    try:
+        container.reload()
+        return container.status == "running"
+    except Exception:
+        return False
+
 async def check_service_health(container, service: str) -> bool:
     """Check if a service is running by checking its port"""
     port_mapping = {
@@ -60,16 +68,36 @@ async def check_service_exists(container, project_id: str, project_name: str, se
     return {'exists': True, 'error': None}
 
 
-services_alive = {
-    "container": True,
-}
+services_alive: dict[str, dict] = {}
+
+def get_project_services(project_id: str) -> dict:
+    if project_id not in services_alive:
+        services_alive[project_id] = {"container": True}
+    return services_alive[project_id]
 
 async def start_service(container, project_id: str, project_name: str, service: str, websocket: WebSocket):
+
+    project_services = get_project_services(project_id)
+    
+    try:
+        container.reload()
+        if container.status != "running":
+            await websocket.send_text(f"[✗] Container is not running\n")
+            project_services.update({k: {"enabled": False, "status": "dead"} for k in project_services if k != "container"})
+            project_services["container"] = False
+            await send_service_status(websocket, project_services)
+            return
+    except Exception as e:
+        await websocket.send_text(f"[✗] Container unreachable: {str(e)}\n")
+        services_alive.pop(project_id, None)
+        await send_service_status(websocket, {"container": False})
+        return
 
     exists_check = await check_service_exists(container, project_id, project_name, service)
     if not exists_check['exists']:
         await websocket.send_text(f"[✗] Cannot start {service}: {exists_check['error']}\n")
-        await send_service_status(websocket, {service: False})
+        project_services[service] = {"enabled": False, "status": "missing"}
+        await send_service_status(websocket, project_services)
         return
 
     row = await database.fetch_one(
@@ -90,73 +118,68 @@ async def start_service(container, project_id: str, project_name: str, service: 
 
     if not row:
         await websocket.send_text(f"[✗] No {service} service configured\n")
-        # Mark as dead/missing
-        services_alive[service] = {
+        project_services[service] = {
             "enabled": False,
             "port": 0,
             "status": "missing",
             "name": service
         }
-        await send_service_status(websocket, services_alive)
+        await send_service_status(websocket, project_services)
         return
 
     command = row["custom_start_command"] or row["default_start_command"]
     port = row["default_port"] or 0
 
-    # Start service
     if service == "backend":
-        container.exec_run(["sh", "-c", f"cd /app/workspace/backend && {command} >/tmp/{service}.log 2>&1 &"],detach=True)
+        container.exec_run(["sh", "-c", f"cd /app/workspace/backend && {command} >/tmp/{service}.log 2>&1 &"], detach=True)
     elif service == "frontend":
-        container.exec_run(["sh", "-c", f"cd /app/workspace/frontend/{project_name} && {command} >/tmp/{service}.log 2>&1 &"],detach=True)
+        container.exec_run(["sh", "-c", f"cd /app/workspace/frontend/{project_name} && {command} >/tmp/{service}.log 2>&1 &"], detach=True)
     elif service == "database":
         container.exec_run(["sh", "-c", f"{command} >/tmp/{service}.log 2>&1"], detach=True)
+
     await websocket.send_text(f"[→] Starting {row['name']} ({service})...\n")
     logger.info(f"Started {service} for {project_name} with command: {command}")
 
     if service == "database":
         await asyncio.sleep(2)
-
         project_db = "myapp"
         check_db_cmd = (
             f'su - postgres -c "psql -lqt | cut -d \\| -f 1 | grep -qw {project_db} && echo exists || echo missing"'
         )
         check_result = container.exec_run(check_db_cmd)
-
         if b"exists" in check_result.output:
             await push_schema(container, project_id, websocket)
         else:
             await websocket.send_text(f"[ℹ] Database '{project_db}' not found\n")
     
     # Health check
+
     await asyncio.sleep(3)
     is_running = await check_service_health(container, service)
 
     if is_running:
         await websocket.send_text(f"[✓] {row['name']} is running on port {port}\n")
-        # Store full service info
-        services_alive[service] = {
+        project_services[service] = {
             "enabled": True,
             "port": port,
             "status": "running",
             "name": row['name'],
             "category": row['category']
         }
-        await send_service_status(websocket, services_alive)
+        await send_service_status(websocket, project_services)
     else:
         log_file = f'/tmp/{service}.log'
         log_check = container.exec_run(f"tail -20 {log_file}")
         log_output = log_check.output.decode() if log_check.output else "No logs available"
-
         await websocket.send_text(f"[!] Failed to start {row['name']}. Logs:\n{log_output}\n")
-        # Mark as failed
-        services_alive[service] = {
+        project_services[service] = {
             "enabled": False,
             "port": port,
             "status": "failed",
             "name": row['name'],
             "logs": log_output
         }
-        await send_service_status(websocket, services_alive)
+        await send_service_status(websocket, project_services)
 
 
 
@@ -173,6 +196,7 @@ async def send_error(websocket: WebSocket, message: str):
         "type": "error",
         "message": message
     }))
+
 
 # Command handlers
 def handle_cd_command(cmd: str, current_dir: str) -> tuple[str, str]:
