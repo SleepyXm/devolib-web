@@ -5,11 +5,13 @@ import MonacoEditor from "@/app/components/monacoeditor";
 import { useContextMenu } from "@/app/components/Contextmenu";
 import { editorMenuItems } from "@/app/components/Contextmenu/menuitems";
 import { EditorMenuItem } from "@/app/components/Contextmenu/menuactions";
-import { ProjectContext } from "../[project]/layout";
+import { ProjectContext, ProjectMetaContext } from "../[project]/layout";
 import { useFileManager } from "./frontend/frontendmanager";
+import { usePageScanner } from "./helpers/FileScanner";
 
 export default function FrontendPage() {
   const { projectWS, projectName } = useContext(ProjectContext)!;
+  const { setPages } = useContext(ProjectMetaContext)!;
   const [srcDoc, setSrcDoc] = useState("");
   const [iframeMode, setIframeMode] = useState<'srcDoc' | 'live'>('srcDoc');
 
@@ -22,6 +24,8 @@ export default function FrontendPage() {
     loadFileContent,
     hasUnsavedChanges 
   } = useFileManager(projectWS);
+
+  const scannedPages = usePageScanner(fileContent, "react_router", "App.jsx");
 
   const handleMenuAction = (item: EditorMenuItem) => {
     switch (item.action) {
@@ -73,6 +77,10 @@ export default function FrontendPage() {
       }
     });
   }, [projectWS, iframeMode]);
+
+  useEffect(() => {
+  setPages(scannedPages);
+  }, [scannedPages]);
 
   // Build srcDoc
   useEffect(() => {
