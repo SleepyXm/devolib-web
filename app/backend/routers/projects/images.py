@@ -68,6 +68,22 @@ export default defineConfig({
   }
 })""",
     },
+    "main.jsx": {
+        "path": "/app/workspace/frontend/{name}/src/main.jsx",
+        "content": """import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import { HashRouter } from 'react-router-dom'
+import App from './App.jsx'
+import './index.css'
+
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <HashRouter>
+      <App />
+    </HashRouter>
+  </StrictMode>
+)"""
+    }
 }
 
 router = APIRouter()
@@ -212,9 +228,16 @@ async def create_project_container(
                     info = tarfile.TarInfo(name="vite.config.js")
                     info.size = len(encoded)
                     tar.addfile(info, io.BytesIO(encoded))
+                    logger.info("Added localhost vite config for internal proxying")
+                    
+                    encoded = TEMPLATES["main.jsx"]["content"].encode("utf-8")
+                    info = tarfile.TarInfo(name="src/main.jsx")
+                    info.size = len(encoded)
+                    tar.addfile(info, io.BytesIO(encoded))
+                    logger.info("Added main.jsx with HashRouter to enable project page routing")
+                    
                 tar_stream.seek(0)
             container.put_archive(f"/app/workspace/frontend/{project_name}", tar_stream)
-            logger.info("Added localhost vite config for internal proxying")
 
         for framework in backend_services:
 
