@@ -151,8 +151,6 @@ async def start_service(container, project_id: str, project_name: str, service: 
             await push_schema(container, project_id, websocket)
         else:
             await websocket.send_text(f"[ℹ] Database '{project_db}' not found\n")
-    
-    # Health check
 
     await asyncio.sleep(3)
     is_running = await check_service_health(container, service)
