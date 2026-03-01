@@ -4,7 +4,6 @@ import { useState, useEffect, useContext } from "react";
 import BackendEditor from "./backend/backendeditor";
 import { useFileManager } from "./frontend/frontendmanager";
 import { ProjectContext, ProjectMetaContext } from "../[project]/layout";
-import WireframeView from "./backend/wireframeview";
 import { useEndpointScanner } from "./helpers/FileScanner";
 
 
@@ -131,7 +130,6 @@ export default function BackendPage() {
       {/* Code editor */}
       <div className="flex flex-1 overflow-hidden">
         <BackendEditor initialCode={fileContent} onChange={(value) => writeFile(value)} language="python" />
-        <div className="relative w-1/2"><WireframeView /></div>
       </div>
     </div>
   );

@@ -50,6 +50,14 @@ export async function getProjectMetadata(id: string): Promise<ProjectMetaData> {
   return res; 
 }
 
+export async function patchProjectMetadata(id: string, metadata: Partial<ProjectMetaData>): Promise<ProjectMetaData> {
+  const res = await request(`${project_endpoint}/metadata/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(metadata),
+  });
+  return res; 
+}
+
 
 export async function editProject(id: string, updates: Partial<Project>): Promise<Project> {
   const res = await request(`${project_endpoint}/edit/${id}`, {

@@ -6,10 +6,11 @@ import FrontendPage from "./frontend";
 import BackendPage from "./backend";
 import { useContext, useState } from "react";
 import { ProjectContext } from "./layout";
+import WireframeView from "./wireframeview";
 
 export default function ProjectPage() {
   const [activeView, setActiveView] = useState<
-    "frontend" | "backend" | "database" | "terminal"
+    "frontend" | "backend" | "database" | "wireframe" | "terminal"
   >("terminal");
 
   const context = useContext(ProjectContext);
@@ -107,6 +108,18 @@ export default function ProjectPage() {
         </button>
 
         <button
+          onClick={() => setActiveView("wireframe")}
+          className={`px-4 py-2 rounded flex items-center gap-2 ${
+            activeView === "wireframe"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+          }`}
+        >
+
+          WireFrame
+        </button>
+
+        <button
           onClick={() => setActiveView("terminal")}
           className={`px-4 py-2 rounded flex items-center gap-2 ${
             activeView === "terminal"
@@ -129,6 +142,7 @@ export default function ProjectPage() {
         {activeView === "backend" && <BackendPage />}
         {activeView === "database" && <DatabasePage />}
         {activeView === "terminal" && <Terminal />}
+        {activeView === "wireframe" && <WireframeView />}
       </div>
     </div>
   );
