@@ -14,6 +14,7 @@ export function ProjectModal({ projectId, projectName, onClose }: ProjectModalPr
     envs: [],
     db_schema: {},
     endpoints: [],
+    pages: [],
     updated_at: null
   });
   const [loading, setLoading] = useState(true);
@@ -172,7 +173,7 @@ export function ProjectModal({ projectId, projectName, onClose }: ProjectModalPr
                       </span>
                     )}
                     <span className="flex-1">{endpoint.path}</span>
-                    <span className="text-gray-500 text-xs uppercase">{endpoint.type}</span>
+                    <span className="text-gray-500 text-xs uppercase">{endpoint.path}</span>
                   </div>
                 ))}
               </div>

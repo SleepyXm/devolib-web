@@ -3,8 +3,9 @@
 import { useState, useEffect, useContext } from "react";
 import BackendEditor from "./backend/backendeditor";
 import { useFileManager } from "./frontend/frontendmanager";
-import { ProjectContext } from "../[project]/layout";
+import { ProjectContext, ProjectMetaContext } from "../[project]/layout";
 import WireframeView from "./backend/wireframeview";
+import { useEndpointScanner } from "./helpers/FileScanner";
 
 
 interface CommandPayload {
@@ -28,10 +29,16 @@ export default function BackendPage() {
     loadFileContent,
     hasUnsavedChanges 
   } = useFileManager(projectWS);
+  const { endpoints, setEndpoints } = useContext(ProjectMetaContext)!;
+  const scannedEndpoints = useEndpointScanner(fileContent, framework, "main.py");
 
   const [commandPayload, setCommandPayload] = useState<CommandPayload | null>(
     null,
   );
+
+  useEffect(() => {
+    setEndpoints(scannedEndpoints);
+  }, [scannedEndpoints]);
 
   const handleGeneratePayload = () => {
     const payload: CommandPayload = {

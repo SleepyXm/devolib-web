@@ -1,6 +1,6 @@
 export const PythonShapes = {
   router: {
-    decorator: "@router.{method}({path})",
+    decorator: "@app.{method}({path})",
     definition: "async def {name}({inputs}):",
     auth_dependency: "current_user: dict = Depends(get_current_user)",
     body_input: "{name}: {Model} = Body(...)",

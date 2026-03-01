@@ -54,6 +54,8 @@ interface ProjectMetaContextType {
   updated_at: string | null;
   fetchMeta: () => Promise<void>;
   setDbSchema: (schema: ProjectMetaContextType["db_schema"]) => void;
+  setEndpoints: React.Dispatch<React.SetStateAction<ProjectMetaContextType["endpoints"]>>;
+  setPages: React.Dispatch<React.SetStateAction<ProjectMetaContextType["pages"]>>;
 }
 
 
@@ -162,7 +164,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
       }}
     >
       <ProjectMetaContext.Provider value={{
-        db_schema, pages, endpoints, envs, updated_at, fetchMeta, setDbSchema
+        db_schema, pages, endpoints, envs, updated_at, fetchMeta, setDbSchema, setEndpoints, setPages,
       }}>
       {children}
       </ProjectMetaContext.Provider>
