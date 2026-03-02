@@ -11,17 +11,18 @@ import { usePageScanner } from "./helpers/FileScanner";
 
 export default function FrontendPage() {
   const { projectWS, projectName } = useContext(ProjectContext)!;
+  const { pages } = useContext(ProjectMetaContext)!;
   const [srcDoc, setSrcDoc] = useState("");
-  const [iframeMode, setIframeMode] = useState<'srcDoc' | 'live'>('srcDoc');
+  const [iframeMode, setIframeMode] = useState<"srcDoc" | "live">("srcDoc");
 
   const { contextMenu, handleContextMenu, handleClick } = useContextMenu();
-  const { 
-    fileContent, 
-    writeFile, 
-    saveFile, 
-    readFile, 
+  const {
+    fileContent,
+    writeFile,
+    saveFile,
+    readFile,
     loadFileContent,
-    hasUnsavedChanges 
+    hasUnsavedChanges,
   } = useFileManager(projectWS);
 
   const scannedPages = usePageScanner(fileContent, "react_router", "App.jsx");
@@ -36,10 +37,15 @@ export default function FrontendPage() {
         writeFile(fileContent.toUpperCase());
         break;
       case "insert-element":
-        writeFile(fileContent + `<${item.payload.value} class="${item.payload.defaultClass}"></${item.payload.value}>\n`);
+        writeFile(
+          fileContent +
+            `<${item.payload.value} class="${item.payload.defaultClass}"></${item.payload.value}>\n`,
+        );
         break;
       case "set-class":
-        writeFile(fileContent + ` class="${item.payload.prefix}-${item.payload.color}"`);
+        writeFile(
+          fileContent + ` class="${item.payload.prefix}-${item.payload.color}"`,
+        );
         break;
     }
     handleClick();
@@ -49,39 +55,38 @@ export default function FrontendPage() {
   useEffect(() => {
     if (!projectName) return;
     fetch(`http://${projectName}.localhost`)
-      .then(res => {
-        if (res.ok) setIframeMode('live');
-        else setIframeMode('srcDoc');
+      .then((res) => {
+        if (res.ok) setIframeMode("live");
+        else setIframeMode("srcDoc");
       })
-      .catch(() => setIframeMode('srcDoc'));
+      .catch(() => setIframeMode("srcDoc"));
   }, []);
 
   // Fetch file content from container
   useEffect(() => {
-    if (!projectWS || !projectName || iframeMode === 'live') return;
+    if (!projectWS || !projectName || iframeMode === "live") return;
 
     readFile(`/app/workspace/frontend/${projectName}/src/App.jsx`);
 
     projectWS.onOutput((data: string) => {
       try {
         const msg = JSON.parse(data);
-        if (msg.type === 'FILE_CONTENT') {
+        if (msg.type === "FILE_CONTENT") {
           loadFileContent(msg.content); // Use hook method
         }
       } catch {
         // Handle non-JSON messages
-        if (data.includes('FILE_CONTENT:')) {
-          loadFileContent(data.replace('FILE_CONTENT:', ''));
+        if (data.includes("FILE_CONTENT:")) {
+          loadFileContent(data.replace("FILE_CONTENT:", ""));
         }
       }
     });
   }, [projectWS, iframeMode]);
 
-
   // Build srcDoc
   useEffect(() => {
-    if (iframeMode !== 'srcDoc') return;
-    
+    if (iframeMode !== "srcDoc") return;
+
     const timeout = setTimeout(() => {
       setSrcDoc(`
         <html>
@@ -135,11 +140,13 @@ export default function FrontendPage() {
       <div className="p-2 bg-gray-900 text-white flex justify-between items-center">
         <h2>Frontend Project Page</h2>
         <div className="flex gap-2 items-center">
-          {iframeMode === 'srcDoc' && (
+          {iframeMode === "srcDoc" && (
             <span className="text-yellow-400 text-sm">⚠ Container offline</span>
           )}
-          {iframeMode === 'live' && (
-            <span className="text-green-400 text-sm">✓ Live preview active</span>
+          {iframeMode === "live" && (
+            <span className="text-green-400 text-sm">
+              ✓ Live preview active
+            </span>
           )}
           {hasUnsavedChanges && (
             <button
@@ -152,18 +159,36 @@ export default function FrontendPage() {
         </div>
       </div>
 
+      <div className="w-48 bg-gray-800 text-white flex flex-col overflow-y-auto">
+        <div className="p-2 text-xs text-gray-400 uppercase tracking-wide border-b border-gray-700">
+          Pages
+        </div>
+        {pages.map((page) => (
+          <button
+            key={page.route}
+            onClick={() =>
+              readFile(`/app/workspace/frontend/${projectName}/${page.file}`)
+            }
+            className="px-3 py-2 text-left hover:bg-gray-700 border-b border-gray-700/50 flex flex-col"
+          >
+            <span className="text-sm">{page.route}</span>
+            <span className="text-xs text-gray-400">{page.file}</span>
+          </button>
+        ))}
+      </div>
+
       <div
         className="flex flex-1 overflow-hidden"
-        onContextMenu={iframeMode === 'srcDoc' ? handleContextMenu : undefined}
+        onContextMenu={iframeMode === "srcDoc" ? handleContextMenu : undefined}
         onClick={handleClick}
       >
         <MonacoEditor
           initialCode={fileContent}
-          language={iframeMode === 'srcDoc' ? 'html' : 'typescript'}
+          language={iframeMode === "srcDoc" ? "html" : "typescript"}
           onChange={(value) => writeFile(value)}
         />
         <div className="relative w-1/2">
-          {iframeMode === 'live' ? (
+          {iframeMode === "live" ? (
             <iframe
               className="w-full h-full"
               src={`http://${projectName}.localhost`}
@@ -179,9 +204,9 @@ export default function FrontendPage() {
           )}
         </div>
 
-        {iframeMode === 'srcDoc' && contextMenu.show && (
+        {iframeMode === "srcDoc" && contextMenu.show && (
           <>
-            <div className="fixed inset-0 z-40"/>
+            <div className="fixed inset-0 z-40" />
             <div
               className="fixed z-50 bg-gray-900 text-white rounded shadow-lg"
               style={{ top: contextMenu.y, left: contextMenu.x }}
