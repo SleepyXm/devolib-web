@@ -11,7 +11,6 @@ import { usePageScanner } from "./helpers/FileScanner";
 
 export default function FrontendPage() {
   const { projectWS, projectName } = useContext(ProjectContext)!;
-  const { setPages } = useContext(ProjectMetaContext)!;
   const [srcDoc, setSrcDoc] = useState("");
   const [iframeMode, setIframeMode] = useState<'srcDoc' | 'live'>('srcDoc');
 
@@ -78,9 +77,6 @@ export default function FrontendPage() {
     });
   }, [projectWS, iframeMode]);
 
-  useEffect(() => {
-  setPages(scannedPages);
-  }, [scannedPages]);
 
   // Build srcDoc
   useEffect(() => {
