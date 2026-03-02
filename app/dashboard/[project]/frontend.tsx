@@ -164,7 +164,12 @@ export default function FrontendPage() {
         </div>
       </div>
 
-      <div className="w-48 bg-gray-800 text-white flex flex-col overflow-y-auto shrink-0">
+      <div
+        className="flex flex-1 overflow-hidden"
+        onContextMenu={iframeMode === "srcDoc" ? handleContextMenu : undefined}
+        onClick={handleClick}
+      >
+        <div className="w-48 bg-gray-800 text-white flex flex-col overflow-y-auto shrink-0">
           <div className="p-2 text-xs text-gray-400 uppercase tracking-wide border-b border-gray-700">
             Pages
           </div>
@@ -181,12 +186,6 @@ export default function FrontendPage() {
             </button>
           ))}
         </div>
-
-      <div
-        className="flex flex-1 overflow-hidden"
-        onContextMenu={iframeMode === "srcDoc" ? handleContextMenu : undefined}
-        onClick={handleClick}
-      >
         <MonacoEditor
           initialCode={fileContent}
           language={iframeMode === "srcDoc" ? "html" : "typescript"}
