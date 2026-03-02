@@ -123,7 +123,7 @@ async def create_project_container(
     # Fetch service configs from DB (keeping your existing logic)
     all_services = backend_services + frontend_services + db
     config_query = """
-    SELECT framework, default_port, scaffold_command, start_flags, packages
+    SELECT framework, default_port, scaffold_command, start_flags, default_packages
     FROM services 
     WHERE framework = ANY(:frameworks)
     """
@@ -217,6 +217,15 @@ async def create_project_container(
                     tty=True,
                     detach=False,
                 )
+
+            if framework in configs_map and configs_map[framework]["default_packages"]:
+                packages = " ".join(json.loads(configs_map[framework]["default_packages"]))
+                container.exec_run(
+                    f"sh -c 'cd /app/workspace/frontend/{project_name} && npm install {packages}'",
+                    tty=True,
+                    detach=False,
+                )
+                logger.info("Installed default frontend packages", frameework=framework, packages=packages)
 
             if "React" in frontend_services:
                 tar_stream = io.BytesIO()

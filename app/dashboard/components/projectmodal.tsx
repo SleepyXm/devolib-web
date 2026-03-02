@@ -89,27 +89,61 @@ export function ProjectModal({ projectId, projectName, onClose }: ProjectModalPr
 
         {/* Content */}
         <div className="p-6 overflow-y-auto flex-1 space-y-6">
-          {/* Environment Variables */}
+
+
+
+
+
           <section>
             <h3 className="text-lg font-semibold mb-3 border-b border-gray-300 dark:border-gray-700 pb-2">
-              Environment Variables
+              Project Pages
             </h3>
-            {metadata.envs.length > 0 ? (
+            {metadata.pages.length > 0 ? (
               <div className="space-y-2">
-                {metadata.envs.map((env, idx) => (
+                {metadata.pages.map((pages, idx) => (
                   <div
                     key={idx}
                     className="flex gap-4 p-3 border border-gray-300 dark:border-gray-700 rounded font-mono text-sm"
                   >
-                    <span className="font-semibold min-w-[200px]">{env.key}</span>
-                    <span className="flex-1 text-gray-600 dark:text-gray-400">
-                      {env.is_secret ? "••••••••" : env.value}
-                    </span>
+                    {pages.route && (
+                      <span className="font-semibold min-w-[80px] text-blue-600 dark:text-blue-400">
+                        {pages.route}
+                      </span>
+                    )}
+                    <span className="flex-1">{pages.file}</span>
+                    <span className="text-gray-500 text-xs uppercase">{pages.file}</span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-sm">No environment variables configured</p>
+              <p className="text-gray-500 text-sm">No endpoints configured</p>
+            )}
+          </section>
+
+          {/* API Endpoints */}
+          <section>
+            <h3 className="text-lg font-semibold mb-3 border-b border-gray-300 dark:border-gray-700 pb-2">
+              API Endpoints
+            </h3>
+            {metadata.endpoints.length > 0 ? (
+              <div className="space-y-2">
+                {metadata.endpoints.map((endpoint, idx) => (
+                  <div
+                    key={idx}
+                    className="flex gap-4 p-3 border border-gray-300 dark:border-gray-700 rounded font-mono text-sm"
+                  >
+                    {endpoint.method && (
+                      <span className="font-semibold min-w-[80px] text-blue-600 dark:text-blue-400">
+                        {endpoint.method}
+                      </span>
+                    )}
+                    <span className="flex-1">{endpoint.path}</span>
+                    <span className="text-gray-500 text-xs uppercase">{endpoint.path}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-sm">No endpoints configured</p>
             )}
           </section>
 
@@ -155,30 +189,29 @@ export function ProjectModal({ projectId, projectName, onClose }: ProjectModalPr
             )}
           </section>
 
-          {/* API Endpoints */}
+
+
+          {/* Environment Variables */}
           <section>
             <h3 className="text-lg font-semibold mb-3 border-b border-gray-300 dark:border-gray-700 pb-2">
-              API Endpoints
+              Environment Variables
             </h3>
-            {metadata.endpoints.length > 0 ? (
+            {metadata.envs.length > 0 ? (
               <div className="space-y-2">
-                {metadata.endpoints.map((endpoint, idx) => (
+                {metadata.envs.map((env, idx) => (
                   <div
                     key={idx}
                     className="flex gap-4 p-3 border border-gray-300 dark:border-gray-700 rounded font-mono text-sm"
                   >
-                    {endpoint.method && (
-                      <span className="font-semibold min-w-[80px] text-blue-600 dark:text-blue-400">
-                        {endpoint.method}
-                      </span>
-                    )}
-                    <span className="flex-1">{endpoint.path}</span>
-                    <span className="text-gray-500 text-xs uppercase">{endpoint.path}</span>
+                    <span className="font-semibold min-w-[200px]">{env.key}</span>
+                    <span className="flex-1 text-gray-600 dark:text-gray-400">
+                      {env.is_secret ? "••••••••" : env.value}
+                    </span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-sm">No endpoints configured</p>
+              <p className="text-gray-500 text-sm">No environment variables configured</p>
             )}
           </section>
 

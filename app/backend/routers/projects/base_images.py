@@ -217,32 +217,34 @@ CMD ["tail", "-f", "/dev/null"]
 def build_fullstacktest():
     """Both ecosystems in one."""
     dockerfile = """
-FROM python:3.14-alpine
+FROM python:3.13-alpine
 
 # System deps
 RUN apk update && apk add --no-cache \\
     curl bash ca-certificates git build-base \\
-    nodejs npm postgresql mysql \\
+    nodejs npm postgresql postgresql-contrib \\
     python3 make g++ \\
     && rm -rf /var/cache/apk/*
 
-# Python packages
+# Python runtime — fastapi backend focused
 RUN pip install --no-cache-dir \\
-    fastapi uvicorn[standard] pydantic sqlalchemy \\
-    psycopg2-binary redis httpx
+    fastapi uvicorn[standard] pydantic sqlalchemy asyncpg \\
+    psycopg2-binary redis httpx \\
+    python-dotenv alembic python-multipart \\
+    passlib python-jose \\
+    pytest pytest-asyncio pytest-cov
 
 # Install Bun
 RUN curl -fsSL https://bun.sh/install | bash
 ENV BUN_INSTALL="/root/.bun"
 ENV PATH="$BUN_INSTALL/bin:$PATH"
 
-
-# CRITICAL: Set npm to auto-confirm
+# npm config
 RUN npm config set yes true --global && \\
     npm config set update-notifier false --global && \\
     npm config set fund false --global
 
-# Node tools - with all the frameworks
+# Global scaffolding tools
 RUN npm install -g --force \\
     create-react-app@latest \\
     create-next-app@latest \\
@@ -252,26 +254,66 @@ RUN npm install -g --force \\
     typescript@latest \\
     tailwindcss@latest
 
-# Cache npm packages
-RUN mkdir -p /tmp/cache && cd /tmp/cache && \\
+# Pre-cache frontend runtime deps (invisible ones users forget)
+# NODE_PATH lets any project resolve these without reinstalling
+ENV NODE_PATH=/opt/npm_cache/node_modules
+RUN mkdir -p /opt/npm_cache && cd /opt/npm_cache && \\
     npm init -y && \\
     npm install \\
-        react@latest \\
-        react-dom@latest \\
-        react-router-dom \\
+        vite@latest \\
+        esbuild@latest \\
+        rollup@latest \\
+        @vitejs/plugin-react@latest \\
+        postcss@latest \\
+        autoprefixer@latest \\
+        ts-node@latest \\
+        @types/node@latest \\
+        @types/react@latest \\
+        @types/react-dom@latest \\
+        dotenv \\
+        cors \\
+        express \\
+        body-parser \\
+        uuid \\
         axios \\
         @tanstack/react-query \\
-    && cd / && rm -rf /tmp/cache
+        react-router-dom \\
+        react-hook-form \\
+        zod \\
+        clsx \\
+        date-fns
 
-# Initialize postgres database
+# Mirror the same cache for bun
+ENV BUN_INSTALL_CACHE_DIR=/opt/bun_cache
+RUN mkdir -p /opt/bun_cache && cd /opt/bun_cache && \\
+    bun init -y && \\
+    bun add \\
+        vite \\
+        esbuild \\
+        @vitejs/plugin-react \\
+        postcss \\
+        autoprefixer \\
+        @types/node \\
+        @types/react \\
+        @types/react-dom \\
+        dotenv \\
+        axios \\
+        @tanstack/react-query \\
+        react-router-dom \\
+        react-hook-form \\
+        zod \\
+        clsx \\
+        date-fns
+
+# Postgres setup
 RUN mkdir -p /var/lib/postgresql/data && \\
     chown -R postgres:postgres /var/lib/postgresql && \\
     su - postgres -c "initdb -D /var/lib/postgresql/data"
 RUN mkdir -p /run/postgresql && \\
     chown postgres:postgres /run/postgresql
 
-RUN su - postgres -c "pg_ctl -D /var/lib/postgresql/data start -w && \
-    psql -c 'CREATE DATABASE myapp;' && \
+RUN su - postgres -c "pg_ctl -D /var/lib/postgresql/data start -w && \\
+    psql -c 'CREATE DATABASE myapp;' && \\
     pg_ctl -D /var/lib/postgresql/data stop"
 
 RUN mkdir -p /app/workspace/frontend
