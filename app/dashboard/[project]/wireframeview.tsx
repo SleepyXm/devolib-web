@@ -38,16 +38,15 @@ function patchRoutes(content: string, name: string, path: string): string {
 }
 
 export default function WireframeView() {
-  const { db_schema, endpoints, setEndpoints, pages, setPages } = useContext(ProjectMetaContext)!;
-  
+  const { db_schema, endpoints, pages, setPages } = useContext(ProjectMetaContext)!;
   const { serviceStatus, projectWS, projectName, projectId } = useContext(ProjectContext)!;
-  const { fileContent, readFile, loadFileContent } = useFileManager(projectWS);
-  const scannedPages = usePageScanner(fileContent, "react_router", "Routes.jsx");
+
   const [showInput, setShowInput] = useState(false);
   const { contextMenu, handleContextMenu, handleClick } = useContextMenu();
   const [activeSection, setActiveSection] = useState<"pages" | "endpoints" | null>(null);
   const [inputValue, setInputValue] = useState("");
-  const inputValueRef = useRef("");
+  const [routesFileContent, setRoutesFileContent] = useState<string | null>(null);
+
 
   const handleMenuAction = (item: WireframeMenuItem) => {
     if (item.action === "add-page" || item.action === "add-endpoint") {
@@ -56,68 +55,74 @@ export default function WireframeView() {
     handleClick();
   };
 
-  const handleCreate = () => {
-  if (!inputValue || !projectName || !projectId) return;
+  useEffect(() => {
+  if (!projectWS) return;
+
+  const handleOutput = (data: string) => {
+    try {
+      const msg = JSON.parse(data);
+      if (msg.type === "FILE_CONTENT") {
+        setRoutesFileContent(msg.content);
+      }
+    } catch {
+      if (data.startsWith("FILE_CONTENT:")) {
+        setRoutesFileContent(data.replace("FILE_CONTENT:", ""));
+      }
+    }
+  };
+
+  projectWS.onOutput(handleOutput);
+
+  return () => {
+    projectWS.onOutput?.(handleOutput);
+  };
+  }, [projectWS]);
+
+  useEffect(() => {
+  if (!projectWS || !projectName) return;
+
+  projectWS.sendCommand(JSON.stringify({
+    type: "READ_FILE",
+    path: `/app/workspace/frontend/${projectName}/src/Routes.jsx`,
+  }));
+  }, [projectWS, projectName]);
+
+  const handleCreate = async () => {
+  if (!inputValue || !projectName || !projectId || !projectWS) return;
+
   const name = inputValue.charAt(0).toUpperCase() + inputValue.slice(1);
   const path = inputValue.toLowerCase();
 
   if (activeSection === "pages") {
-    inputValueRef.current = inputValue;
 
-    projectWS?.sendCommand(JSON.stringify({
+
+    projectWS.sendCommand(JSON.stringify({
       type: "WRITE_FILE",
       path: `/app/workspace/frontend/${projectName}/src/${name}.jsx`,
-      content: `export default function ${name}() {\n  return <h1>Welcome to your ${name} page</h1>\n}`
-    }));
+      content: `export default function ${name}() {
+                return <h1>Welcome to your ${name} page</h1>
+              }`
+     }));
 
-    projectWS?.sendCommand(JSON.stringify({
-      type: "READ_FILE",
-      path: `/app/workspace/frontend/${projectName}/src/Routes.jsx`,
-    }));
+    // Patch Routes if we already have content
+    if (routesFileContent) {
+      projectWS.sendCommand(JSON.stringify({
+        type: "WRITE_FILE",
+        path: `/app/workspace/frontend/${projectName}/src/Routes.jsx`,
+        content: patchRoutes(routesFileContent, name, path),
+      }));
+    }
 
-    patchProjectMetadata(projectId, {
-      pages: [...pages, { route: `/${path}`, file: `${name}.jsx` }]
-    });
+    // Update metadata
+    const newPages = [...pages, { route: `/${path}`, file: `src/${name}.jsx` }];
+    setPages(newPages);
+
+    await patchProjectMetadata(projectId, { pages: newPages });
   }
 
   setShowInput(false);
   setInputValue("");
 };
-
-  useEffect(() => {
-    setPages(scannedPages);
-  }, [scannedPages]);
-
-  useEffect(() => {
-    if (!projectWS) return;
-    projectWS.onOutput((data: string) => {
-      try {
-        const msg = JSON.parse(data);
-        if (msg.type === "FILE_CONTENT" && inputValueRef.current) {
-          loadFileContent(msg.content);
-        }
-      } catch {
-        if (data.startsWith("FILE_CONTENT:") && inputValueRef.current) {
-          loadFileContent(data.replace("FILE_CONTENT:", ""));
-        }
-      }
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!fileContent || !inputValueRef.current) return;
-    const name = inputValueRef.current.charAt(0).toUpperCase() + inputValueRef.current.slice(1);
-    const path = inputValueRef.current.toLowerCase();
-
-    projectWS?.sendCommand(JSON.stringify({
-      type: "WRITE_FILE",
-      path: `/app/workspace/frontend/${projectName}/src/Routes.jsx`,
-      content: patchRoutes(fileContent, name, path),
-    }));
-
-    setInputValue("");
-    inputValueRef.current = "";
-  }, [fileContent]);
 
   return (
     <div className="flex flex-col w-full p-6 gap-6 overflow-auto text-foreground">

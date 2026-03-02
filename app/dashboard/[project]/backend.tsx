@@ -5,6 +5,7 @@ import BackendEditor from "./backend/backendeditor";
 import { useFileManager } from "./frontend/frontendmanager";
 import { ProjectContext, ProjectMetaContext } from "../[project]/layout";
 import { useEndpointScanner } from "./helpers/FileScanner";
+import { patchProjectMetadata } from "@/app/handlers/projects";
 
 
 interface CommandPayload {
@@ -17,7 +18,7 @@ interface CommandPayload {
 }
 
 export default function BackendPage() {
-  const { projectWS } = useContext(ProjectContext)!;
+  const { projectWS, projectId } = useContext(ProjectContext)!;
   const [projectName, setProjectName] = useState("");
   const [framework, setFramework] = useState("fastapi");
   const { 
@@ -36,8 +37,12 @@ export default function BackendPage() {
   );
 
   useEffect(() => {
+    if (!projectId) return;
     setEndpoints(scannedEndpoints);
-  }, [scannedEndpoints]);
+    patchProjectMetadata(projectId, { endpoints: scannedEndpoints }).catch((err) => {
+      console.error("Failed to update endpoints metadata:", err);
+    });
+  }, [scannedEndpoints, projectId]);
 
   const handleGeneratePayload = () => {
     const payload: CommandPayload = {
