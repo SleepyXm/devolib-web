@@ -24,8 +24,13 @@ export default function FrontendPage() {
     loadFileContent,
     hasUnsavedChanges,
   } = useFileManager(projectWS);
+  const [selectedPage, setSelectedPage] = useState<{ route: string; file: string } | null>(null);
 
-  const scannedPages = usePageScanner(fileContent, "react_router", "App.jsx");
+  const handlePageSelect = (page: { route: string; file: string }) => {
+    setSelectedPage(page);
+    readFile(`/app/workspace/frontend/${projectName}/${page.file}`);
+  };
+
 
   const handleMenuAction = (item: EditorMenuItem) => {
     switch (item.action) {
@@ -159,23 +164,23 @@ export default function FrontendPage() {
         </div>
       </div>
 
-      <div className="w-48 bg-gray-800 text-white flex flex-col overflow-y-auto">
-        <div className="p-2 text-xs text-gray-400 uppercase tracking-wide border-b border-gray-700">
-          Pages
+      <div className="w-48 bg-gray-800 text-white flex flex-col overflow-y-auto shrink-0">
+          <div className="p-2 text-xs text-gray-400 uppercase tracking-wide border-b border-gray-700">
+            Pages
+          </div>
+          {pages.map((page) => (
+            <button
+              key={page.route}
+              onClick={() => handlePageSelect(page)}
+              className={`px-3 py-2 text-left hover:bg-gray-700 border-b border-gray-700/50 flex flex-col ${
+                selectedPage?.route === page.route ? "bg-gray-700" : ""
+              }`}
+            >
+              <span className="text-sm">{page.route}</span>
+              <span className="text-xs text-gray-400">{page.file}</span>
+            </button>
+          ))}
         </div>
-        {pages.map((page) => (
-          <button
-            key={page.route}
-            onClick={() =>
-              readFile(`/app/workspace/frontend/${projectName}/${page.file}`)
-            }
-            className="px-3 py-2 text-left hover:bg-gray-700 border-b border-gray-700/50 flex flex-col"
-          >
-            <span className="text-sm">{page.route}</span>
-            <span className="text-xs text-gray-400">{page.file}</span>
-          </button>
-        ))}
-      </div>
 
       <div
         className="flex flex-1 overflow-hidden"
@@ -191,7 +196,7 @@ export default function FrontendPage() {
           {iframeMode === "live" ? (
             <iframe
               className="w-full h-full"
-              src={`http://${projectName}.localhost`}
+              src={`http://${projectName}.localhost/#${selectedPage ? selectedPage.route : ""}`}
               title="preview"
             />
           ) : (
