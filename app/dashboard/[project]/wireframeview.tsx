@@ -100,12 +100,12 @@ export default function WireframeView() {
       type: "WRITE_FILE",
       path: `/app/workspace/frontend/${projectName}/src/${name}.jsx`,
       content: `export default function ${name}() {
-                  return(
-                    <>
-                      <h1>Welcome to your ${name} page</h1>
-                    </>
-                  );
-                }`
+  return(
+    <>
+      <h1>Welcome to your ${name} page</h1>
+    </>
+  );
+}`
      }));
 
     // Patch Routes if we already have content
