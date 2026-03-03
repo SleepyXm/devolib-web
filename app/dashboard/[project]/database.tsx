@@ -21,6 +21,7 @@ export default function DatabasePage() {
   const { projectWS } = useContext(ProjectContext)!;
 
   const [savedCols, setSavedCols] = useState<Record<string, boolean>>({});
+  const [tableName, setTableName] = useState("");
 
   const handleColumnNameSave = (
     tableId: number,
@@ -45,22 +46,33 @@ export default function DatabasePage() {
   } = useTableManager(projectWS);
 
   useEffect(() => {
-  if (!projectWS) return;
+    if (!projectWS) return;
 
-  projectWS.onSchema((data) => {
-    loadSchema(data);
-  });
+    projectWS.onSchema((data) => {
+      loadSchema(data);
+    });
 
-  const cmd = DBCommandBuilder.build('GET_SCHEMA', 'public');
-  projectWS.sendCommand(JSON.stringify(cmd));
-}, [projectWS]);
+    const cmd = DBCommandBuilder.build("GET_SCHEMA", "public");
+    projectWS.sendCommand(JSON.stringify(cmd));
+  }, [projectWS]);
 
   return (
     <div className="p-6 space-y-4 w-[60vw]">
       <h2 className="text-xl text-black font-bold">Database Project Page</h2>
+
+      <input
+        type="text"
+        value={tableName}
+        onChange={(e) => setTableName(e.target.value)}
+        placeholder="Table name..."
+        className="border px-2 py-1 rounded text-black"
+      />
       <button
         className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        onClick={addTable}
+        onClick={() => {
+          addTable(tableName);
+          setTableName("");
+        }}
       >
         Add New Table
       </button>

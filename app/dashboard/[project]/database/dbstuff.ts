@@ -60,7 +60,7 @@ export const DBCommandBuilder = {
 
   createTable: (tableName: string, columns: Column[]): string => {
     if (!columns || columns.length === 0) {
-      return `CREATE TABLE ${tableName} (id SERIAL PRIMARY KEY)`;
+      return `CREATE TABLE IF NOT EXISTS ${tableName} (id SERIAL PRIMARY KEY)`;
     }
 
     const columnDefs = columns.map(col => {

@@ -8,6 +8,7 @@ export const useTableManager = (projectWS: any) => {
   const [tables, setTables] = useState<Table[]>([]);
   const [tableCounter, setTableCounter] = useState(1);
 
+
   const executeCommand = (command: DBCommand) => {
     console.log(`${command.operation}:`, command);
     projectWS?.sendCommand(JSON.stringify(command));
@@ -31,10 +32,10 @@ export const useTableManager = (projectWS: any) => {
     setTableCounter(loadedTables.length + 1);
   };
 
-  const addTable = () => {
+  const addTable = (name: string) => {
     const newTable: Table = { 
       id: tableCounter, 
-      name: `Table_${tableCounter}`, 
+      name: name, 
       columns: [], 
       rows: [] 
     };
