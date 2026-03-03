@@ -3,19 +3,8 @@
 import { useContext, useEffect, useState } from "react";
 import { ProjectContext } from "../[project]/layout";
 import { useTableManager } from "./database/tablemanager";
-import { DBCommandBuilder } from "./database/dbstuff";
-
-const COLUMN_TYPES = [
-  "STRING",
-  "TEXT",
-  "VARCHAR",
-  "NUMBER",
-  "BOOLEAN",
-  "DATE",
-  "UUID",
-  "INT",
-  "TIMESTAMPTZ",
-];
+import { DBCommandBuilder } from "./database/dboperations";
+import { COLUMN_TYPES } from "./database/dbtypes";
 
 export default function DatabasePage() {
   const { projectWS } = useContext(ProjectContext)!;

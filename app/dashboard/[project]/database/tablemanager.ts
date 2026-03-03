@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Table, Row, Column } from "./dbtypes";
-import { DBCommand, DBCommandBuilder } from "./dbstuff";
+import { DBCommand, DBCommandBuilder } from "./dboperations";
 
 // Hook for managing tables and DB commands
 export const useTableManager = (projectWS: any) => {
@@ -129,6 +129,14 @@ export const useTableManager = (projectWS: any) => {
         newName: updated.name
       }));
     }
+
+    if (updated.type && updated.type !== oldColumn.type) {
+    executeCommand(DBCommandBuilder.build('ALTER_TABLE', table.name, {
+      action: 'CHANGE_COLUMN_TYPE',
+      column: oldColumn.name,
+      newType: updated.type
+    }));
+  }
   };
 
   const toggleExpanded = (tableId: number, colIdx: number) => {
