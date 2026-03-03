@@ -222,7 +222,8 @@ FROM python:3.13-alpine
 # System deps
 RUN apk update && apk add --no-cache \\
     curl bash ca-certificates git build-base \\
-    nodejs npm postgresql postgresql-contrib \\
+    nodejs npm \\
+    postgresql16 postgresql16-contrib \\
     python3 make g++ \\
     && rm -rf /var/cache/apk/*
 
