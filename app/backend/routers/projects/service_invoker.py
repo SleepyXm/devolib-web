@@ -9,6 +9,7 @@ DBoperations = {
     'ALTER_TABLE',
     'INSERT',
     'UPDATE',
+    'CHANGE_COLUMN_TYPE',
     'DELETE',
     'GET_SCHEMA',
     'PUSH_SCHEMA'
