@@ -1,87 +1,16 @@
-import io
-import re
-import tarfile
-import uuid
+import io, re, tarfile, uuid, docker, os, json, boto3, structlog
 from fastapi import APIRouter
 from database import database
 from routers.auth.auth_utils import get_current_user
-import docker
-import os
 from datetime import datetime
-import json
 from .base_images import ensure_exists, NETWORK_NAME
-import structlog
 
-
-TEMPLATES = {
-    "FastAPI": {
-        "path": "/app/workspace/backend/main.py",
-        "content": """from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy import text
-
-app = FastAPI()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+s3 = boto3.client(
+    "s3",
+    endpoint_url=f"https://{os.environ['CF_ACCOUNT_ID']}.r2.cloudflarestorage.com",
+    aws_access_key_id=os.environ["R2_ACCESS_KEY"],
+    aws_secret_access_key=os.environ["R2_SECRET_KEY"],
 )
-
-DATABASE_URL = "postgresql+asyncpg://postgres@localhost:5432/myapp"
-engine = create_async_engine(DATABASE_URL, echo=True)
-
-@app.get("/api/health")
-async def health():
-    return {"message": "Hello World"}
-""",
-    },
-    "vite.config": {
-        "path": "/app/workspace/frontend/{name}/vite.config.js",
-        "content": """import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    proxy: {
-      '/api': 'http://localhost:8000'
-    }
-  }
-})""",
-    },
-    "main.jsx": {
-        "path": "/app/workspace/frontend/{name}/src/main.jsx",
-        "content": """import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import { HashRouter } from 'react-router-dom'
-import AppRoutes from './Routes.jsx'
-import './index.css'
-
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <HashRouter>
-      <AppRoutes />
-    </HashRouter>
-  </StrictMode>
-)"""
-    },
-    "Routes.jsx": {
-        "path": "/app/workspace/frontend/{name}/src/Routes.jsx",
-        "content": """import { Routes, Route } from 'react-router-dom'
-import App from './App.jsx'
-
-export default function AppRoutes() {
-  return (
-    <Routes>
-      <Route path="/" element={<App />} />
-    </Routes>
-  )
-}"""
-    }
-}
 
 router = APIRouter()
 
@@ -89,6 +18,9 @@ logger = structlog.get_logger()
 
 docker_client = docker.from_env()
 
+def get_template(key: str) -> str:
+    response = s3.get_object(Bucket=os.environ["R2_BUCKET_NAME"], Key=key)
+    return response["Body"].read().decode("utf-8")
 
 def pick_base_image(backend_services: list, frontend_services: list, db: list) -> str:
 
@@ -230,19 +162,19 @@ async def create_project_container(
             if "React" in frontend_services:
                 tar_stream = io.BytesIO()
                 with tarfile.open(fileobj=tar_stream, mode="w") as tar:
-                    encoded = TEMPLATES["vite.config"]["content"].encode("utf-8")
+                    encoded = get_template("vite.config.js").encode("utf-8")
                     info = tarfile.TarInfo(name="vite.config.js")
                     info.size = len(encoded)
                     tar.addfile(info, io.BytesIO(encoded))
                     logger.info("Added localhost vite config for internal proxying")
                     
-                    encoded = TEMPLATES["main.jsx"]["content"].encode("utf-8")
+                    encoded = get_template("main.jsx").encode("utf-8")
                     info = tarfile.TarInfo(name="src/main.jsx")
                     info.size = len(encoded)
                     tar.addfile(info, io.BytesIO(encoded))
                     logger.info("Added main.jsx with HashRouter to enable project page routing")
 
-                    encoded = TEMPLATES["Routes.jsx"]["content"].encode("utf-8")
+                    encoded = get_template("Routes.jsx").encode("utf-8")
                     info = tarfile.TarInfo(name="src/Routes.jsx")
                     info.size = len(encoded)
                     tar.addfile(info, io.BytesIO(encoded))
@@ -257,7 +189,7 @@ async def create_project_container(
                 logger.info("Scaffolding backend", framework="FastAPI")
                 tar_stream = io.BytesIO()
                 with tarfile.open(fileobj=tar_stream, mode="w") as tar:
-                    encoded = TEMPLATES["FastAPI"]["content"].encode("utf-8")
+                    encoded = get_template("main.py").encode("utf-8")
                     info = tarfile.TarInfo(name="main.py")
                     info.size = len(encoded)
                     tar.addfile(info, io.BytesIO(encoded))

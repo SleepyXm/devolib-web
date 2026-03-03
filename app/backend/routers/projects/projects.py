@@ -261,3 +261,31 @@ async def get_metadata(
         "endpoints": json.loads(metadata["endpoints"]) if isinstance(metadata["endpoints"], str) else (metadata["endpoints"] or []),
         "updated_at": metadata["updated_at"]
     }
+
+
+@router.patch("/metadata/{project_id}")
+async def update_metadata(
+    project_id: str,
+    body: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    # Verify ownership
+    project = await database.fetch_one(
+        "SELECT project_id FROM projects WHERE project_id = :project_id AND user_id = :user_id",
+        {"project_id": project_id, "user_id": current_user["id"]}
+    )
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found or not owned by user")
+
+    allowed = {"envs", "db_schema", "pages", "endpoints"}
+    updates = {k: v for k, v in body.items() if k in allowed}
+    if not updates:
+        raise HTTPException(status_code=400, detail="No valid fields to update")
+
+    set_clause = ", ".join(f"{k} = :{k}" for k in updates)
+    await database.execute(
+        f"UPDATE project_metadata SET {set_clause}, updated_at = NOW() WHERE project_id = :project_id",
+        {**{k: json.dumps(v) for k, v in updates.items()}, "project_id": project_id}
+    )
+
+    return {"ok": True}
