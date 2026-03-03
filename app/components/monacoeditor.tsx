@@ -78,6 +78,7 @@ export default function MonacoEditor({
           fontSize: 16,
           minimap: { enabled: false },
           wordWrap: "on",
+          "renderValidationDecorations": "off",
         }}
       />
     </div>
