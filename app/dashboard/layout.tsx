@@ -40,7 +40,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="flex min-h-screen pt-17">
-      <aside className="w-[5vw] bg-gray-600 p-2 z-0">
+      <aside className="w-[7vw] bg-gray-600 p-2 z-0">
         <h2 className="font-bold mb-4 text-white">Dashboard Sidebar</h2>
         <ul className="space-y-2">
           {tabs.map((tab) => (

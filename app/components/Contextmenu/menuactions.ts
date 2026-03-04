@@ -12,7 +12,7 @@ type MenuActionElement = {
 type MenuActionColor = {
   label: string;
   action: "set-class";
-  payload: { prefix: string; color: string };
+  payload: { prefix: string; color: string; shade: number };
 };
 
 export type EditorMenuItem =

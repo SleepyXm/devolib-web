@@ -1,13 +1,14 @@
 
-import { useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Table, Row, Column } from "./dbtypes";
 import { DBCommand, DBCommandBuilder } from "./dboperations";
+import {  ProjectMetaContext } from "../../[project]/layout";
 
 // Hook for managing tables and DB commands
 export const useTableManager = (projectWS: any) => {
   const [tables, setTables] = useState<Table[]>([]);
   const [tableCounter, setTableCounter] = useState(1);
-
+  const { setDbSchema } = useContext(ProjectMetaContext)!;
 
   const executeCommand = (command: DBCommand) => {
     console.log(`${command.operation}:`, command);
@@ -31,6 +32,24 @@ export const useTableManager = (projectWS: any) => {
     setTables(loadedTables);
     setTableCounter(loadedTables.length + 1);
   };
+
+  const tablesToSchema = (tables: Table[]) => {
+  return tables.reduce((acc, table) => {
+    acc[table.name] = table.columns.map(col => ({
+      column: col.name,
+      type: col.type,
+      nullable: true
+    }));
+    return acc;
+  }, {} as Record<string, { column: string; type: string; nullable: boolean }[]>);
+  };
+
+  useEffect(() => {
+  if (!tables || tables.length === 0) return;
+  setDbSchema(tablesToSchema(tables));
+}, [tables]);
+
+
 
   const addTable = (name: string) => {
     const newTable: Table = { 

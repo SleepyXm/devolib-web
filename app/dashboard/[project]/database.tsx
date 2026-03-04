@@ -8,7 +8,7 @@ import { COLUMN_TYPES } from "./database/dbtypes";
 
 export default function DatabasePage() {
   const { projectWS } = useContext(ProjectContext)!;
-
+  
   const [savedCols, setSavedCols] = useState<Record<string, boolean>>({});
   const [tableName, setTableName] = useState("");
 

@@ -39,9 +39,6 @@ export default function BackendPage() {
   useEffect(() => {
     if (!projectId) return;
     setEndpoints(scannedEndpoints);
-    patchProjectMetadata(projectId, { endpoints: scannedEndpoints }).catch((err) => {
-      console.error("Failed to update endpoints metadata:", err);
-    });
   }, [scannedEndpoints, projectId]);
 
   const handleGeneratePayload = () => {
@@ -84,7 +81,14 @@ export default function BackendPage() {
         <h2>Backend Project Setup</h2>
         {hasUnsavedChanges && (
             <button
-              onClick={saveFile}
+              onClick={() => {
+                saveFile();
+                if (projectId) {
+                  patchProjectMetadata(projectId, { endpoints: scannedEndpoints }).catch((err) => {
+                    console.error("Failed to update endpoints metadata:", err);
+                  });
+                }
+              }}
               className="px-4 py-2 rounded bg-blue-500 hover:bg-blue-600"
             >
               Save Changes

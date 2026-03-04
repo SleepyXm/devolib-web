@@ -124,6 +124,28 @@ export const baseElements =
   { value: "li", label: "List Item", defaultClass: "mb-1" },
 ]
 
+const widthValues = [4, 8, 12, 16, 20, 24, 32, 36, 40, 48, 56, 64, 72, 80, 96];
+
+export function snapToTailwindWidth(px: number): string {
+  // Each tailwind unit = 4px
+  const units = px / 4;
+  const nearest = widthValues.reduce((prev, curr) => 
+    Math.abs(curr - units) < Math.abs(prev - units) ? curr : prev
+  );
+  return `w-${nearest}`;
+}
+
+const heightValues = [4, 8, 12, 16, 20, 24, 32, 36, 40, 48, 56, 64, 72, 80, 96];
+
+export function snapToTailwindHeight(px: number): string {
+  // Each tailwind unit = 4px
+  const units = px / 4;
+  const nearest = heightValues.reduce((prev, curr) => 
+    Math.abs(curr - units) < Math.abs(prev - units) ? curr : prev
+  );
+  return `h-${nearest}`;
+}
+
 
 export type TailwindState = { [prefix: string]: string };
 

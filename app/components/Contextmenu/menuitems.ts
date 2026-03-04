@@ -7,7 +7,7 @@ const elementMenuItems: EditorMenuItem[] = baseElements.map((el) => ({
   payload: el,
 }));
 
-const colorMenuItems: EditorMenuItem[] = hardValues.flatMap((prefix) =>
+export const colorMenuItems: EditorMenuItem[] = hardValues.flatMap((prefix) =>
   colourOptions.map((color) => ({
     label: `${prefix}-${color.value}`,
     action: "set-class",
@@ -16,6 +16,5 @@ const colorMenuItems: EditorMenuItem[] = hardValues.flatMap((prefix) =>
 );
 
 export const editorMenuItems: EditorMenuItem[] = [
-  ...elementMenuItems,
-  ...colorMenuItems,
+  ...elementMenuItems
 ];
