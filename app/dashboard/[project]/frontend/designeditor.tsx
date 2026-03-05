@@ -304,7 +304,7 @@ export default function DesignEditor() {
     <div className="flex flex-col h-120px min-h-screen w-full border rounded-lg">
       {/* Header */}
       <div className="p-2 bg-gray-900 text-white flex justify-between items-center">
-        <h2>Frontend Editor</h2>
+        <h2>Design Editor</h2>
       </div>
 
       {/* Code editor + preview */}
