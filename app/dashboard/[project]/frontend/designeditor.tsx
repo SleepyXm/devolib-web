@@ -10,7 +10,7 @@ import {
   snapToTailwindWidth,
 } from "@/app/types/tailwindstuff";
 
-export default function FrontendPage() {
+export default function DesignEditor() {
   const [code, setCode] = useState(
     `<h1>Hello Devolib</h1>\n<p>This is your live preview.</p>`,
   );
