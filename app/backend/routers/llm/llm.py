@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from openai import OpenAI
 from dotenv import load_dotenv
-import os
+import os, re
 
 load_dotenv()
 
@@ -16,6 +16,10 @@ client = OpenAI(
 
 class MessageInput(BaseModel):
     user_input: str
+
+def extract_html_from_response(response: str) -> str | None:
+    match = re.search(r'```html\n([\s\S]*?)```', response)
+    return match.group(1).strip() if match else None
 
 @router.post("/chat")
 def get_ai_response(data: MessageInput):
@@ -58,8 +62,11 @@ You can talk naturally outside of code blocks.
             delta = chunk.choices[0].delta.content
             if delta is not None:
                 assistant_response += delta
-        
-        return {"response": assistant_response}
+
+        return {
+            "response": assistant_response,
+            "code": extract_html_from_response(assistant_response)
+        }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

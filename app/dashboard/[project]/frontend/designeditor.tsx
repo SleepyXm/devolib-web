@@ -309,13 +309,13 @@ export default function DesignEditor() {
         onClick={handleClick}
       >
         <>
-          <div className="flex flex-col w-1/2 h-[calc(100vh-9.5rem)]">
+          <div className="flex flex-col w-1/2 h-[calc(100vh-13.5rem)]">
             <MonacoEditor
               initialCode={code}
               language="html"
               onChange={(value) => setCode(value)}
             />
-            <Chat />
+            <Chat setCode={(setCode)} />
           </div>
           <div className="flex w-1/2">
             {/* Slim toolbar */}
