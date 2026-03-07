@@ -3,18 +3,22 @@
 import { useState, useEffect } from "react";
 import MonacoEditor from "@/app/components/monacoeditor";
 import { useContextMenu } from "@/app/components/Contextmenu";
-import { editorMenuItems, colorMenuItems } from "@/app/components/Contextmenu/menuitems";
+import {
+  editorMenuItems,
+  colorMenuItems,
+} from "@/app/components/Contextmenu/menuitems";
 import { EditorMenuItem } from "@/app/components/Contextmenu/menuactions";
 import {
   snapToTailwindHeight,
   snapToTailwindWidth,
 } from "@/app/types/tailwindstuff";
+import Chat from "./chat";
 
 export default function DesignEditor() {
   const [code, setCode] = useState(
     `<h1>Hello Devolib</h1>\n<p>This is your live preview.</p>`,
   );
-  
+
   const [srcDoc, setSrcDoc] = useState("");
 
   const { contextMenu, handleContextMenu, handleClick } = useContextMenu();
@@ -72,23 +76,16 @@ export default function DesignEditor() {
     setSelectedElement(null);
   };
 
-  {
-    /*useEffect(() => {
-  // point to containers frontend
-  setSrcDoc('http://localhost:9000');
-  }, []);*/
-  }
-
   const getContextualMenuItems = () => {
-  if (!selectedElement) {
-    return editorMenuItems;
-  }
+    if (!selectedElement) {
+      return editorMenuItems;
+    }
 
-  return [
-    ...colorMenuItems,
-    ...editorMenuItems.filter(item => item.action !== "insert-element"),
-  ];
-};
+    return [
+      ...colorMenuItems,
+      ...editorMenuItems.filter((item) => item.action !== "insert-element"),
+    ];
+  };
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -237,8 +234,6 @@ export default function DesignEditor() {
     return () => clearTimeout(timeout);
   }, [code]);
 
-
-
   useEffect(() => {
     const handleMessage = (e: MessageEvent) => {
       if (e.data.type === "contextmenu") {
@@ -314,12 +309,14 @@ export default function DesignEditor() {
         onClick={handleClick}
       >
         <>
-          <MonacoEditor
-            initialCode={code}
-            language="html"
-            onChange={(value) => setCode(value)}
-            
-          />
+          <div className="flex flex-col w-1/2 h-[calc(100vh-9.5rem)]">
+            <MonacoEditor
+              initialCode={code}
+              language="html"
+              onChange={(value) => setCode(value)}
+            />
+            <Chat />
+          </div>
           <div className="flex w-1/2">
             {/* Slim toolbar */}
             <div className="w-12 bg-gray-900 border-r border-gray-700 flex flex-col items-center py-4 gap-4">
@@ -386,8 +383,4 @@ export default function DesignEditor() {
       </div>
     </div>
   );
-}
-
-{
-  /* src="http://localhost:9000" This should be used when container rev proxy has been finalised*/
 }

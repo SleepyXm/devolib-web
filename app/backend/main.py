@@ -4,6 +4,7 @@ from routers.auth import auth
 from routers.projects import projects, images, container
 from routers.payments import payment
 from routers.products import products
+from routers.llm import llm
 from database import database
 import os
 from dotenv import load_dotenv
@@ -25,6 +26,7 @@ app.include_router(container.router, prefix="/container", tags=["container"])
 app.include_router(images.router, prefix="/images", tags=["images"])
 app.include_router(payment.router, prefix="/payment", tags="payment")
 app.include_router(products.router, prefix="/products", tags="products")
+app.include_router(llm.router, prefix="/llm", tags="llm")
 
 
 @app.get("/")
