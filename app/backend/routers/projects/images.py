@@ -3,24 +3,14 @@ from fastapi import APIRouter
 from database import database
 from routers.auth.auth_utils import get_current_user
 from datetime import datetime
-from .base_images import ensure_exists, NETWORK_NAME
-
-s3 = boto3.client(
-    "s3",
-    endpoint_url=f"https://{os.environ['CF_ACCOUNT_ID']}.r2.cloudflarestorage.com",
-    aws_access_key_id=os.environ["R2_ACCESS_KEY"],
-    aws_secret_access_key=os.environ["R2_SECRET_KEY"],
-)
+from .helpers.containerhelper import create_and_start_container, scaffold_template, _clean_name
+from .helpers.base_images import ensure_exists
 
 router = APIRouter()
 
 logger = structlog.get_logger()
 
 docker_client = docker.from_env()
-
-def get_template(key: str) -> str:
-    response = s3.get_object(Bucket=os.environ["R2_BUCKET_NAME"], Key=key)
-    return response["Body"].read().decode("utf-8")
 
 def pick_base_image(backend_services: list, frontend_services: list, db: list) -> str:
 
@@ -46,213 +36,112 @@ async def create_project_container(
     db=None,
 ):
     """
-    Create container from base image.
+    Orchestrates container creation and project scaffolding.
     """
     backend_services = backend_services or []
     frontend_services = frontend_services or []
     db = db or []
 
-    # Fetch service configs from DB (keeping your existing logic)
+    # Fetch service configs
     all_services = backend_services + frontend_services + db
-    config_query = """
-    SELECT framework, default_port, scaffold_command, start_flags, default_packages
-    FROM services 
-    WHERE framework = ANY(:frameworks)
-    """
     service_configs = await database.fetch_all(
-        config_query, {"frameworks": all_services}
+        """
+        SELECT framework, default_port, scaffold_command, start_flags, default_packages
+        FROM services
+        WHERE framework = ANY(:frameworks)
+        """,
+        {"frameworks": all_services},
     )
-
-    # Build lookup dict
     configs_map = {config["framework"]: config for config in service_configs}
 
-    # Get port from DB
-    frontend_port = None
-    for framework in frontend_services:
-        if framework in configs_map and configs_map[framework]["default_port"]:
-            frontend_port = configs_map[framework]["default_port"]
-            break
+    # Resolve frontend port
+    frontend_port = next(
+        (
+            configs_map[fw]["default_port"]
+            for fw in frontend_services
+            if fw in configs_map and configs_map[fw]["default_port"]
+        ),
+        3000,
+    )
 
-    # Final fallback
-    if frontend_port is None:
-        frontend_port = 3000
-
-    # Pick base image
+    # Resolve base image and clean name
     base_type = pick_base_image(backend_services, frontend_services, db)
     base_tag = ensure_exists(base_type)
-
-    # Clean project name for DNS
     clean_name = _clean_name(project_name)
 
-    try:
-        logger.info(
-            "Creating container",
-            project_id=project_id,
-            base=base_type,
-            port=frontend_port,
-            services=f"BE:{len(backend_services)} FE:{len(frontend_services)}",
-        )
+    # Create and start the container
+    result = create_and_start_container(
+        project_id=project_id,
+        project_name=project_name,
+        base_tag=base_tag,
+        base_type=base_type,
+        clean_name=clean_name,
+        frontend_port=frontend_port,
+        backend_services=backend_services,
+        frontend_services=frontend_services,
+        db=db,
+    )
 
-        container = docker_client.containers.create(
-            image=base_tag,
-            name=f"devolib_project_{project_id}",
-            detach=True,
-            # Traefik labels
-            labels={
-                "traefik.enable": "true",
-                f"traefik.http.routers.{project_id}.rule": f"Host(`{clean_name}.localhost`)",
-                f"traefik.http.services.{project_id}.loadbalancer.server.port": str(
-                    frontend_port
-                ),
-                # Metadata for debugging
-                "devolib.project_id": project_id,
-                "devolib.project_name": project_name,
-                "devolib.base": base_type,
-                "devolib.backend_services": ",".join(backend_services),
-                "devolib.frontend_services": ",".join(frontend_services),
-                "devolib.db_services": ",".join(db),
-            },
-            # Persistent workspace volume
-            volumes={
-                f"devolib_project_{project_id}": {
-                    "bind": "/app/workspace",
-                    "mode": "rw",
-                }
-            },
-            # Join the web network (same as Traefik)
-            network=NETWORK_NAME,
-            # Resource limits
-            mem_limit="512m",
-            cpu_quota=50000,  # 50% of one core
-            # Keep container alive
-            command=["tail", "-f", "/dev/null"],
-        )
+    container = result["container"]
 
-        container.start()
+    # Scaffold frontend services
+    for framework in frontend_services:
+        if framework in configs_map and configs_map[framework]["scaffold_command"]:
+            cmd = configs_map[framework]["scaffold_command"].replace("{name}", project_name)
+            logger.info("Scaffolding frontend", framework=framework, cmd=cmd)
+            container.exec_run(
+                f"sh -c 'cd /app/workspace/frontend && {cmd}'",
+                tty=True,
+                detach=False,
+            )
 
-        logger.info(
-            "Container started",
-            project_id=project_id,
-            container_id=container.short_id,
-            url=f"http://{clean_name}.localhost",
-        )
+        if framework in configs_map and configs_map[framework]["default_packages"]:
+            packages = " ".join(json.loads(configs_map[framework]["default_packages"]))
+            container.exec_run(
+                f"sh -c 'cd /app/workspace/frontend/{project_name} && npm install {packages}'",
+                tty=True,
+                detach=False,
+            )
+            logger.info("Installed default frontend packages", framework=framework, packages=packages)
 
-        # Scaffold the project structure
-        for framework in frontend_services:
-            if framework in configs_map and configs_map[framework]["scaffold_command"]:
-                cmd = configs_map[framework]["scaffold_command"].replace(
-                    "{name}", project_name
-                )
-                logger.info("Scaffolding frontend", framework=framework, cmd=cmd)
-                container.exec_run(
-                    f"sh -c 'cd /app/workspace/frontend && {cmd}'",
-                    tty=True,
-                    detach=False,
-                )
+        if "React" in frontend_services:
+            scaffold_template(container, "React", f"/app/workspace/frontend/{project_name}")
 
-            if framework in configs_map and configs_map[framework]["default_packages"]:
-                packages = " ".join(json.loads(configs_map[framework]["default_packages"]))
-                container.exec_run(
-                    f"sh -c 'cd /app/workspace/frontend/{project_name} && npm install {packages}'",
-                    tty=True,
-                    detach=False,
-                )
-                logger.info("Installed default frontend packages", frameework=framework, packages=packages)
+    # Scaffold backend services
+    for framework in backend_services:
+        if "FastAPI" in backend_services:
+            scaffold_template(container, "FastAPI", f"/app/workspace/backend")
 
-            if "React" in frontend_services:
-                tar_stream = io.BytesIO()
-                with tarfile.open(fileobj=tar_stream, mode="w") as tar:
-                    encoded = get_template("vite.config.js").encode("utf-8")
-                    info = tarfile.TarInfo(name="vite.config.js")
-                    info.size = len(encoded)
-                    tar.addfile(info, io.BytesIO(encoded))
-                    logger.info("Added localhost vite config for internal proxying")
-                    
-                    encoded = get_template("main.jsx").encode("utf-8")
-                    info = tarfile.TarInfo(name="src/main.jsx")
-                    info.size = len(encoded)
-                    tar.addfile(info, io.BytesIO(encoded))
-                    logger.info("Added main.jsx with HashRouter to enable project page routing")
+        if framework in configs_map and configs_map[framework]["scaffold_command"]:
+            cmd = configs_map[framework]["scaffold_command"].replace("{name}", project_name)
+            logger.info("Scaffolding backend", framework=framework, cmd=cmd)
+            container.exec_run(f"sh -c '{cmd}'", tty=True, detach=False)
 
-                    encoded = get_template("Routes.jsx").encode("utf-8")
-                    info = tarfile.TarInfo(name="src/Routes.jsx")
-                    info.size = len(encoded)
-                    tar.addfile(info, io.BytesIO(encoded))
-                    logger.info("Added Routes.jsx to store pages that have been created and enable access via routing")
-                    
-                tar_stream.seek(0)
-            container.put_archive(f"/app/workspace/frontend/{project_name}", tar_stream)
+    # Scaffold database services
+    for framework in db:
+        if framework in configs_map and configs_map[framework]["scaffold_command"]:
+            cmd = configs_map[framework]["scaffold_command"].replace("{name}", project_name)
+            logger.info("Scaffolding database", framework=framework, cmd=cmd)
+            container.exec_run(
+                f"sh -c 'cd /app/workspace/database && {cmd}'",
+                tty=True,
+                detach=False,
+            )
 
-        for framework in backend_services:
-
-            if "FastAPI" in backend_services:
-                logger.info("Scaffolding backend", framework="FastAPI")
-                tar_stream = io.BytesIO()
-                with tarfile.open(fileobj=tar_stream, mode="w") as tar:
-                    encoded = get_template("main.py").encode("utf-8")
-                    info = tarfile.TarInfo(name="main.py")
-                    info.size = len(encoded)
-                    tar.addfile(info, io.BytesIO(encoded))
-                tar_stream.seek(0)
-                container.put_archive("/app/workspace/backend", tar_stream)
-
-            if framework in configs_map and configs_map[framework]["scaffold_command"]:
-                cmd = configs_map[framework]["scaffold_command"].replace(
-                    "{name}", project_name
-                )
-                logger.info("Scaffolding backend", framework=framework, cmd=cmd)
-                container.exec_run(f"sh -c '{cmd}'", tty=True, detach=False)
-
-        for framework in db:
-            if framework in configs_map and configs_map[framework]["scaffold_command"]:
-                cmd = configs_map[framework]["scaffold_command"].replace(
-                    "{name}", project_name
-                )
-                logger.info("Scaffolding database", framework=framework, cmd=cmd)
-                container.exec_run(
-                    f"sh -c 'cd /app/workspace/database && {cmd}'",
-                    tty=True,
-                    detach=False,
-                )
-
-        # Update DB with container ID
-        await database.execute(
-            query="""
+    # Persist container ID to DB
+    await database.execute(
+        query="""
             UPDATE projects
             SET container_id = :container_id
             WHERE project_id = :project_id
-            """,
-            values={"container_id": container.id, "project_id": project_id},
-        )
+        """,
+        values={"container_id": container.id, "project_id": project_id},
+    )
 
-        # Return both container ID and service configs for scaffolding later
-        return {
-            "project_id": project_id,
-            "container_id": container.id,
-            "configs_map": configs_map,  # So you can use scaffold_command/start_flags elsewhere
-            "port": frontend_port,
-        }
-
-    except docker.errors.APIError as e:
-        logger.error("Failed to create container", project_id=project_id, error=str(e))
-        raise
-    except Exception as e:
-        logger.error(
-            "Unexpected error creating container", project_id=project_id, error=str(e)
-        )
-        raise
-
-
-def _clean_name(name: str) -> str:
-    """Make project name DNS-safe for Traefik routing."""
-    # Only allow alphanumeric and hyphens
-    clean = re.sub(r"[^a-z0-9-]", "-", name.lower())
-    # Remove consecutive hyphens
-    clean = re.sub(r"-+", "-", clean)
-    # Strip leading/trailing hyphens
-    clean = clean.strip("-")
-    # Fallback if empty
-    return clean or f"proj-{hash(name) % 10000}"
+    return {
+        **result["metadata"],
+        "configs_map": configs_map,
+    }
 
 
 async def delete_project_container(project_id: str):

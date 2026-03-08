@@ -4,7 +4,8 @@ import asyncio
 from fastapi import WebSocket
 import structlog
 from database import database
-from .service_invoker import handle_db_command, DBoperations, FileOperations, handle_file_command, push_schema
+from .helpers.service_invoker import handle_db_command, DBoperations, FileOperations, handle_file_command, push_schema
+from .helpers.cmdhandlers import handle_shell_command, handle_cd_command
 
 logger = structlog.get_logger()
 
@@ -197,12 +198,6 @@ async def send_error(websocket: WebSocket, message: str):
 
 
 # Command handlers
-def handle_cd_command(cmd: str, current_dir: str) -> tuple[str, str]:
-    """Handle directory change commands"""
-    target = cmd[3:].strip()
-    new_dir = os.path.normpath(os.path.join(current_dir, target))
-    return f"Changed directory to {new_dir}\n", new_dir
-
 async def handle_json_command(container, payload: dict, current_dir: str, websocket: WebSocket, project_id: str, project_name: str):
     """Handle JSON payload commands"""
     if payload.get('type') == 'START_SERVICE':
@@ -224,17 +219,6 @@ async def handle_json_command(container, payload: dict, current_dir: str, websoc
     # response = await handle_command(container, payload, current_dir)
     # return response, current_dir
     return "Command handled\n", current_dir
-
-def handle_shell_command(container, cmd: str, current_dir: str) -> tuple[str, str]:
-    """Handle regular shell commands"""
-    result = container.exec_run(f"bash -c 'cd {current_dir} && {cmd}'", demux=True)
-    stdout, stderr = result.output
-    output = ""
-    if stdout:
-        output += stdout.decode()
-    if stderr:
-        output += stderr.decode()
-    return output, current_dir
 
 async def process_command(container, cmd: str, current_dir: str, websocket: WebSocket, project_id: str, project_name: str):
     """Route command to appropriate handler"""
