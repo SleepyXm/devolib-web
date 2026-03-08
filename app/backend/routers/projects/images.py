@@ -128,6 +128,8 @@ async def create_project_container(
                 detach=False,
             )
 
+    container.stop()  # Stop after scaffolding to save resources until user starts the project
+
     # Persist container ID to DB
     await database.execute(
         query="""
@@ -156,7 +158,7 @@ async def delete_project_container(project_id: str):
     try:
         container = docker_client.containers.get(container_name)
         logger.info("Stopping container", project_id=project_id)
-        container.stop(timeout=10)
+        container.stop(timeout=5)
         container.remove()
         logger.info("Container removed", project_id=project_id)
     except docker.errors.NotFound:
