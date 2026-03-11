@@ -197,6 +197,13 @@ async def send_error(websocket: WebSocket, message: str):
     }))
 
 
+def is_log_event(line: str) -> bool:
+    try:
+        data = json.loads(line)
+        return data.get("type") == "LOG_EVENT"
+    except (json.JSONDecodeError, AttributeError):
+        return False
+
 # Command handlers
 async def handle_json_command(container, payload: dict, current_dir: str, websocket: WebSocket, project_id: str, project_name: str):
     """Handle JSON payload commands"""
@@ -242,3 +249,21 @@ async def process_command(container, cmd: str, current_dir: str, websocket: WebS
     
     # Shell commands
     return handle_shell_command(container, cmd, current_dir)
+
+async def tail_logd(container, websocket: WebSocket):
+    try:
+        exec_result = container.exec_run(
+            "tail -f /var/log/logd.log",
+            stream=True,
+            tty=False,
+            detach=False,
+            socket=True
+        )
+        for chunk in exec_result.output:
+            lines = chunk.decode("utf-8", errors="replace").splitlines()
+            for line in lines:
+                line = line.strip()
+                if line and is_log_event(line):
+                    await websocket.send_text(line)
+    except Exception as e:
+        logger.warning(f"logd tail stopped: {e}")

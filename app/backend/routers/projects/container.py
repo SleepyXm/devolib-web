@@ -7,7 +7,8 @@ import os
 from datetime import datetime
 import json
 from .services import send_service_status, send_error, process_command
-import structlog
+import structlog, asyncio
+from .services import tail_logd
 
 logger = structlog.get_logger()
 
@@ -93,6 +94,7 @@ async def websocket_terminal(websocket: WebSocket, project_id: str, access_token
     await send_service_status(websocket, {"container": True})
     
     current_dir = "/app/workspace"
+    logd_task = asyncio.create_task(tail_logd(container, websocket))
     
     # Main command loop
     try:
@@ -110,6 +112,7 @@ async def websocket_terminal(websocket: WebSocket, project_id: str, access_token
         print(f"WebSocket disconnected for project {project_id}")
         
     except Exception as e:
+        logd_task.cancel()
         await send_error(websocket, f"Connection error: {str(e)}")
         await send_service_status(websocket, {"container": False})
         print(f"WebSocket error for project {project_id}: {e}")
