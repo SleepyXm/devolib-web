@@ -109,6 +109,7 @@ export type ProjectWS = {
   onOutput: (callback: (data: string) => void) => void;
   onStatus: (callback: (data: ServiceStatus) => void) => void;
   onSchema: (callback: (data: any) => void) => void;
+  onLog: (callback: (data: any) => void) => void;
   close: () => void;
 };
 
@@ -123,6 +124,7 @@ export function connectToProject(project_id: string, access_token: string): Proj
   let outputCallback: ((data: string) => void) | null = null;
   let statusCallback: ((data: ServiceStatus) => void) | null = null;
   let schemaCallback: ((data: any) => void) | null = null;
+  let logCallback: ((data: any) => void) | null = null;
 
   ws.onmessage = (event) => {
     try {
@@ -134,6 +136,11 @@ export function connectToProject(project_id: string, access_token: string): Proj
       // For schema retrieval on project
       if (message.type === 'DATABASE_SCHEMA' && schemaCallback) {
         schemaCallback(message);
+        return;
+      }
+
+      if (message.type === 'LOG_EVENT' && logCallback) {
+        logCallback(message.event);
         return;
       }
     } catch (e) {
@@ -165,6 +172,9 @@ export function connectToProject(project_id: string, access_token: string): Proj
     },
     onSchema: (callback: (data: string) => void) => { 
       schemaCallback = callback;
+    },
+    onLog: (callback: (data: any) => void) => {
+      logCallback = callback;
     },
 
     close: () => {

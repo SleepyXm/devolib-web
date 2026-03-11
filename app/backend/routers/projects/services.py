@@ -257,13 +257,25 @@ async def tail_logd(container, websocket: WebSocket):
             stream=True,
             tty=False,
             detach=False,
-            socket=True
+            socket=False
         )
-        for chunk in exec_result.output:
-            lines = chunk.decode("utf-8", errors="replace").splitlines()
-            for line in lines:
-                line = line.strip()
-                if line and is_log_event(line):
-                    await websocket.send_text(line)
+        loop = asyncio.get_event_loop()
+        queue = asyncio.Queue()
+
+        def read_stream():
+            for chunk in exec_result.output:
+                lines = chunk.decode("utf-8", errors="replace").splitlines()
+                for line in lines:
+                    line = line.strip()
+                    if line and is_log_event(line):
+                        loop.call_soon_threadsafe(queue.put_nowait, line)
+
+        loop.run_in_executor(None, read_stream)
+
+        while True:
+            line = await queue.get()
+            print(f"Forwarding log event: {line}")
+            await websocket.send_text(line)
+
     except Exception as e:
         logger.warning(f"logd tail stopped: {e}")

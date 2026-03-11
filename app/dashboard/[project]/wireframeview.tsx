@@ -1,12 +1,12 @@
 "use client";
 
 import { ReactNode, useContext, useState, useEffect, useRef } from "react";
-import { ProjectMetaContext, ProjectContext, ServiceStatus } from "./layout";
-import { useFileManager } from "./frontend/frontendmanager";
+import { ProjectMetaContext, ProjectContext, ServiceStatus, ProjectLogsContext } from "./layout";
 import { useContextMenu } from "@/app/components/Contextmenu";
 import { WireframeMenuItem, pagesMenuItems, endpointsMenuItems } from "@/app/components/Contextmenu/wireframemenu";
-import { usePageScanner } from "./helpers/FileScanner";
 import { patchProjectMetadata } from "@/app/handlers/projects";
+import LogsPanel from "./helpers/logspanel";
+
 
 
 const SERVICES: { key: keyof ServiceStatus; label: string }[] = [
@@ -216,6 +216,7 @@ export default function WireframeView() {
             ))}
           </div>
         </div>
+        <LogsPanel />
       </div>
 
       {contextMenu.show && (
