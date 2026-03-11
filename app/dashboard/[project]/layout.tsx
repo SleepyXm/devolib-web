@@ -58,6 +58,22 @@ interface ProjectMetaContextType {
   setPages: (pages: ProjectMetaContextType["pages"]) => void;
 }
 
+interface ProjectLogsContextType {
+  logs: LogEvent[];
+  clearLogs: () => void;
+}
+
+interface LogEvent {
+  id: string;
+  correlationId: string;
+  source: "frontend" | "backend" | "database";
+  direction: "inbound" | "outbound" | "self";
+  cause: "self" | "contract" | "expectation";
+  status?: number;
+  message: string;
+  timestamp: string;
+}
+
 
 export const ProjectMetaContext = createContext<ProjectMetaContextType | null>(null);
 
