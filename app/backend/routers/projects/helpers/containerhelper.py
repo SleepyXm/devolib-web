@@ -115,7 +115,6 @@ def scaffold_template(container, framework: str, destination: str):
     Fetches template files for the given framework from the bucket,
     builds a tar archive, and puts it into the container at destination.
     """
-    # Framework -> list of (bucket_key, tar_path) mappings
     FRAMEWORK_TEMPLATES = {
         "React": [
             ("vite.config.js", "vite.config.js"),
@@ -126,25 +125,35 @@ def scaffold_template(container, framework: str, destination: str):
         "FastAPI": [
             ("main.py", "main.py"),
         ],
+        "LoggingService": [
+            ("logd", "usr/local/bin/logd"),
+        ],
     }
 
     if framework not in FRAMEWORK_TEMPLATES:
         logger.warning("No templates found for framework", framework=framework)
         return
 
+    is_binary = framework == "LoggingService"
+
     tar_stream = io.BytesIO()
     with tarfile.open(fileobj=tar_stream, mode="w") as tar:
         for bucket_key, tar_path in FRAMEWORK_TEMPLATES[framework]:
-            encoded = get_template(bucket_key).encode("utf-8")
+            content = get_template(bucket_key, binary=is_binary)
+            if not is_binary:
+                content = content.encode("utf-8")
             info = tarfile.TarInfo(name=tar_path)
-            info.size = len(encoded)
-            tar.addfile(info, io.BytesIO(encoded))
+            info.size = len(content)
+            if is_binary:
+                info.mode = 0o755
+            tar.addfile(info, io.BytesIO(content))
             logger.info("Added template file", framework=framework, file=tar_path)
 
     tar_stream.seek(0)
     container.put_archive(destination, tar_stream)
     logger.info("Scaffolded templates", framework=framework, destination=destination)
 
-def get_template(key: str) -> str:
+def get_template(key: str, binary: bool = False) -> str | bytes:
     response = s3.get_object(Bucket=os.environ["R2_BUCKET_NAME"], Key=key)
-    return response["Body"].read().decode("utf-8")
+    content = response["Body"].read()
+    return content if binary else content.decode("utf-8")

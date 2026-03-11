@@ -7,6 +7,9 @@ import os
 from datetime import datetime
 import json
 from .services import send_service_status, send_error, process_command
+import structlog
+
+logger = structlog.get_logger()
 
 router = APIRouter()
 docker_client = docker.from_env()
@@ -38,6 +41,14 @@ async def start_project_container(project_id: str, current_user: dict = Depends(
             )
         except docker.errors.ImageNotFound:
             raise HTTPException(status_code=404, detail="Docker image not found")
+        
+    # Start logd if not already running
+    check = container.exec_run("pgrep logd", tty=False, detach=False)
+    if check.exit_code != 0:
+        container.exec_run("sh -c 'logd > /var/log/logd.log 2>&1 &'", tty=False, detach=True)
+        logger.info("Started logd", project_id=project_id)
+    else:
+        logger.info("logd already running", project_id=project_id)
     
     await database.execute(
         "UPDATE projects SET last_online = NOW() WHERE project_id = :project_id",

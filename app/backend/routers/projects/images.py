@@ -128,6 +128,10 @@ async def create_project_container(
                 detach=False,
             )
 
+    scaffold_template(container, "LoggingService", "/")
+    container.exec_run("sh -c 'logd &'", tty=True, detach=True)
+    logger.info("Logging service started")
+
     container.stop()  # Stop after scaffolding to save resources until user starts the project
 
     # Persist container ID to DB
