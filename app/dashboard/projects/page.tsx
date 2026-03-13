@@ -61,7 +61,7 @@ export default function ProjectsPage() {
 
   const FRONTEND_OPTIONS = ["React", "HTML/CSS", "Next.js", "Angular.js"];
 
-  const DATABASE_OPTIONS = ["MySQL", "PostgreSQL", "SQLite"];
+  const DATABASE_OPTIONS = ["PostgreSQL", "MySQL", "SQLite"];
 
   const [backend, setBackend] = useState(BACKEND_OPTIONS[0]);
   const [frontend, setFrontend] = useState(FRONTEND_OPTIONS[0]);
