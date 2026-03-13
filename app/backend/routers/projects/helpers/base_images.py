@@ -309,9 +309,16 @@ RUN mkdir -p /opt/bun_cache && cd /opt/bun_cache && \\
 RUN mkdir -p /var/lib/postgresql/data && \\
     chown -R postgres:postgres /var/lib/postgresql && \\
     su - postgres -c "initdb -D /var/lib/postgresql/data"
+
+# Tune postgres memory
+RUN echo "shared_buffers = 32MB" >> /var/lib/postgresql/data/postgresql.conf && \\
+    echo "work_mem = 4MB" >> /var/lib/postgresql/data/postgresql.conf && \\
+    echo "maintenance_work_mem = 32MB" >> /var/lib/postgresql/data/postgresql.conf && \\
+    echo "max_connections = 20" >> /var/lib/postgresql/data/postgresql.conf
+
 RUN mkdir -p /run/postgresql && \\
     chown postgres:postgres /run/postgresql
-
+    
 RUN su - postgres -c "pg_ctl -D /var/lib/postgresql/data start -w && \\
     psql -c 'CREATE DATABASE myapp;' && \\
     pg_ctl -D /var/lib/postgresql/data stop"
