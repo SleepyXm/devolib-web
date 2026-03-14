@@ -9,3 +9,5 @@ passlib
 bcrypt=4.1.1
 uvicorn
 strawberry-graphql
+boto3
+apscheduler

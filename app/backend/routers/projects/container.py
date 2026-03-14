@@ -1,14 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, Body, WebSocket, WebSocketDisconnect, Query
 from database import database
-from database import database
 from routers.auth.auth_utils import get_current_user
 import docker
 import os
 from datetime import datetime
 import json
-from .services import send_service_status, send_error, process_command
+from .services import send_service_status, send_error, process_command, tail_logd
 import structlog, asyncio
-from .services import tail_logd
+from .helpers.containerhelper import stop_container
 
 logger = structlog.get_logger()
 
@@ -22,6 +21,9 @@ async def start_project_container(project_id: str, current_user: dict = Depends(
     project = await database.fetch_one(query=select_query, values={"project_id": project_id, "user_id": current_user["id"]})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found or not owned by user")
+
+    if project["status"] == "running":
+        raise HTTPException(status_code=400, detail="Project is already running")
     
     container_name = f"devolib_project_{project_id}"
     try:
@@ -52,7 +54,7 @@ async def start_project_container(project_id: str, current_user: dict = Depends(
         logger.info("logd already running", project_id=project_id)
     
     await database.execute(
-        "UPDATE projects SET last_online = NOW() WHERE project_id = :project_id",
+        "UPDATE projects SET last_online = NOW(), status = 'running' WHERE project_id = :project_id",
         {"project_id": project_id}
     )
     
@@ -121,13 +123,13 @@ async def websocket_terminal(websocket: WebSocket, project_id: str, access_token
 
 
 @router.post("/stop/{project_id}")
-async def stop_project_container(project_id: str):
-    container_name = f"devolib_project_{project_id}"
+async def stop_project_container(project_id: str, current_user: dict = Depends(get_current_user)):
+    select_query = "SELECT * FROM projects WHERE project_id = :project_id AND user_id = :user_id"
+    project = await database.fetch_one(query=select_query, values={"project_id": project_id, "user_id": current_user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found or not owned by user")
     try:
-        container = docker_client.containers.get(container_name)
-        if container.status == "running":
-            container.stop()
-        return {"ok": True, "container_id": container.id, "status": container.status}
+        container = await stop_container(project_id)
+        return {"ok": True, "container_id": container.id, "status": "stopped"}
     except docker.errors.NotFound:
         raise HTTPException(status_code=404, detail="Container not found")
-    

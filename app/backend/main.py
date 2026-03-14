@@ -1,4 +1,6 @@
-from fastapi import FastAPI
+from datetime import datetime
+
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from routers.auth import auth
 from routers.projects import projects, images, container
@@ -8,6 +10,7 @@ from routers.llm import llm
 from database import database
 import os
 from dotenv import load_dotenv
+from helpers.scheduler import scheduler
 load_dotenv()
 
 app = FastAPI()
@@ -16,7 +19,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[os.getenv("DEV_SERVER"), os.getenv("FRONT-END-PROD"), ""],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PATCH","OPTIONS", "PUT", "DELETE"],
+    allow_methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"],
     allow_headers=["Authorization", "Content-Type"],
 )
 
@@ -33,9 +36,22 @@ app.include_router(llm.router, prefix="/llm", tags="llm")
 async def root():
     return {"message": "Welcome to your API"}
 
+@app.middleware("http")
+async def track_activity(request: Request, call_next):
+    response = await call_next(request)
+    project_id = request.path_params.get("project_id")
+    if project_id:
+        await database.execute(
+            "UPDATE projects SET last_online = NOW() WHERE project_id = :project_id",
+            {"project_id": project_id}
+        )
+    return response
+
 @app.on_event("startup")
 async def startup():
     await database.connect()
+    scheduler.start()
+
 
 @app.on_event("shutdown")
 async def shutdown():
