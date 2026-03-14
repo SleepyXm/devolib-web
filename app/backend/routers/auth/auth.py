@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Cookie
+from fastapi import APIRouter, HTTPException, Depends, Cookie, Request
 from fastapi import Response
 from fastapi.responses import JSONResponse
 from passlib.context import CryptContext
@@ -9,6 +9,7 @@ from schemas import UserCreate, UserLogin
 import json
 from uuid import uuid4
 import asyncio
+from helpers.limiter import limiter
 
 DUMMY_PASSWORD_HASH = (
     "$2b$12$C6UzMDM.H6dfI/f/IKcEeO9u9wZK0s8AjtKoa6HgMHqmpYyqn1cG."
@@ -24,7 +25,8 @@ def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
 @router.post("/signup")
-async def signup(user: UserCreate):
+@limiter.limit("5/minute")
+async def signup(request: Request, user: UserCreate):
     query = "SELECT * FROM users WHERE username = :username"
     existing_user = await database.fetch_one(query=query, values={"username": user.username})
     if existing_user:
@@ -54,7 +56,8 @@ async def signup(user: UserCreate):
 
 
 @router.post("/login")
-async def login(user: UserLogin, response: Response):
+@limiter.limit("5/minute")
+async def login(request: Request, user: UserLogin, response: Response):
 
     query = "SELECT id, password FROM users WHERE username = :username"
 

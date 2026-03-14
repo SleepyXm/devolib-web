@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from openai import OpenAI
 from dotenv import load_dotenv
 import os, re
+from helpers.limiter import limiter
 
 load_dotenv()
 
@@ -22,7 +23,8 @@ def extract_html_from_response(response: str) -> str | None:
     return match.group(1).strip() if match else None
 
 @router.post("/chat")
-def get_ai_response(data: MessageInput):
+@limiter.limit("10/minute")
+def get_ai_response(request: Request, data: MessageInput):
     messages = [
         {
             "role": "system",
@@ -55,7 +57,7 @@ You can talk naturally outside of code blocks.
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=messages,
-            stream=True
+            stream=False
         )
         assistant_response = ""
         for chunk in response:

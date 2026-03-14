@@ -11,9 +11,16 @@ from database import database
 import os
 from dotenv import load_dotenv
 from helpers.scheduler import scheduler
+from helpers.limiter import limiter
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+
 load_dotenv()
 
 app = FastAPI()
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
