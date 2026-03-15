@@ -71,14 +71,17 @@ async def check_service_exists(container, project_id: str, project_name: str, se
 
 services_alive: dict[str, dict] = {}
 
-def get_project_services(project_id: str) -> dict:
+def get_project_services(project_id: str, websocket: WebSocket = None) -> dict:
     if project_id not in services_alive:
         services_alive[project_id] = {"container": True}
+    if websocket:
+        services_alive[project_id]["ws"] = websocket
     return services_alive[project_id]
 
 async def start_service(container, project_id: str, project_name: str, service: str, websocket: WebSocket):
 
     project_services = get_project_services(project_id)
+    
     
     try:
         container.reload()

@@ -154,7 +154,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
         database: false,
         container: false,
     });
-  };
+};
 
   // start services
   const startService = (service: "frontend" | "backend" | "database") => {

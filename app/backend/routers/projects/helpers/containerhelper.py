@@ -169,8 +169,14 @@ async def stop_container(project_id: str):
 
     if project_id in services_alive:
         ws = services_alive[project_id].get("ws")
+        print(f"ws for {project_id}: {ws}")
         if ws:
-            await send_service_status(ws, {"container": False})
+            await send_service_status(ws, {
+                "container": False,
+                "frontend": False,
+                "backend": False,
+                "database": False,
+            })
         services_alive.pop(project_id, None)
 
     if container.status == "running":

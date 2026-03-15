@@ -82,6 +82,7 @@ async def websocket_terminal(websocket: WebSocket, project_id: str, access_token
  
     await websocket.accept()
     
+    
     # Get container
     container_name = f"devolib_project_{project_id}"
     try:
