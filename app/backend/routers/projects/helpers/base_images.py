@@ -246,10 +246,9 @@ RUN npm config set yes true --global && \\
 
 # Global scaffolding tools
 RUN npm install -g --force \\
-    create-react-app@latest \\
     create-next-app@latest \\
     @vue/cli@latest \\
-    create-vite@latest \\
+    create-vite@7 \\
     express-generator@latest \\
     typescript@latest \\
     tailwindcss@latest

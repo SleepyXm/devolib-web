@@ -148,6 +148,12 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
     projectWS.current = null;
     setIsConnected(false);
     setIsRunning(false);
+    setServiceStatus({
+        frontend: false,
+        backend: false,
+        database: false,
+        container: false,
+    });
   };
 
   // start services

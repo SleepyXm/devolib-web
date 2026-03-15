@@ -110,7 +110,6 @@ async def websocket_terminal(websocket: WebSocket, project_id: str, access_token
                 await websocket.send_text(output)
                 
     except WebSocketDisconnect:
-        await send_service_status(websocket, {"container": False})
         print(f"WebSocket disconnected for project {project_id}")
         
     except Exception as e:

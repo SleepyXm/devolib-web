@@ -5,6 +5,7 @@ from .base_images import NETWORK_NAME
 from asyncio.log import logger
 import docker, structlog, re, tarfile, io, os, boto3
 from fastapi import WebSocket, HTTPException, Depends
+from ..services import send_service_status, services_alive
 
 
 docker_client = docker.from_env()
@@ -165,8 +166,16 @@ def get_template(key: str, binary: bool = False) -> str | bytes:
 async def stop_container(project_id: str):
     container_name = f"devolib_project_{project_id}"
     container = docker_client.containers.get(container_name)
+
+    if project_id in services_alive:
+        ws = services_alive[project_id].get("ws")
+        if ws:
+            await send_service_status(ws, {"container": False})
+        services_alive.pop(project_id, None)
+
     if container.status == "running":
         container.stop()
+
     await database.execute(
         "UPDATE projects SET status = 'stopped', last_online = NOW() WHERE project_id = :project_id",
         {"project_id": project_id}

@@ -142,7 +142,7 @@ async def start_service(container, project_id: str, project_name: str, service: 
     logger.info(f"Started {service} for {project_name} with command: {command}")
 
     if service == "database":
-        await asyncio.sleep(2)
+        await asyncio.sleep(0.2)
         project_db = "myapp"
         check_db_cmd = (
             f'su - postgres -c "psql -lqt | cut -d \\| -f 1 | grep -qw {project_db} && echo exists || echo missing"'
@@ -153,7 +153,7 @@ async def start_service(container, project_id: str, project_name: str, service: 
         else:
             await websocket.send_text(f"[ℹ] Database '{project_db}' not found\n")
 
-    await asyncio.sleep(3)
+    await asyncio.sleep(0.2)
     is_running = await check_service_health(container, service)
 
     if is_running:

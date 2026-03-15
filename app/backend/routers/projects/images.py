@@ -1,16 +1,15 @@
-import io, re, tarfile, uuid, docker, os, json, boto3, structlog
+import docker, os, json, structlog
 from fastapi import APIRouter
 from database import database
 from routers.auth.auth_utils import get_current_user
 from datetime import datetime
 from .helpers.containerhelper import create_and_start_container, scaffold_template, _clean_name
 from .helpers.base_images import ensure_exists
+from .container import docker_client
 
 router = APIRouter()
 
 logger = structlog.get_logger()
-
-docker_client = docker.from_env()
 
 def pick_base_image(backend_services: list, frontend_services: list, db: list) -> str:
 
@@ -162,7 +161,7 @@ async def delete_project_container(project_id: str):
     try:
         container = docker_client.containers.get(container_name)
         logger.info("Stopping container", project_id=project_id)
-        container.stop(timeout=5)
+        container.stop(timeout=2)
         container.remove()
         logger.info("Container removed", project_id=project_id)
     except docker.errors.NotFound:

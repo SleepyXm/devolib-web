@@ -1,11 +1,12 @@
 import uuid
-from fastapi import APIRouter, Depends, Body, HTTPException
+from fastapi import APIRouter, Depends, Body, HTTPException, Request
 from database import database
 from routers.auth.auth_utils import get_current_user
 from .images import create_project_container, delete_project_container
 import docker
 import secrets
 import json
+from helpers.limiter import limiter
 
 router = APIRouter()
 
@@ -61,7 +62,9 @@ async def list_projects(current_user: dict = Depends(get_current_user)):
 
 
 @router.post("/create")
+@limiter.limit("3/minute")
 async def create_project(
+    request: Request,
     name: str = Body(..., embed=True),
     backend: str = Body(None, embed=True),
     frontend: str = Body(None, embed=True),
@@ -137,7 +140,7 @@ async def create_project(
         default_endpoints.append({
             "method": "GET",
             "path": "/api/health",
-            "file": "routes/health.js"
+            "file": "routes/main.js"
         })
 
     elif backend == "FastAPI":
@@ -262,14 +265,9 @@ async def get_metadata(
         "updated_at": metadata["updated_at"]
     }
 
-
 @router.patch("/metadata/{project_id}")
-async def update_metadata(
-    project_id: str,
-    body: dict,
-    current_user: dict = Depends(get_current_user)
-):
-    # Verify ownership
+async def update_metadata(project_id: str, body: dict, current_user: dict = Depends(get_current_user)):
+
     project = await database.fetch_one(
         "SELECT project_id FROM projects WHERE project_id = :project_id AND user_id = :user_id",
         {"project_id": project_id, "user_id": current_user["id"]}
