@@ -47,17 +47,17 @@ export default function DatabasePage() {
 
   return (
     <div className="p-6 space-y-4 w-[60vw]">
-      <h2 className="text-xl text-black font-bold">Database Project Page</h2>
+      <h2 className="text-xl text-black font-bold">Alter your Database</h2>
 
       <input
         type="text"
         value={tableName}
         onChange={(e) => setTableName(e.target.value)}
         placeholder="Table name..."
-        className="border px-2 py-1 rounded text-black"
+        className="border border-gray-300 border-2 px-2 mr-4 py-1 rounded text-black bg-white"
       />
       <button
-        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        className="bg-[#111318] text-zinc-500 px-4 py-1.5 rounded transition-all duration-300 hover:text-zinc-100"
         onClick={() => {
           addTable(tableName);
           setTableName("");
@@ -67,18 +67,19 @@ export default function DatabasePage() {
       </button>
 
       {tables.map((table) => (
-        <div key={table.id} className="border p-4 rounded space-y-2 relative">
-          <div className="flex justify-between items-center text-black">
+        <div key={table.id} className="border rounded-lg border-[#c9bfab] bg-white rounded space-y-2 relative">
+          <div className="border-b border-[#c9bfab] rounded-t-lg bg-[#f8f4ec] p-4">
+          <div className="flex justify-between items-center text-zinc-700">
             <h3 className="font-semibold">{table.name}</h3>
             <div className="flex gap-2">
               <button
-                className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 text-sm"
+                className="bg-[#50c878] text-black px-2 py-1 rounded hover:bg-green-600 text-sm"
                 onClick={() => addColumn(table.id)}
               >
                 Add Column
               </button>
               <button
-                className="bg-purple-500 text-white px-2 py-1 rounded hover:bg-purple-600 text-sm"
+                className="bg-[#7050c0] text-white px-2 py-1 rounded hover:bg-purple-600 text-sm"
                 onClick={() => addRow(table.id)}
               >
                 Add Row
@@ -89,13 +90,14 @@ export default function DatabasePage() {
               >
                 ×
               </button>
+              </div>
             </div>
           </div>
 
           {/* Columns */}
-          <div className="space-y-2">
+          <div className="space-y-4 p-4">
             {table.columns.map((col, idx) => (
-              <div key={idx} className="border p-2 rounded bg-gray-50 relative">
+              <div key={idx} className="border border-[#c9bfab] p-2 rounded bg-gray-50 relative">
                 <div className="flex justify-between items-center text-black">
                   <input
                     type="text"
@@ -114,7 +116,7 @@ export default function DatabasePage() {
                         }));
                       }
                     }}
-                    className="border px-2 py-1 rounded w-1/2"
+                    className="border border-[#c9bfab] px-2 py-1 rounded w-1/2"
                   />
                   {savedCols[`${table.id}-${idx}`] === false && (
                     <span className="text-xs text-yellow-500">unsaved</span>

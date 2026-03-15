@@ -16,11 +16,6 @@ export default function Background({ children }: { children: React.ReactNode }) 
 
         {/* page content */}
         {children}
-
-        <footer className="dv-footer">
-          <span>devolib © 2026</span>
-          <span>waitlist v0.1</span>
-        </footer>
       </div>
     </div>
   );

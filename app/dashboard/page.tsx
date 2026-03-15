@@ -48,7 +48,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4 z-50">
         <h1 className="text-xl mb-4 z-50">Welcome to your Dashboard</h1>
       </div>
-      <div className="mt-2 p-4 shadow border-3 border-black dark:border-white z-50">
+      <div className="bg-gradient-to-l from-gray-500/80 to-gray-200 mt-2 p-4 shadow border-3 border-black dark:border-white z-50">
         <h1 className="text-lg font-semibold mb-2 z-50">Recent Projects</h1>
 
         <div className="grid grid-cols-3 gap-3 z-50">

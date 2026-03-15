@@ -31,12 +31,12 @@ export default function Terminal() {
     <div style={{ padding: "20px", fontFamily: "monaco" }}>
 
       <div style={{ marginBottom: "15px", display: "flex", gap: "10px" }}>
-        <button onClick={start} disabled={isRunning} style={{ backgroundColor: "#34d696ff", color: "#fff", border: "none", padding: "8px 16px", borderRadius: "6px", cursor: isRunning ? "not-allowed" : "pointer" }}>▶ Start</button>
-        <button onClick={connect} disabled={isConnected} style={{ backgroundColor: "#007bff", color: "#fff", border: "none", padding: "8px 16px", borderRadius: "6px", cursor: isConnected ? "not-allowed" : "pointer" }}>➤ Connect</button>
-        <button onClick={stop} disabled={!isRunning} style={{ backgroundColor: "#dc3545", color: "#fff", border: "none", padding: "0px 14px", borderRadius: "50%", width: "40px", height: "40px", fontSize: "18px", cursor: !isRunning ? "not-allowed" : "pointer" }}>■</button>
+        <button onClick={start} disabled={isRunning} style={{ backgroundColor: "#50c878", color: "##0a1810", border: "2px solid", borderColor: "#0b130d77", padding: "8px 16px", borderRadius: "6px", cursor: isRunning ? "not-allowed" : "pointer" }}>▶ Start</button>
+        <button onClick={connect} disabled={isConnected} style={{ backgroundColor: "#4a90e0", color: "#fff", border: "2px solid", borderColor: "#2a70c0", padding: "8px 16px", borderRadius: "6px", cursor: isConnected ? "not-allowed" : "pointer" }}>➤ Connect</button>
+        <button onClick={stop} disabled={!isRunning} style={{ backgroundColor: "#c85050", color: "#fff", border: "2px solid", borderColor: "#47070777", padding: "8px 16px", borderRadius: "6px", fontSize: "18px", cursor: !isRunning ? "not-allowed" : "pointer" }}>■</button>
       </div>
 
-      <pre style={{ background: "#111", color: "rgb(255, 255, 255)", fontFamily: "monaco", padding: "10px", height: "400px", width: "80vw", overflowY: "auto", borderRadius: "6px", marginBottom: "10px" }}>
+      <pre style={{ background: "#11111a", color: "rgb(255, 255, 255)", fontFamily: "monaco", padding: "10px", height: "400px", width: "80vw", overflowY: "auto", borderRadius: "6px", marginBottom: "10px" }}>
         {logs || "Waiting for container output..."}
       </pre>
 
@@ -48,7 +48,7 @@ export default function Terminal() {
         onKeyDown={handleEnter}
         placeholder={isConnected ? "Type command and hit Enter" : "Connect or start container first"}
         disabled={!isConnected}
-        style={{ width: "80vw", fontFamily: "monaco", padding: "8px", borderRadius: "6px", border: "1px solid #444", backgroundColor: "#111", color: "rgb(255, 255, 255)" }}
+        style={{ width: "80vw", fontFamily: "monaco", padding: "8px", borderRadius: "6px", border: "1px solid #444", backgroundColor: "#11111a", color: "rgb(255, 255, 255)" }}
       />
     </div>
   );

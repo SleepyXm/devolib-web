@@ -22,7 +22,7 @@ export default function ProjectPage() {
   return (
     <div className="flex flex-col h-screen">
       {/* Tab buttons */}
-      <div className="flex gap-2 p-2 bg-gray-800 border-b border-gray-700">
+      <div className="flex gap-2 p-2 bg-[#1a1e24] border-b border-gray-700">
         <button
           onClick={() => {
             console.log("Button clicked!");
@@ -38,19 +38,23 @@ export default function ProjectPage() {
           }}
           className={`px-4 py-2 rounded flex items-center gap-2 ${
             activeView === "frontend"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+              ? "bg-[#222830] border border-[#2e3540] text-white"
+              : "bg-transparent border-transparent text-[#3a4050] transition-all hover:text-zinc-400 duration-400"
           }`}
         >
           <span
             className={`w-2 h-2 rounded-full ${
-              serviceStatus.frontend ? "bg-green-500" : "bg-red-500"
+              serviceStatus.frontend ? "bg-[#50c878]" : "bg-[#c85050]"
+            } ${
+              activeView === "frontend"
+                ? serviceStatus.frontend
+                  ? "shadow-[0_0_4px_rgba(80,200,120,0.6)]"
+                  : "shadow-[0_0_4px_rgba(200,80,80,0.6)]"
+                : ""
             }`}
           />
           Frontend
         </button>
-
-
 
         <button
           onClick={() => {
@@ -67,18 +71,23 @@ export default function ProjectPage() {
           }}
           className={`px-4 py-2 rounded flex items-center gap-2 ${
             activeView === "backend"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+              ? "bg-[#222830] border border-[#2e3540] text-white"
+              : "bg-transparent border-transparent text-[#3a4050] transition-all hover:text-zinc-400 duration-400"
           }`}
         >
           <span
             className={`w-2 h-2 rounded-full ${
-              serviceStatus.backend ? "bg-green-500" : "bg-red-500"
+              serviceStatus.backend ? "bg-[#50c878]" : "bg-[#c85050]"
+            } ${
+              activeView === "backend"
+                ? serviceStatus.backend
+                  ? "shadow-[0_0_4px_rgba(80,200,120,0.6)]"
+                  : "shadow-[0_0_4px_rgba(200,80,80,0.6)]"
+                : ""
             }`}
           />
           Backend
         </button>
-
 
         <button
           onClick={() => {
@@ -95,13 +104,19 @@ export default function ProjectPage() {
           }}
           className={`px-4 py-2 rounded flex items-center gap-2 ${
             activeView === "database"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+              ? "bg-[#222830] border border-[#2e3540] text-white"
+              : "bg-transparent border-transparent text-[#3a4050] transition-all hover:text-zinc-400 duration-400"
           }`}
         >
           <span
             className={`w-2 h-2 rounded-full ${
-              serviceStatus.database ? "bg-green-500" : "bg-red-500"
+              serviceStatus.database ? "bg-[#50c878]" : "bg-[#c85050]"
+            } ${
+              activeView === "database"
+                ? serviceStatus.database
+                  ? "shadow-[0_0_4px_rgba(80,200,120,0.6)]"
+                  : "shadow-[0_0_4px_rgba(200,80,80,0.6)]"
+                : ""
             }`}
           />
           Database
@@ -111,11 +126,10 @@ export default function ProjectPage() {
           onClick={() => setActiveView("wireframe")}
           className={`px-4 py-2 rounded flex items-center gap-2 ${
             activeView === "wireframe"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+              ? "bg-[#222830] border border-[#2e3540] text-white"
+              : "bg-transparent border-transparent text-[#3a4050] transition-all hover:text-zinc-400 duration-400"
           }`}
         >
-
           WireFrame
         </button>
 
@@ -123,13 +137,19 @@ export default function ProjectPage() {
           onClick={() => setActiveView("terminal")}
           className={`px-4 py-2 rounded flex items-center gap-2 ${
             activeView === "terminal"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+              ? "bg-[#222830] border border-[#2e3540] text-white"
+              : "bg-transparent border-transparent text-[#3a4050] transition-all hover:text-zinc-400 duration-400"
           }`}
         >
           <span
             className={`w-2 h-2 rounded-full ${
-              serviceStatus.container ? "bg-green-500" : "bg-red-500"
+              serviceStatus.container ? "bg-[#50c878]" : "bg-[#c85050]"
+            } ${
+              activeView === "terminal"
+                ? serviceStatus.container
+                  ? "shadow-[0_0_4px_rgba(80,200,120,0.6)]"
+                  : "shadow-[0_0_4px_rgba(200,80,80,0.6)]"
+                : ""
             }`}
           />
           Container

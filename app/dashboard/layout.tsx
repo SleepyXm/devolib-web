@@ -40,8 +40,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="flex min-h-screen pt-17">
-      <aside className="w-[7vw] bg-gray-600 p-2 z-0">
-        <h2 className="font-bold mb-4 text-white">Dashboard Sidebar</h2>
+      <aside className="w-[7vw] bg-[#2a2e38] p-2 z-0">
+        <h2 className="font-bold mb-4 text-gray-400">Dashboard Sidebar</h2>
         <ul className="space-y-2">
           {tabs.map((tab) => (
             <li key={tab.name}>
@@ -49,8 +49,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 <button
                   className={`w-full text-left px-2 py-1 rounded ${
                     activeTab === tab.href.split("/").pop()
-                      ? "bg-gradient-to-l from-yellow-200 to-red-300 text-black"
-                      : "hover:bg-gray-700 text-white"
+                      ? "bg-gradient-to-l from-gray-500/80 to-gray-200 border border-[#474849] text-black"
+                      : "transition-all duration-300 hover:bg-gray-600 border border-[#474849]/0 text-white"
                   }`}
                 >
                   {tab.name}

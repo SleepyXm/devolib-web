@@ -131,9 +131,9 @@ export default function WireframeView() {
   return (
     <div className="flex flex-col w-full p-6 gap-6 overflow-auto text-foreground">
       {showInput && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-card border rounded-lg p-6 flex flex-col gap-4 w-80">
-            <p className="text-sm font-semibold">
+        <div className="fixed inset-0 z-50 flex items-center text-zinc-400 justify-center bg-black/50">
+          <div className="bg-card border rounded-lg p-6 flex flex-col gap-4 w-80 bg-[#111318]">
+            <p className="text-sm font-semibold bg-[#111318] text-zinc-400">
               {activeSection === "pages" ? "New Page Name" : "New Endpoint Path"}
             </p>
             <input
@@ -143,70 +143,61 @@ export default function WireframeView() {
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleCreate()}
               placeholder={activeSection === "pages" ? "Dashboard" : "/api/items"}
-              className="px-3 py-2 rounded bg-background border text-sm"
+              className="px-3 py-2 rounded bg-zinc-600 border text-sm transition-all duration-300"
             />
             <div className="flex gap-2 justify-end">
-              <button onClick={() => setShowInput(false)} className="px-3 py-1.5 text-sm rounded hover:bg-muted">Cancel</button>
-              <button onClick={handleCreate} className="px-3 py-1.5 text-sm rounded bg-primary text-primary-foreground">Create</button>
+              <button onClick={() => setShowInput(false)} className="px-3 py-1.5 text-sm rounded hover:bg-muted hover:text-white">Cancel</button>
+              <button onClick={handleCreate} className="px-3 py-1.5 text-sm rounded bg-primary text-primary-foreground hover:text-white">Create</button>
             </div>
           </div>
         </div>
       )}
 
-      <div className="flex items-center gap-6 px-4 py-3 rounded-lg border bg-card">
-        <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mr-2">Services</span>
-        {SERVICES.map(({ key, label }) => (
-          <div key={key} className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${serviceStatus[key] ? "bg-green-500" : "bg-muted-foreground/40"}`} />
-            <span className="text-sm">{label}</span>
-          </div>
-        ))}
-      </div>
 
       <div className="flex gap-6 flex-1 min-h-0">
         <div className="flex flex-col flex-1 min-w-0" onContextMenu={(e) => { setActiveSection("pages"); handleContextMenu(e); }}>
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3 px-1">Pages</p>
-          <div className="rounded-lg border bg-card p-4 flex flex-col gap-1 flex-1 overflow-auto">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground text-zinc-400 p-2 bg-[#111318] overflow-hidden rounded-t-lg pl-4">Pages</p>
+          <div className="border border-[#c9bfab] bg-card flex flex-col gap-1 flex-1 overflow-auto bg-white">
             {pages.length === 0 ? (
               <p className="text-sm text-muted-foreground">No pages found.</p>
             ) : pages.map((page, i) => (
-              <div key={i} className="flex items-center gap-2 text-sm py-1.5 px-2 rounded hover:bg-muted/50 transition-colors">
-                <span className="text-muted-foreground">/</span>
-                <span className="font-mono">{page.route.replace(/^\//, "") || "index"}</span>
-                <span className="text-muted-foreground/40 text-xs ml-auto font-mono">{page.file}</span>
+              <div key={i} className="flex items-center gap-2 text-sm px-6 py-3 border-b border-black/30 hover:bg-muted/50 transition-colors">
+                <span className="text-[#1a6888]">/</span>
+                <span className="font-mono text-[#1a6888]">{page.route.replace(/^\//, "") || ""}</span>
+                <span className="text-zinc-800/70 text-xs ml-auto font-mono">{page.file}</span>
               </div>
             ))}
           </div>
         </div>
 
         <div className="flex flex-col flex-1 min-w-0" onContextMenu={(e) => { setActiveSection("endpoints"); handleContextMenu(e); }}>
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3 px-1">API Endpoints</p>
-          <div className="rounded-lg border bg-card p-4 flex flex-col gap-1 flex-1 overflow-auto">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground text-zinc-400 p-2 bg-[#111318] overflow-hidden rounded-t-lg pl-4">API Endpoints</p>
+          <div className="border border-[#c9bfab] bg-card flex flex-col gap-1 flex-1 overflow-auto bg-white">
             {endpoints.length === 0 ? (
               <p className="text-sm text-muted-foreground">No endpoints found.</p>
             ) : endpoints.map((ep, i) => (
-              <div key={i} className="flex items-center gap-2 text-sm py-1.5 px-2 rounded hover:bg-muted/50 transition-colors">
-                <span className={`font-mono text-xs px-1.5 py-0.5 rounded shrink-0 uppercase ${METHOD_COLORS[ep.method] ?? "bg-green-500/10 text-green-400"}`}>
+              <div key={i} className="flex items-center gap-2 text-sm px-6 py-3 border-b border-black/30 hover:bg-muted/50 transition-colors">
+                <span className={`font-mono text-xs px-1.5 py-0.5 rounded shrink-0 uppercase ${METHOD_COLORS[ep.method] ?? "bg-green-300/30 border border-[#96c48f] text-green-600"}`}>
                   {ep.method}
                 </span>
-                <span className="font-mono truncate">{ep.path}</span>
-                <span className="text-muted-foreground/40 text-xs ml-auto font-mono">{ep.file}</span>
+                <span className="font-mono truncate text-[#1a6888]">{ep.path}</span>
+                <span className="text-zinc-800/70 text-xs ml-auto font-mono">{ep.file}</span>
               </div>
             ))}
           </div>
         </div>
 
         <div className="flex flex-col flex-1 min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3 px-1">Database</p>
-          <div className="rounded-lg border bg-card p-4 flex flex-col gap-4 flex-1 overflow-auto">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground text-zinc-400 p-2 bg-[#111318] overflow-hidden rounded-t-lg pl-4">Database</p>
+          <div className="border border-[#c9bfab] bg-card flex flex-col gap-1 flex-1 overflow-auto bg-white">
             {Object.keys(db_schema).length === 0 ? (
               <p className="text-sm text-muted-foreground">No tables found.</p>
             ) : Object.entries(db_schema).map(([table, columns]) => (
               <div key={table}>
-                <p className="text-xs font-semibold mb-1.5 text-muted-foreground uppercase tracking-wide">{table}</p>
-                <div className="rounded border divide-y text-xs overflow-hidden">
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground p-1 text-[#7d7668] bg-[#f0ebe0] overflow-hidden pl-4">{table}</p>
+                <div className="divide-y text-xs overflow-hidden">
                   {columns.map((col) => (
-                    <div key={col.column} className="flex justify-between px-3 py-1.5 hover:bg-muted/50 transition-colors">
+                    <div key={col.column} className="flex justify-between text-zinc-700 px-3 py-1.5 border-black/30 hover:bg-muted/50 transition-colors">
                       <span className="font-mono">{col.column}</span>
                       <span className="text-muted-foreground">{col.type}{col.nullable ? "" : " · NN"}</span>
                     </div>
@@ -238,7 +229,7 @@ export default function WireframeView() {
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="flex flex-col min-w-[220px] max-w-[320px] flex-1">
-      <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">
+      <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground text-zinc-400 p-2 bg-[#111318] overflow-hidden rounded-t-lg">
         {title}
       </h2>
       <div className="rounded-lg border bg-card p-4 flex flex-col gap-1 flex-1">
