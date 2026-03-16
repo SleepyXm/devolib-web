@@ -57,7 +57,7 @@ You can talk naturally outside of code blocks.
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=messages,
-            stream=False
+            stream=True
         )
         assistant_response = ""
         for chunk in response:
