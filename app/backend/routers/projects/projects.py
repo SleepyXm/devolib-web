@@ -3,14 +3,11 @@ from fastapi import APIRouter, Depends, Body, HTTPException, Request
 from database import database
 from routers.auth.auth_utils import get_current_user
 from .images import create_project_container, delete_project_container
-import docker
 import secrets
 import json
 from helpers.limiter import limiter
 
 router = APIRouter()
-
-docker_client = docker.from_env()
 
 @router.get("/list")
 async def list_projects(current_user: dict = Depends(get_current_user)):

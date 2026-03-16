@@ -1,15 +1,10 @@
 
 
-from database import database
 from .base_images import NETWORK_NAME
 from asyncio.log import logger
-import docker, structlog, re, tarfile, io, os, boto3
-from fastapi import WebSocket, HTTPException, Depends
-from ..services import send_service_status, services_alive
-
-
-docker_client = docker.from_env()
-logger = structlog.get_logger()
+import docker, re, tarfile, io, os, boto3
+from helpers.dockerclient import docker_client
+from helpers.structlogger import logger
 
 s3 = boto3.client(
     "s3",
@@ -160,30 +155,3 @@ def get_template(key: str, binary: bool = False) -> str | bytes:
     response = s3.get_object(Bucket=os.environ["R2_BUCKET_NAME"], Key=key)
     content = response["Body"].read()
     return content if binary else content.decode("utf-8")
-
-
-
-async def stop_container(project_id: str):
-    container_name = f"devolib_project_{project_id}"
-    container = docker_client.containers.get(container_name)
-
-    if project_id in services_alive:
-        ws = services_alive[project_id].get("ws")
-        print(f"ws for {project_id}: {ws}")
-        if ws:
-            await send_service_status(ws, {
-                "container": False,
-                "frontend": False,
-                "backend": False,
-                "database": False,
-            })
-        services_alive.pop(project_id, None)
-
-    if container.status == "running":
-        container.stop()
-
-    await database.execute(
-        "UPDATE projects SET status = 'stopped', last_online = NOW() WHERE project_id = :project_id",
-        {"project_id": project_id}
-    )
-    return container

@@ -1,13 +1,10 @@
-import json
-import os
-import asyncio
+import json, asyncio
 from fastapi import WebSocket
-import structlog
 from database import database
 from .helpers.service_invoker import handle_db_command, DBoperations, FileOperations, handle_file_command, push_schema
 from .helpers.cmdhandlers import handle_shell_command, handle_cd_command
-
-logger = structlog.get_logger()
+from helpers.servicestates import send_service_status, services_alive
+from helpers.structlogger import logger
 
 
 async def check_container_health(container) -> bool:
@@ -67,9 +64,6 @@ async def check_service_exists(container, project_id: str, project_name: str, se
             return {'exists': False, 'error': f"Required file {file} not found"}
     
     return {'exists': True, 'error': None}
-
-
-services_alive: dict[str, dict] = {}
 
 def get_project_services(project_id: str, websocket: WebSocket = None) -> dict:
     if project_id not in services_alive:
@@ -185,19 +179,6 @@ async def start_service(container, project_id: str, project_name: str, service: 
 
 
 
-async def send_service_status(websocket: WebSocket, status: dict):
-    """Send service status update to client"""
-    await websocket.send_text(json.dumps({
-        "type": "service-status",
-        "data": status
-    }))
-
-async def send_error(websocket: WebSocket, message: str):
-    """Send error message to client"""
-    await websocket.send_text(json.dumps({
-        "type": "error",
-        "message": message
-    }))
 
 
 def is_log_event(line: str) -> bool:
@@ -231,7 +212,6 @@ async def handle_json_command(container, payload: dict, current_dir: str, websoc
     return "Command handled\n", current_dir
 
 async def process_command(container, cmd: str, current_dir: str, websocket: WebSocket, project_id: str, project_name: str):
-    """Route command to appropriate handler"""
     cmd = cmd.strip()
     if not cmd:
         return "", current_dir
@@ -245,13 +225,23 @@ async def process_command(container, cmd: str, current_dir: str, websocket: WebS
         try:
             payload = json.loads(cmd)
             logger.info(f"Received JSON payload: {payload}")
-            return await handle_json_command(container, payload, current_dir, websocket, project_id, project_name)
+            result = await handle_json_command(container, payload, current_dir, websocket, project_id, project_name)
+            await database.execute(
+                "UPDATE projects SET last_online = NOW() WHERE project_id = :project_id",
+                {"project_id": project_id}
+            )
+            return result
         except Exception as e:
             print(f"Error handling JSON command: {e}")
             return f"Error handling command: {str(e)}\n", current_dir
     
     # Shell commands
-    return handle_shell_command(container, cmd, current_dir)
+    result = handle_shell_command(container, cmd, current_dir)
+    await database.execute(
+        "UPDATE projects SET last_online = NOW() WHERE project_id = :project_id",
+        {"project_id": project_id}
+    )
+    return result
 
 async def tail_logd(container, websocket: WebSocket):
     try:

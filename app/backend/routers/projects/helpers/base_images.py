@@ -1,10 +1,8 @@
 from pathlib import Path
 import docker
 import shutil
-import structlog
-
-logger = structlog.get_logger()
-docker_client = docker.from_env()
+from helpers.dockerclient import docker_client
+from helpers.structlogger import logger
 
 NETWORK_NAME = "web"
 

@@ -6,9 +6,6 @@ from database import database
 from routers.auth.auth_utils import create_access_token, get_current_user
 import uuid
 from schemas import UserCreate, UserLogin
-import json
-from uuid import uuid4
-import asyncio
 from helpers.limiter import limiter
 
 DUMMY_PASSWORD_HASH = (

@@ -1,18 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException, Body, WebSocket, WebSocketDisconnect, Query
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, Query
 from database import database
 from routers.auth.auth_utils import get_current_user
-import docker
-import os
 from datetime import datetime
-import json
-from .services import send_service_status, send_error, process_command, tail_logd
-import structlog, asyncio
-from .helpers.containerhelper import stop_container
-
-logger = structlog.get_logger()
+from .services import process_command, tail_logd
+from helpers.servicestates import send_service_status, send_error
+import asyncio
+from helpers.stopper import stop_container
+from helpers.dockerclient import docker_client
+import docker
+from helpers.structlogger import logger
 
 router = APIRouter()
-docker_client = docker.from_env()
+
 
 @router.post("/start/{project_id}")
 async def start_project_container(project_id: str, current_user: dict = Depends(get_current_user)):

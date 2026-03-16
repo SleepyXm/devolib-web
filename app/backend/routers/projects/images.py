@@ -6,10 +6,9 @@ from datetime import datetime
 from .helpers.containerhelper import create_and_start_container, scaffold_template, _clean_name
 from .helpers.base_images import ensure_exists
 from .container import docker_client
+from helpers.structlogger import logger
 
 router = APIRouter()
-
-logger = structlog.get_logger()
 
 def pick_base_image(backend_services: list, frontend_services: list, db: list) -> str:
 
