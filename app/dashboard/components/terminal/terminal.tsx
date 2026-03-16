@@ -3,7 +3,7 @@
 import { useContext, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { ProjectContext } from "../../[project]/layout";
-import { getLogColor, TerminalControls, LogOutput, TerminalInput } from "./terminalcomponents";
+import { TerminalControls, LogOutput, TerminalInput } from "./terminalcomponents";
 
 
 export default function Terminal() {
