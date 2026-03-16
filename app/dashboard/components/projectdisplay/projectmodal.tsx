@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { getProjectMetadata, ProjectMetaData, deleteProject } from "@/app/handlers/projects";
 import { DangerZone, ModalHeader, PagesSection, EnvsSection, EndpointsSection, DatabaseSection } from "./projectdisplaycomponents";
+import { useRouter } from "next/navigation";
 
 
 interface ProjectModalProps {
@@ -25,6 +26,7 @@ export function ProjectModal({
   const [loading, setLoading] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const modalRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchMetadata = async () => {
@@ -78,6 +80,7 @@ export function ProjectModal({
     );
   }
 
+
   return (
     <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50">
       <div
@@ -86,6 +89,13 @@ export function ProjectModal({
       >
         <ModalHeader title={projectName} onClose={onClose} />
         <div className="p-6 overflow-y-auto flex-1 space-y-6">
+          <span className="text-sm text-white dark:text-zinc-400 bg-[#4a90e0] border-2 border-[#2a70c0] rounded px-2 py-1"
+          onClick={async () => {
+                  router.push(`/dashboard/${projectId}`);
+                }}>
+            Access Project <span className="text-xl">→</span>
+          </span>
+          <br />
           <PagesSection pages={metadata.pages} />
           <EndpointsSection endpoints={metadata.endpoints} />
           <DatabaseSection db_schema={metadata.db_schema} />

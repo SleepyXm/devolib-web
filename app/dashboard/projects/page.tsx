@@ -1,11 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import {
-  listProjects,
-  handleCreateProject,
-  deleteProject,
-  Project,
-} from "@/app/handlers/projects";
+import { listProjects, handleCreateProject, deleteProject, Project } from "@/app/handlers/projects";
 import { useUser } from "@/app/provider/UserProvider";
 import { useRouter } from "next/navigation";
 import ErrorPopup from "@/app/components/ErrorPopup";
