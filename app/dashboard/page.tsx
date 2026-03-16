@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ProjectCard } from "./components/projectdisplay";
-import { ProjectModal } from "./components/projectmodal";
+import { ProjectCard } from "./components/projectdisplay/projectdisplay";
+import { ProjectModal } from "./components/projectdisplay/projectmodal";
 import { useUser } from "@/app/provider/UserProvider";
 import { listProjects } from "../handlers/projects";
 

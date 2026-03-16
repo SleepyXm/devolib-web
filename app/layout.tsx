@@ -4,6 +4,7 @@ import "./globals.css";
 import { UserProvider } from "./provider/UserProvider";
 import Navbar from "./components/AxonNav";
 import Background from "./components/background";
+import SmoothScroll from "@/app/components/scrollsmooth"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -51,11 +52,15 @@ export default function RootLayout(
       <body
         className={`${Space_mono.className} ${syne.className} antialiased bg-white dark:bg-black`}
       >
-
+        <SmoothScroll />
+        <div id="smooth-wrapper">
+          <div id="smooth-content">
         <Navbar />
         <Background>
         {children}
         </Background>
+        </div>
+        </div>
 
       </body>
       </UserProvider>
