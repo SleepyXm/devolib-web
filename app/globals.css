@@ -1,8 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #f5f0eb;
+  --bg: #a49c91;
   --fg: #0a0a0a;
+  --mesh-1: #dedede2e;
+  --mesh-2: #f5f0eb;
   --card-bg: #d4b8f5;
   --input-bg: #f5f0eb;
   --badge-bg: #f5f0b8;
@@ -29,6 +31,8 @@
   :root {
     --bg: #18181a;
     --fg: #f0ece6;
+    --mesh-1: #d4b8f5;
+  --mesh-2: #f5f0eb;
   --card-bg: #1e1a2e;
   --input-bg: #13111a;
   --badge-bg: #2a1f00;
@@ -54,14 +58,26 @@ body {
 
 .dv-wrap {
   background-color: var(--bg);
-  color: var(--fg);
-  font-family: "Space Mono", monospace;
-  min-height: 100vh;
-  overflow-x: hidden;
-  transition:
-    background-color 0.3s ease,
-    color 0.3s ease;
-  position: relative;
+  background-image:
+    radial-gradient(at 30% 40%, var(--mesh-1) 0px, transparent 60%),
+    radial-gradient(at 70% 60%, var(--mesh-2) 0px, transparent 60%);
+  background-size: 100% 100%, 100% 100%;
+  animation: meshShift 10s ease-in-out infinite alternate;
+}
+
+@keyframes meshShift {
+  0% {
+    background-image:
+      radial-gradient(at 30% 40%, var(--mesh-1) 0px, transparent 60%),
+      radial-gradient(at 70% 60%, var(--mesh-2) 0px, transparent 60%);
+    background-size: 100% 100%, 100% 100%;
+  }
+  100% {
+    background-image:
+      radial-gradient(at 70% 60%, var(--mesh-1) 0px, transparent 60%),
+      radial-gradient(at 30% 40%, var(--mesh-2) 0px, transparent 60%);
+    background-size: 100% 100%, 100% 100%;
+  }
 }
 
 .dv-dot-grid {
@@ -87,7 +103,7 @@ body {
 .dv-glow-1 {
   width: 220px;
   height: 220px;
-  background: radial-gradient(circle, #b8f5d860, transparent 70%);
+  background: radial-gradient(circle, #c2dacf60, transparent 70%);
   top: 8%;
   left: 6%;
   animation-delay: 0s;
@@ -95,7 +111,7 @@ body {
 .dv-glow-2 {
   width: 300px;
   height: 300px;
-  background: radial-gradient(circle, #d4b8f550, transparent 70%);
+  background: radial-gradient(circle, #d3d3d391, transparent 70%);
   bottom: 12%;
   right: 4%;
   animation-delay: 1.5s;
@@ -836,3 +852,7 @@ body {
         width: var(--target, 70%) !important;
       }
     }
+element {
+  background: conic-gradient(from 0deg, transparent 70%, rgba(161, 161, 170, 0.1) 90%, rgba(161, 161, 170, 0.6) 100%);
+  animation: radar-sweep 4s linear infinite;
+}

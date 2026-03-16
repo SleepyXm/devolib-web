@@ -40,3 +40,11 @@ class ProjectCreate(BaseModel):
 class CheckoutRequest(BaseModel):
     price_id: str
     
+class Project(BaseModel):
+    project_id: str
+    project_name: str
+    websocket: str
+    created_at: datetime
+    last_online: str
+    status: str
+    serviceStatus: list[Dict[str, Any]]

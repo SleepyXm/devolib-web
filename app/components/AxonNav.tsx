@@ -26,7 +26,7 @@ const Navbar = () => {
     { label: "Home", url: "/" },
     ...(user
       ? [
-          { label: `${user.username}`, url: "/users/" },
+          { label: `${user.username}`, url: "/dashboard/profile" },
           { label: "Dashboard", url: "/dashboard" },
           { label: "Sign out", onClick: handleLogout},
         ]

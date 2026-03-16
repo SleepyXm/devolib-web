@@ -28,7 +28,7 @@ export default function Terminal() {
   };
 
   return (
-    <div className="flex flex-col h-full p-4 gap-3 font-mono" style={{ backgroundColor: "#f0ebe000", backgroundImage: "radial-gradient(circle, #c8c0b0 1px, transparent 1px)", backgroundSize: "20px 20px" }}>
+    <div className="flex flex-col h-full p-4 gap-3 font-mono">
       <TerminalControls start={start} connect={connect} stop={stop} isRunning={isRunning} isConnected={isConnected} />
       <LogOutput logs={logs} />
       <TerminalInput command={command} onChange={(e) => setCommand(e.target.value)} onKeyDown={handleEnter} isConnected={isConnected} />
