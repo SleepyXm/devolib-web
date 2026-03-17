@@ -121,7 +121,7 @@ export async function fetchProjectDetails(project_id: string): Promise<Project &
 export function connectToProject(project_id: string, access_token: string): ProjectWS {
   const ws = new WebSocket(`${WSAPI_BASE}${container_endpoint}/ws/${project_id}?access_token=${access_token}`);
 
-  let outputCallback: ((data: string) => void) | null = null;
+  let outputCallbacks: ((data: string) => void)[] = [];
   let statusCallback: ((data: ServiceStatus) => void) | null = null;
   let schemaCallback: ((data: any) => void) | null = null;
   let logCallback: ((data: any) => void) | null = null;
@@ -147,7 +147,7 @@ export function connectToProject(project_id: string, access_token: string): Proj
       // Catching as terminal output
     }
     
-    if (outputCallback) outputCallback(event.data);
+    outputCallbacks.forEach(cb => cb(event.data));
   };
 
   ws.onclose = () => {
@@ -164,8 +164,8 @@ export function connectToProject(project_id: string, access_token: string): Proj
         ws.send(cmd + "\n");
       }
     },
-    onOutput: (callback: (data: string) => void) => {
-      outputCallback = callback;
+    onOutput: (callback) => {
+      outputCallbacks.push(callback);
     },
     onStatus: (callback: (data: ServiceStatus) => void) => { 
       statusCallback = callback;
