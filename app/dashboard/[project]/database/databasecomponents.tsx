@@ -185,10 +185,11 @@ export function TableCard({ table, tables, savedCols, onAddColumn, onAddRow, onD
 }
  
 // --- DB Controls (top input + button) ---
-export function DBControls({ tableName, onChange, onAdd }: {
+export function DBControls({ tableName, onChange, onAdd, onInsertTestData }: {
   tableName: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onAdd: () => void;
+  onInsertTestData: () => void;
 }) {
   return (
     <div className="flex items-center gap-2">
@@ -204,6 +205,13 @@ export function DBControls({ tableName, onChange, onAdd }: {
         className="text-sm px-3 py-1.5 rounded border border-[#c9bfab] bg-[#111318] text-zinc-500 transition-all duration-300s hover:text-zinc-100"
       >
         Add table
+      </button>
+
+      <button
+        onClick={onInsertTestData}
+        className="text-sm px-3 py-1.5 rounded border border-[#c9bfab] bg-[#f8f4ec] text-[#111318] transition-all duration-300 hover:bg-[#c2bdb2] disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        Insert Test Data
       </button>
     </div>
   );

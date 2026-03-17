@@ -1,35 +1,11 @@
 import json
-from fastapi import WebSocket
-import tempfile, os, tarfile, io
+import os, tarfile, io, asyncio
 from database import database
-import asyncio
 from helpers.packagemanager.packagemanager import PM_COMMANDS
+from helpers.Operations.operations import DBoperations, FileOperations, DependencyOperations
 
-DBoperations = {
-    'CREATE_TABLE', 
-    'DROP_TABLE',
-    'ALTER_TABLE',
-    'INSERT',
-    'UPDATE',
-    'CHANGE_COLUMN_TYPE',
-    'DELETE',
-    'GET_SCHEMA',
-    'PUSH_SCHEMA'
-}
 
-FileOperations = {
-    'READ_FILE',
-    'WRITE_FILE',
-    'SAVE_CHANGES',
-    'UNDO_CHANGES',
-    'DELETE_FILE',
-}
-
-DependencyOperations = {
-    'INSTALL_PACKAGES',
-    'REMOVE_PACKAGE',
-    'UPGRADE'
-}
+# --------------------------------- DB Command -------------------------------------- #
 
 
 async def handle_db_command(container, command: dict, q: asyncio.Queue, project_id: str):
@@ -39,9 +15,17 @@ async def handle_db_command(container, command: dict, q: asyncio.Queue, project_
     if command['operation'] in ('GET_SCHEMA', 'PUSH_SCHEMA'):
         await push_schema(container, project_id, q)
         return True
-
-    sql = command['sql']
-    result = container.exec_run(['su', '-', 'postgres', '-c', f"psql -d myapp -c \"{sql}\""])
+    
+    if command['operation'] == 'INSERT_TEST_DATA':
+        sql = command.get('sql', '').replace('\n', ' ')
+        wrapped = f"BEGIN; {sql} COMMIT;"
+        result = container.exec_run(['psql', '-U', 'postgres', '-d', 'myapp', '-c', wrapped])
+        if result.exit_code != 0:
+            await q.put(f"[✗] Insert failed: {result.output.decode()}\n")
+            return False
+        await q.put("[✓] Test data inserted\n")
+        await push_schema(container, project_id, q)
+        return True
 
     if result.exit_code != 0:
         await q.put(f"[✗] SQL Error: {result.output.decode()}\n")
@@ -51,6 +35,10 @@ async def handle_db_command(container, command: dict, q: asyncio.Queue, project_
     await push_schema(container, project_id, q)
     return True
 
+
+
+
+# ------------------------------- File Command ----------------------------------------- #
 
 async def handle_file_command(container, command: dict, q: asyncio.Queue):
     if command['type'] not in FileOperations:
@@ -99,6 +87,8 @@ async def handle_file_command(container, command: dict, q: asyncio.Queue):
         return True
     
 
+# ------------------------------- Grab Schema ----------------------------------------- #
+
 async def push_schema(container, project_id, q: asyncio.Queue):
     schema_cmd = (
         'su - postgres -c "psql -d myapp -t -A -F\'|\' '
@@ -129,6 +119,7 @@ async def push_schema(container, project_id, q: asyncio.Queue):
     await q.put(json.dumps({"type": "DATABASE_SCHEMA", "tables": tables}))
 
 
+# ------------------------------- Deps Handler ----------------------------------------- #
 
 async def handle_package_command(container, command: dict, q: asyncio.Queue):
     if command['operation'] not in DependencyOperations:
@@ -152,8 +143,15 @@ async def handle_package_command(container, command: dict, q: asyncio.Queue):
             await q.put(f"[✗] Rejected suspicious package name: {pkg}\n")
             return False
 
+    PM_COMMANDS = {
+        'npm':   lambda pkgs, dev: ['npm', 'install', '--save-dev' if dev else '--save'] + pkgs,
+        'pip':   lambda pkgs, _:   ['pip', 'install'] + pkgs,
+        'yarn':  lambda pkgs, dev: ['yarn', 'add', '--dev' if dev else None] + pkgs if not dev else ['yarn', 'add', '--dev'] + pkgs,
+        'cargo': lambda pkgs, dev: ['cargo', 'add'] + (['--dev'] if dev else []) + pkgs,
+    }
+
     cmd = PM_COMMANDS[pm](packages, dev)
-    cmd = [c for c in cmd if c is not None]
+    cmd = [c for c in cmd if c is not None]  # strip None from yarn non-dev
 
     await q.put(f"→ {' '.join(cmd)}\n")
     await q.put(json.dumps({"type": "INSTALL_STARTED", "pm": pm, "packages": packages}))
@@ -179,12 +177,8 @@ async def handle_package_command(container, command: dict, q: asyncio.Queue):
             break
         await q.put(f"  {line}\n")
 
-    while exit_code is None:
-        exit_code = exec_result.exit_code
-        if exit_code is None:
-            await asyncio.sleep(0.1)
-
-
+    # stream=True doesn't give us exit_code until after iteration
+    exit_code = exec_result.exit_code
     if exit_code != 0:
         await q.put(f"[✗] Install failed (exit {exit_code})\n")
         await q.put(json.dumps({"type": "INSTALL_DONE", "success": False}))

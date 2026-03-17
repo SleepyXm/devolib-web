@@ -8,7 +8,8 @@ export type DBOperationType =
   | "UPDATE"
   | "DELETE"
   | "GET_SCHEMA"
-  | "PUSH_SCHEMA";
+  | "PUSH_SCHEMA"
+  | "INSERT_TEST_DATA";
 
 export type DBCommand = {
   operation: DBOperationType;
@@ -22,12 +23,13 @@ export const DBCommandBuilder = {
     operation: DBOperationType,
     target: string,
     payload?: any,
+    sql?: string
   ): DBCommand => {
     return {
       operation,
       target,
       payload,
-      sql: DBCommandBuilder.generateSQL(operation, target, payload),
+      sql: sql ?? DBCommandBuilder.generateSQL(operation, target, payload),
     };
   },
 
@@ -41,6 +43,9 @@ export const DBCommandBuilder = {
         return "";
       case "PUSH_SCHEMA":
         return "";
+      case "INSERT_TEST_DATA":
+        return "";
+
 
       case "CREATE_TABLE":
         return DBCommandBuilder.createTable(target, payload);

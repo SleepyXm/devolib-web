@@ -3,6 +3,7 @@ import { useContext, useEffect, useState } from "react";
 import { Table, Row, Column } from "./dbtypes";
 import { DBCommand, DBCommandBuilder } from "./dboperations";
 import {  ProjectMetaContext } from "../../[project]/layout";
+import { gen_test_data } from "@/app/handlers/llm";
 
 // Hook for managing tables and DB commands
 export const useTableManager = (projectWS: any) => {
@@ -196,6 +197,14 @@ export const useTableManager = (projectWS: any) => {
     }));
   };
 
+  const insertTestData = async (projectWS: any) => {
+    const schema = Object.fromEntries(tables.map(t => [t.name, t.columns.map(c => ({ column: c.name, type: c.type, nullable: true }))]));
+    const result = await gen_test_data(schema);
+    console.log("result:", result);
+    console.log("sql:", result.sql);
+    projectWS?.sendCommand(JSON.stringify(DBCommandBuilder.build("INSERT_TEST_DATA", "", undefined, result.sql)));
+  };
+
   return {
     tables,
     loadSchema,
@@ -206,6 +215,7 @@ export const useTableManager = (projectWS: any) => {
     updateColumn,
     toggleExpanded,
     addRow,
-    updateRowValue
+    updateRowValue,
+    insertTestData
   };
 };

@@ -6,6 +6,7 @@ import { useTableManager } from "./database/tablemanager";
 import { DBCommandBuilder } from "./database/dboperations";
 import { COLUMN_TYPES } from "./database/dbtypes";
 import { TableCard, DBControls } from "./database/databasecomponents";
+import { gen_test_data } from "@/app/handlers/llm";
 
 export default function DatabasePage() {
   const { projectWS } = useContext(ProjectContext)!;
@@ -33,6 +34,7 @@ export default function DatabasePage() {
     toggleExpanded,
     addRow,
     updateRowValue,
+    insertTestData
   } = useTableManager(projectWS);
 
   useEffect(() => {
@@ -55,6 +57,7 @@ export default function DatabasePage() {
       tableName={tableName}
       onChange={(e) => setTableName(e.target.value)}
       onAdd={() => { addTable(tableName); setTableName(""); }}
+      onInsertTestData={() => insertTestData(projectWS)}
     />
     {tables.map((table) => (
       <TableCard

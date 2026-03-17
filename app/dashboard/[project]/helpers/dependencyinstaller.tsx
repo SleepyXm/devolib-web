@@ -3,7 +3,6 @@
 import { useContext, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { ProjectContext } from "../../[project]/layout";
-import { LogOutput } from "../../components/terminal/terminalcomponents";
 import { buildInstallPayload, validatePackageName, PackageManager, QueuedPackage, buildPreview } from "./depshelper";
 
 export default function DependencyInstallerPage() {
@@ -168,8 +167,6 @@ export default function DependencyInstallerPage() {
           </button>
         </>
       )}
-
-      <LogOutput logs={logs} />
     </div>
   );
 }
