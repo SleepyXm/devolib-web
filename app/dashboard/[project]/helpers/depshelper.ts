@@ -23,3 +23,27 @@ export function buildInstallPayload(
 export function validatePackageName(name: string): boolean {
   return /^[a-zA-Z0-9\-_@/.^~]+$/.test(name);
 }
+
+export interface QueuedPackage {
+  name: string;
+  dev: boolean;
+}
+
+export const PM_COMMANDS: Record<PackageManager, { install: string; dev: string | null }> = {
+  npm:   { install: "npm install",  dev: "--save-dev" },
+  pip:   { install: "pip install",  dev: null },
+  yarn:  { install: "yarn add",     dev: "--dev" },
+  cargo: { install: "cargo add",    dev: "--dev" },
+};
+
+
+export function buildPreview(pm: PackageManager, queue: QueuedPackage[]): string | null {
+  if (!queue.length) return null;
+  const c = PM_COMMANDS[pm];
+  const deps = queue.filter(p => !p.dev).map(p => p.name);
+  const devs = queue.filter(p => p.dev).map(p => p.name);
+  const parts: string[] = [];
+  if (deps.length) parts.push(`${c.install} ${deps.join(" ")}`);
+  if (devs.length) parts.push(c.dev ? `${c.install} ${c.dev} ${devs.join(" ")}` : `${c.install} ${devs.join(" ")}`);
+  return parts.join(" && ");
+}

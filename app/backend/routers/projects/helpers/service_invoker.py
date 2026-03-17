@@ -156,17 +156,36 @@ async def handle_package_command(container, command: dict, q: asyncio.Queue):
     cmd = [c for c in cmd if c is not None]
 
     await q.put(f"→ {' '.join(cmd)}\n")
+    await q.put(json.dumps({"type": "INSTALL_STARTED", "pm": pm, "packages": packages}))
 
-    result = container.exec_run(cmd, workdir='/app')
+    exec_result = container.exec_run(cmd, workdir='/app', stream=True)
 
-    output = result.output.decode('utf-8', errors='replace')
-    for line in output.splitlines():
-        if line.strip():
-            await q.put(f"  {line}\n")
+    loop = asyncio.get_event_loop()
+    read_queue = asyncio.Queue()
 
-    if result.exit_code != 0:
-        await q.put(f"[✗] Install failed (exit {result.exit_code})\n")
+    def read_stream():
+        for chunk in exec_result.output:
+            lines = chunk.decode('utf-8', errors='replace').splitlines()
+            for line in lines:
+                if line.strip():
+                    loop.call_soon_threadsafe(read_queue.put_nowait, line)
+        loop.call_soon_threadsafe(read_queue.put_nowait, None)  # sentinel
+
+    loop.run_in_executor(None, read_stream)
+
+    while True:
+        line = await read_queue.get()
+        if line is None:
+            break
+        await q.put(f"  {line}\n")
+
+    # stream=True doesn't give us exit_code until after iteration
+    exit_code = exec_result.exit_code
+    if exit_code != 0:
+        await q.put(f"[✗] Install failed (exit {exit_code})\n")
+        await q.put(json.dumps({"type": "INSTALL_DONE", "success": False}))
         return False
 
     await q.put(f"[✓] Installed {len(packages)} package(s) via {pm}\n")
+    await q.put(json.dumps({"type": "INSTALL_DONE", "success": True}))
     return True
