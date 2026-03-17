@@ -179,8 +179,12 @@ async def handle_package_command(container, command: dict, q: asyncio.Queue):
             break
         await q.put(f"  {line}\n")
 
-    # stream=True doesn't give us exit_code until after iteration
-    exit_code = exec_result.exit_code
+    while exit_code is None:
+        exit_code = exec_result.exit_code
+        if exit_code is None:
+            await asyncio.sleep(0.1)
+
+
     if exit_code != 0:
         await q.put(f"[✗] Install failed (exit {exit_code})\n")
         await q.put(json.dumps({"type": "INSTALL_DONE", "success": False}))
