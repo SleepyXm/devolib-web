@@ -18,7 +18,7 @@ export default function ProjectPage() {
 
   if (!context) return <div>Loading project context...</div>;
 
-  const { serviceStatus } = context;
+  const { serviceStatus, isConnected } = context;
 
   return (
   <div className="flex flex-col h-screen">
@@ -28,7 +28,7 @@ export default function ProjectPage() {
         <ServiceTab label="Backend"   active={activeView === "backend"}   hasDot online={serviceStatus.backend}   onClick={() => { setActiveView("backend");   if (!serviceStatus.backend)   context.startService("backend")   }} />
         <ServiceTab label="Database"  active={activeView === "database"}  hasDot online={serviceStatus.database}  onClick={() => { setActiveView("database");  if (!serviceStatus.database)  context.startService("database")  }} />
         <ServiceTab label="WireFrame" active={activeView === "wireframe"}        onClick={() => setActiveView("wireframe")} />
-        <ServiceTab label="Container" active={activeView === "terminal"}  hasDot online={serviceStatus.container} onClick={() => setActiveView("terminal")} />
+        <ServiceTab label="Container" active={activeView === "terminal"} hasDot online={serviceStatus.container} connected={isConnected} onClick={() => setActiveView("terminal")} />
       </div>
     </div>
 
