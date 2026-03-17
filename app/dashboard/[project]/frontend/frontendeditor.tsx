@@ -142,14 +142,14 @@ export default function FrontendPage() {
 
   return (
     <div className="flex flex-col h-full min-h-screen">
-      <div className="p-2 bg-gray-900 text-white flex justify-between items-center">
-        <h2>Frontend Project Page</h2>
+      <div className="p-2 bg-[#1a1e24] text-white flex justify-between items-center">
+        <h2>Frontend Editor</h2>
         <div className="flex gap-2 items-center">
           {iframeMode === "srcDoc" && (
-            <span className="text-yellow-400 text-sm">⚠ Container offline</span>
+            <span className="text-yellow-400 bg-yellow-400/20 text-sm border rounded-xl py-1 px-2">⚠ Container offline</span>
           )}
           {iframeMode === "live" && (
-            <span className="text-green-400 text-sm">
+            <span className="text-green-400 bg-green-400/20 text-sm border rounded-xl py-1 px-2">
               ✓ Live preview active
             </span>
           )}
@@ -169,7 +169,7 @@ export default function FrontendPage() {
         onContextMenu={iframeMode === "srcDoc" ? handleContextMenu : undefined}
         onClick={handleClick}
       >
-        <div className="w-48 bg-gray-800 text-white flex flex-col overflow-y-auto shrink-0">
+        <div className="w-36 bg-gray-800 text-white flex flex-col overflow-y-auto shrink-0">
           <div className="p-2 text-xs text-gray-400 uppercase tracking-wide border-b border-gray-700">
             Pages
           </div>

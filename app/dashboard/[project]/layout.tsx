@@ -85,6 +85,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
   const [projectId, setProjectId] = useState<string | null>(null);
   const [projectName, setProjectName] = useState<string | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [wsInstance, setWsInstance] = useState<ProjectWS | null>(null);
 
   const [serviceStatus, setServiceStatus] = useState<ServiceStatus>({
     frontend: false,
@@ -93,13 +94,9 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
     container: false,
   });
 
-  const [db_schema, setDbSchema] = useState<
-    ProjectMetaContextType["db_schema"]
-  >({});
+  const [db_schema, setDbSchema] = useState<ProjectMetaContextType["db_schema"]>({});
   const [pages, setPages] = useState<ProjectMetaContextType["pages"]>([]);
-  const [endpoints, setEndpoints] = useState<
-    ProjectMetaContextType["endpoints"]
-  >([]);
+  const [endpoints, setEndpoints] = useState<ProjectMetaContextType["endpoints"]>([]);
   const [envs, setEnvs] = useState<ProjectMetaContextType["envs"]>([]);
   const [updated_at, setUpdatedAt] = useState<string | null>(null);
 
@@ -132,12 +129,16 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
   const connect = () => {
     if (!projectId || !projectName || !accessToken) return;
     projectWS.current = connectToProject(projectId, accessToken);
-    projectWS.current.onOutput((data) => setLogs((prev) => prev + data));
+    projectWS.current.onOutput((data) => {
+      if (data.startsWith("FILE_CONTENT:")) return;
+      setLogs((prev) => prev + data);
+    });
     projectWS.current.onStatus((status) => setServiceStatus(status));
     projectWS.current.onSchema((data) => setDbSchema(data.tables));
     projectWS.current.onLog((event: LogEvent) =>
       setLogEvents((prev) => [...prev, event]),
     );
+    setWsInstance(projectWS.current);
     setIsConnected(true);
   };
 
@@ -176,7 +177,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
   return (
     <ProjectContext.Provider
       value={{
-        projectWS: projectWS.current,
+        projectWS: wsInstance,
         logs,
         isConnected,
         isRunning,
