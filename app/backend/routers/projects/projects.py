@@ -6,29 +6,14 @@ from .images import create_project_container, delete_project_container
 import secrets
 import json
 from helpers.limiter import limiter
+from helpers.queries.projectquery import list_projects_query, create_project_query
 
 router = APIRouter()
 
 @router.get("/list")
 async def list_projects(current_user: dict = Depends(get_current_user)):
     # Aggregate query, removing N+1 query
-    query = """
-    SELECT 
-        p.project_id, 
-        p.name, 
-        p.status, 
-        p.container_id, 
-        p.created_at,
-        p.last_online,
-        s.name as service_name,
-        s.framework as service_framework
-    FROM projects p
-    LEFT JOIN project_services ps ON p.project_id = ps.project_id
-    LEFT JOIN services s ON s.id = ps.service_id
-    WHERE p.user_id = :user_id
-    ORDER BY p.last_online DESC NULLS LAST, p.created_at DESC
-    """
-    rows = await database.fetch_all(query=query, values={"user_id": current_user["id"]})
+    rows = await database.fetch_all(query=list_projects_query(), values={"user_id": current_user["id"]})
     
     # Aggregate services by project
     projects_dict = {}
@@ -71,13 +56,9 @@ async def create_project(
     project_id = str(uuid.uuid4())
     access_token = secrets.token_urlsafe(32)
     
-    # Insert project with access token
-    insert_query = """
-    INSERT INTO projects (project_id, user_id, name, status, access_token, created_at)
-    VALUES (:project_id, :user_id, :name, 'created', :access_token, NOW())
-    """
+
     await database.execute(
-        query=insert_query,
+        query=create_project_query(),
         values={
             "project_id": project_id,
             "user_id": current_user["id"],

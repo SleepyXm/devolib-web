@@ -5,6 +5,7 @@ from asyncio.log import logger
 import docker, re, tarfile, io, os, boto3
 from helpers.dockerclient import docker_client
 from helpers.structlogger import logger
+import asyncio
 
 s3 = boto3.client(
     "s3",
@@ -155,3 +156,73 @@ def get_template(key: str, binary: bool = False) -> str | bytes:
     response = s3.get_object(Bucket=os.environ["R2_BUCKET_NAME"], Key=key)
     content = response["Body"].read()
     return content if binary else content.decode("utf-8")
+
+
+
+async def check_container_health(container) -> bool:
+    try:
+        container.reload()
+        return container.status == "running"
+    except Exception:
+        return False
+
+async def check_service_health(container, service: str) -> bool:
+    port_mapping = {
+        'frontend': '5173',
+        'backend': '8000',
+        'database': '5432'
+    }
+    
+    if service not in port_mapping:
+        return False
+    
+    port = port_mapping[service]
+    
+    # Run blocking exec_run in a thread so it doesn't block the event loop
+    loop = asyncio.get_event_loop()
+    
+    for _ in range(10):  # retry for ~5 seconds
+        check_port = await loop.run_in_executor(
+            None, 
+            lambda: container.exec_run(f"netstat -tuln | grep {port}")
+        )
+        if check_port.output:
+            return True
+        await asyncio.sleep(0.5)
+    
+    return False
+
+async def check_service_exists(container, project_id: str, project_name: str, service: str) -> dict:
+    """Check if service directory and required files exist"""
+    checks = {
+        'frontend': {
+            'dir': f'/app/workspace/frontend/{project_name}',
+            'required_files': ['package.json']
+        },
+        'backend': {
+            'dir': f'/app/workspace/backend',
+            'required_files': ['main.py']
+        },
+        'database': {
+            'dir': f'/app/workspace/database',
+            'required_files': []
+        }
+    }
+    
+    if service not in checks:
+        return {'exists': False, 'error': 'Unknown service'}
+    
+    check = checks[service]
+    
+    # Check if directory exists
+    dir_check = container.exec_run(f"test -d {check['dir']}")
+    if dir_check.exit_code != 0:
+        return {'exists': False, 'error': f"Directory {check['dir']} not found"}
+    
+    # Check required files
+    for file in check['required_files']:
+        file_check = container.exec_run(f"test -f {check['dir']}/{file}")
+        if file_check.exit_code != 0:
+            return {'exists': False, 'error': f"Required file {file} not found"}
+    
+    return {'exists': True, 'error': None}

@@ -78,45 +78,59 @@ async def websocket_terminal(websocket: WebSocket, project_id: str, access_token
 
     project_name = project["name"]
 
- 
     await websocket.accept()
-    
-    
-    # Get container
+
     container_name = f"devolib_project_{project_id}"
     try:
         container = docker_client.containers.get(container_name)
     except docker.errors.NotFound:
-        await send_error(websocket, "Container not found")
+        await websocket.send_text("Container not found\n")
         await websocket.close(code=1000)
         return
-    
-    # Send connection message for confirmation
-    await websocket.send_text(f"User connected at {datetime.utcnow().isoformat()}!\n")
-    await send_service_status(websocket, {"container": True})
-    
+
+    send_queue = asyncio.Queue()
+
+    async def sender():
+        while True:
+            msg = await send_queue.get()
+            if msg is None:
+                break
+            print(f"[SEND] {repr(msg)}")
+            try:
+                await websocket.send_text(msg)
+                print(f"[SEND OK]")
+            except Exception as e:
+                print(f"[SEND FAIL] {e}")
+
+    sender_task = asyncio.create_task(sender())
+    logd_task = asyncio.create_task(tail_logd(container, send_queue))
+
+    await send_queue.put(f"User connected at {datetime.utcnow().isoformat()}!\n")
+    await send_service_status(send_queue, {"container": True})
+
     current_dir = "/app/workspace"
-    logd_task = asyncio.create_task(tail_logd(container, websocket))
-    
-    # Main command loop
+
     try:
         while True:
             cmd = await websocket.receive_text()
             print(f"Received command: {cmd}")
-            
-            output, current_dir = await process_command(container, cmd, current_dir, websocket, project_id, project_name)
-            
+
+            output, current_dir = await process_command(container, cmd, current_dir, send_queue, project_id, project_name)
+
             if output:
-                await websocket.send_text(output)
-                
+                await send_queue.put(output)
+
     except WebSocketDisconnect:
         print(f"WebSocket disconnected for project {project_id}")
-        
+
     except Exception as e:
-        logd_task.cancel()
-        await send_error(websocket, f"Connection error: {str(e)}")
-        await send_service_status(websocket, {"container": False})
         print(f"WebSocket error for project {project_id}: {e}")
+        await send_queue.put(f"Connection error: {str(e)}\n")
+
+    finally:
+        logd_task.cancel()
+        await send_queue.put(None)  # shut down sender
+        await sender_task
             
 
 
