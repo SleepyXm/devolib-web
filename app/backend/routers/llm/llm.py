@@ -2,8 +2,9 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from openai import OpenAI
 from dotenv import load_dotenv
-import os, re
+import os, re, json
 from helpers.limiter import limiter
+from schemas import MessageInput, SchemaInput
 
 load_dotenv()
 
@@ -14,9 +15,6 @@ client = OpenAI(
     base_url="https://api.deepseek.com"
 )
 
-
-class MessageInput(BaseModel):
-    user_input: str
 
 def extract_html_from_response(response: str) -> str | None:
     match = re.search(r'```html\n([\s\S]*?)```', response)
@@ -43,7 +41,7 @@ Always include data-ref on the root element following: {component}-{variant}-{so
 
 Only use valid Tailwind classes. Never use inline styles unless a gradient requires it.
 Only generate a single component, never a full page or document-level wrapper.
-Only output HTML when the user explicitly asks for a component or UI element.
+Only output HTML when the user explicitly asks for a component or UI element and do not insert code comments.
 You can talk naturally outside of code blocks.
 """
         },
@@ -69,6 +67,40 @@ You can talk naturally outside of code blocks.
             "response": assistant_response,
             "code": extract_html_from_response(assistant_response)
         }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+
+def extract_sql_from_response(response: str) -> str:
+    # try to extract from code block first
+    match = re.search(r'```sql\n([\s\S]*?)```', response)
+    if match:
+        return match.group(1).strip()
+    # fallback — strip any lines that don't look like SQL
+    lines = [l for l in response.splitlines() if l.strip() and l.strip().upper().startswith(("INSERT", "UPDATE", "DELETE", "BEGIN", "COMMIT"))]
+    return "\n".join(lines)
+
+@router.post("/generate-test-data")
+@limiter.limit("10/minute")
+async def generate_test_data(request: Request, data: SchemaInput):
+    try:
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a SQL assistant. Return only raw SQL INSERT statements, no markdown, no code blocks, no explanation."
+                },
+                {
+                    "role": "user",
+                    "content": f"Generate 4 realistic rows per table for this PostgreSQL schema:\n{json.dumps(data.schema, indent=2)}\n\nRules:\n- Skip id/serial columns\n- Respect column types and nullable constraints\n- Use realistic values based on column names"
+                }
+            ]
+        )
+        sql = response.choices[0].message.content.strip()
+        sql = extract_sql_from_response(sql).replace('\\n', ' ')
+        return { "sql": sql }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
