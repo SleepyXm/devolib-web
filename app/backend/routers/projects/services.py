@@ -1,7 +1,7 @@
 import json, asyncio
 from fastapi import WebSocket
 from database import database
-from .helpers.service_invoker import handle_db_command, DBoperations, FileOperations, handle_file_command, push_schema
+from .helpers.service_invoker import handle_db_command, DBoperations, FileOperations, handle_file_command, push_schema, handle_package_command
 from .helpers.cmdhandlers import handle_shell_command, handle_cd_command
 from .helpers.containerhelper import check_service_health, check_container_health, check_service_exists
 from helpers.servicestates import send_service_status, services_alive
@@ -122,6 +122,10 @@ async def handle_json_command(container, payload: dict, current_dir: str, q: asy
     if payload.get('type') in FileOperations:
         await handle_file_command(container, payload, q)
         return "", current_dir
+
+    if payload.get('type') == 'PACKAGE':
+        await handle_package_command(container, payload, q)
+        return None, current_dir
 
     return "Command handled\n", current_dir
 

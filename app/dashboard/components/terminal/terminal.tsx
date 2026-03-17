@@ -4,6 +4,7 @@ import { useContext, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { ProjectContext } from "../../[project]/layout";
 import { TerminalControls, Terminal } from "./terminalcomponents";
+import DependencyInstallerPage from "../../[project]/helpers/dependencyinstaller";
 
 export default function TerminalPage() {
   const ctx = useContext(ProjectContext);
@@ -19,7 +20,9 @@ export default function TerminalPage() {
   }, [projectId, setProjectId]);
 
   return (
-    <div className="flex flex-col h-full p-4 gap-3 font-mono">
+  <div className="flex h-full p-4 gap-3 font-mono">
+    {/* left: terminal */}
+    <div className="flex flex-col flex-1 gap-3 min-w-0">
       <TerminalControls start={start} connect={connect} stop={stop} isRunning={isRunning} isConnected={isConnected} />
       <Terminal
         logs={logs}
@@ -27,5 +30,14 @@ export default function TerminalPage() {
         onCommand={(cmd) => projectWS?.sendCommand(cmd)}
       />
     </div>
-  )
+
+    {/* divider */}
+    <div className="w-px bg-[#1e2228] self-stretch" />
+
+    {/* right: dependency installer */}
+    <div className="flex flex-col w-80 shrink-0 gap-3">
+      <DependencyInstallerPage />
+    </div>
+  </div>
+);
 }

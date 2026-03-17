@@ -3,6 +3,7 @@ from fastapi import WebSocket
 import tempfile, os, tarfile, io
 from database import database
 import asyncio
+from helpers.packagemanager.packagemanager import PM_COMMANDS
 
 DBoperations = {
     'CREATE_TABLE', 
@@ -22,6 +23,12 @@ FileOperations = {
     'SAVE_CHANGES',
     'UNDO_CHANGES',
     'DELETE_FILE',
+}
+
+DependencyOperations = {
+    'INSTALL_PACKAGES',
+    'REMOVE_PACKAGE',
+    'UPGRADE'
 }
 
 
@@ -120,3 +127,46 @@ async def push_schema(container, project_id, q: asyncio.Queue):
         {"schema": json.dumps(tables), "project_id": project_id}
     )
     await q.put(json.dumps({"type": "DATABASE_SCHEMA", "tables": tables}))
+
+
+
+async def handle_package_command(container, command: dict, q: asyncio.Queue):
+    if command['operation'] not in DependencyOperations:
+        raise ValueError(f"Invalid operation: {command['operation']}")
+
+    pm = command.get('pm')
+    packages = command.get('packages', [])
+    dev = command.get('dev', False)
+
+    if not pm or pm not in ('npm', 'pip', 'yarn', 'cargo'):
+        await q.put("[✗] Invalid or missing package manager\n")
+        return False
+
+    if not packages or not isinstance(packages, list):
+        await q.put("[✗] No packages provided\n")
+        return False
+
+    # sanitize: package names only, no shell injection
+    for pkg in packages:
+        if not all(c.isalnum() or c in '-_@/.^~' for c in pkg):
+            await q.put(f"[✗] Rejected suspicious package name: {pkg}\n")
+            return False
+
+    cmd = PM_COMMANDS[pm](packages, dev)
+    cmd = [c for c in cmd if c is not None]
+
+    await q.put(f"→ {' '.join(cmd)}\n")
+
+    result = container.exec_run(cmd, workdir='/app')
+
+    output = result.output.decode('utf-8', errors='replace')
+    for line in output.splitlines():
+        if line.strip():
+            await q.put(f"  {line}\n")
+
+    if result.exit_code != 0:
+        await q.put(f"[✗] Install failed (exit {result.exit_code})\n")
+        return False
+
+    await q.put(f"[✓] Installed {len(packages)} package(s) via {pm}\n")
+    return True
