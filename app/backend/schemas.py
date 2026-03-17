@@ -14,8 +14,6 @@ class UserCreate(BaseModel):
         if '@' not in v:
             raise ValueError('must contain @ symbol')
         return v
-        
-
 
 class UserLogin(BaseModel):
     username: str
@@ -32,10 +30,6 @@ class UserOut(BaseModel):
 
     class Config:
         from_attributes = True
-
-class ProjectCreate(BaseModel):
-    user_id: str
-    name: str
 
 class CheckoutRequest(BaseModel):
     price_id: str
@@ -55,3 +49,25 @@ class Project(BaseModel):
     last_online: str
     status: str
     serviceStatus: list[Dict[str, Any]]
+
+class ProjectCreate(BaseModel):
+    name: str
+    backend: str | None = None
+    frontend: str | None = None
+    db: str | None = None
+
+class Project(BaseModel):
+    project_id: str
+    name: str
+    status: str
+    container_id: str
+    access_token: str
+    created_at: datetime
+    last_online: datetime | None = None
+
+
+class MessageInput(BaseModel):
+    user_input: str
+
+class SchemaInput(BaseModel):
+    schema: dict
