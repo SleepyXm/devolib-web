@@ -79,29 +79,6 @@ async def start_service(container, project_id: str, project_name: str, service: 
         await send_service_status(q, project_services)
 
 
-async def handle_db_command(container, command: dict, q: asyncio.Queue, project_id: str):
-    if command['operation'] not in DBoperations:
-        raise ValueError(f"Invalid operation: {command['operation']}")
-
-    if command['operation'] in ('GET_SCHEMA', 'PUSH_SCHEMA'):
-        await push_schema(container, project_id, q)
-        return True
-
-    sql = command['sql']
-    result = container.exec_run(['su', '-', 'postgres', '-c', f"psql -d myapp -c \"{sql}\""])
-
-    if result.exit_code != 0:
-        await q.put(f"[✗] SQL Error: {result.output.decode()}\n")
-        return False
-
-    await q.put(f"[✓] Executed: {command['operation']} on {command['target']}\n")
-    await push_schema(container, project_id, q)
-    return True
-
-
-
-
-
 def is_log_event(line: str) -> bool:
     try:
         data = json.loads(line)

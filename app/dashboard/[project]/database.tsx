@@ -34,19 +34,28 @@ export default function DatabasePage() {
     toggleExpanded,
     addRow,
     updateRowValue,
-    insertTestData
+    insertTestData,
+    fetchRows,
+    loadRows
   } = useTableManager(projectWS);
 
   useEffect(() => {
-    if (!projectWS) return;
+  if (!projectWS) return;
 
-    projectWS.onSchema((data) => {
-      loadSchema(data);
-    });
+  projectWS.onSchema((data) => {
+    loadSchema(data);
+  });
 
-    const cmd = DBCommandBuilder.build("GET_SCHEMA", "public");
-    projectWS.sendCommand(JSON.stringify(cmd));
-  }, [projectWS]);
+  projectWS.onOutput((data: string) => {
+    try {
+      const msg = JSON.parse(data);
+      if (msg.type === "GET_ROWS") loadRows(msg.table, msg.rows);
+    } catch {}
+  });
+
+  const cmd = DBCommandBuilder.build("GET_SCHEMA", "public");
+  projectWS.sendCommand(JSON.stringify(cmd));
+}, [projectWS]);
 
   return (
   <div className="p-6 space-y-4 w-[60vw]">
@@ -77,6 +86,7 @@ export default function DatabasePage() {
         onDeleteColumn={(idx) => deleteColumn(table.id, idx)}
         onUpdateColumn={(idx, patch) => updateColumn(table.id, idx, patch)}
         onUpdateRowValue={(rowIdx, colName, value) => updateRowValue(table.id, rowIdx, colName, value)}
+        onFetchRows={() => fetchRows(table.name)}
       />
     ))}
   </div>

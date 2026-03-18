@@ -8,7 +8,8 @@ DBoperations = {
     'DELETE',
     'GET_SCHEMA',
     'PUSH_SCHEMA',
-    'INSERT_TEST_DATA'
+    'INSERT_TEST_DATA',
+    'GET_ROWS',
 }
 
 FileOperations = {

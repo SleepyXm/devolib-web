@@ -9,7 +9,8 @@ export type DBOperationType =
   | "DELETE"
   | "GET_SCHEMA"
   | "PUSH_SCHEMA"
-  | "INSERT_TEST_DATA";
+  | "INSERT_TEST_DATA"
+  | "GET_ROWS";
 
 export type DBCommand = {
   operation: DBOperationType;
@@ -40,10 +41,9 @@ export const DBCommandBuilder = {
   ): string => {
     switch (operation) {
       case "GET_SCHEMA":
-        return "";
       case "PUSH_SCHEMA":
-        return "";
       case "INSERT_TEST_DATA":
+      case "GET_ROWS":
         return "";
 
 

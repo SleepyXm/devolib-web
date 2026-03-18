@@ -205,6 +205,14 @@ export const useTableManager = (projectWS: any) => {
     projectWS?.sendCommand(JSON.stringify(DBCommandBuilder.build("INSERT_TEST_DATA", "", undefined, result.sql)));
   };
 
+  const fetchRows = (tableName: string) => {
+    executeCommand(DBCommandBuilder.build('GET_ROWS', tableName));
+  };
+
+  const loadRows = (tableName: string, rows: Row[]) => {
+    setTables(prev => prev.map(t => t.name === tableName ? { ...t, rows } : t));
+  };
+
   return {
     tables,
     loadSchema,
@@ -216,6 +224,8 @@ export const useTableManager = (projectWS: any) => {
     toggleExpanded,
     addRow,
     updateRowValue,
-    insertTestData
+    insertTestData,
+    fetchRows,
+    loadRows
   };
 };

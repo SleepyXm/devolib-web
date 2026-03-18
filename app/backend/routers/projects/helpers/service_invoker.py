@@ -15,6 +15,18 @@ async def handle_db_command(container, command: dict, q: asyncio.Queue, project_
     if command['operation'] in ('GET_SCHEMA', 'PUSH_SCHEMA'):
         await push_schema(container, project_id, q)
         return True
+
+    if command['operation'] == 'GET_ROWS':
+        table = command.get('target')
+        result = container.exec_run(['psql', '-U', 'postgres', '-d', 'myapp', '-A', '-F', '|', '-c', f'SELECT * FROM {table};'])
+        if result.exit_code != 0:
+            await q.put(f"[✗] Query failed: {result.output.decode()}\n")
+            return False
+        lines = result.output.decode().strip().split('\n')
+        headers = lines[0].split('|')
+        rows = [dict(zip(headers, line.split('|'))) for line in lines[1:] if line]
+        await q.put(json.dumps({ "type": "GET_ROWS", "table": table, "rows": rows }))
+        return True
     
     if command['operation'] == 'INSERT_TEST_DATA':
         sql = command.get('sql', '').replace('\n', ' ')

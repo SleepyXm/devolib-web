@@ -1,4 +1,5 @@
 import { COLUMN_TYPES } from "./dbtypes"; // adjust import path as needed
+import { useState, useEffect } from "react";
  
 type Column = {
   name: string;
@@ -92,60 +93,66 @@ export function ColumnRow({ tableId, col, idx, savedState, tables, onKeyDown, on
 }
  
 // --- Row Preview Table ---
-export function RowPreview({ table, tables, onUpdateRowValue }: {
+export function RowPreview({ table, tables, onUpdateRowValue, onFetchRows }: {
   table: Table;
   tables: Table[];
   onUpdateRowValue: (rowIdx: number, colName: string, value: string) => void;
+  onFetchRows: () => void;
 }) {
-  if (table.rows.length === 0) return null;
+  const [open, setOpen] = useState(false);
+  const [fetched, setFetched] = useState(false);
+
+  const handleToggle = () => {
+    if (!fetched) {
+      onFetchRows();
+      setFetched(true);
+    }
+    setOpen(prev => !prev);
+  };
+
+  const label = table.rows.length > 0 ? `View rows (${table.rows.length})` : "View rows";
+
   return (
-    <div className="overflow-x-auto border-t border-[#e8e4dc]">
-      <table className="w-full text-xs border-collapse">
-        <thead>
-          <tr className="bg-[#f8f4ec]">
-            {table.columns.map((col, idx) => (
-              <th key={idx} className="border border-[#e8e4dc] px-2 py-1 text-left font-medium text-zinc-600">{col.name}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {table.rows.map((row, rowIdx) => (
-            <tr key={rowIdx}>
-              {table.columns.map((col, colIdx) => (
-                <td key={colIdx} className="border border-[#e8e4dc] px-2 py-1">
-                  {col.linkedTableId ? (
-                    <select
-                      value={row[col.name] || ""}
-                      onChange={(e) => onUpdateRowValue(rowIdx, col.name, e.target.value)}
-                      className="w-full border border-[#c9bfab] px-1 py-0.5 rounded text-xs bg-white text-black"
-                    >
-                      <option value="">Select</option>
-                      {tables.find((t) => t.id === col.linkedTableId)?.rows.map((r, i) => {
-                        const linkedTable = tables.find((t) => t.id === col.linkedTableId)!;
-                        const val = r[linkedTable.columns[0].name];
-                        return <option key={i} value={val}>{val}</option>;
-                      })}
-                    </select>
-                  ) : (
-                    <input
-                      type="text"
-                      value={row[col.name] || ""}
-                      onChange={(e) => onUpdateRowValue(rowIdx, col.name, e.target.value)}
-                      className="w-full border border-[#c9bfab] px-1 py-0.5 rounded text-xs bg-white text-black"
-                    />
-                  )}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="border-t border-[#e8e4dc]">
+      <button
+        onClick={handleToggle}
+        className="w-full px-4 py-2 text-xs text-left text-zinc-500 hover:bg-[#f8f4ec] flex justify-between items-center"
+      >
+        <span>{label}</span>
+        <span>{open ? "▲" : "▼"}</span>
+      </button>
+      {open && (
+        table.rows.length === 0
+          ? <div className="p-4 text-xs text-zinc-400 italic">No data found.</div>
+          : <div className="overflow-x-auto">
+              <table className="w-full text-xs border-collapse">
+                <thead>
+                  <tr className="bg-[#f8f4ec]">
+                    {table.columns.map((col, idx) => (
+                      <th key={idx} className="border border-[#e8e4dc] px-2 py-1 text-left font-medium text-zinc-600">{col.name}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {table.rows.map((row, rowIdx) => (
+                    <tr key={rowIdx}>
+                      {table.columns.map((col, colIdx) => (
+                        <td key={colIdx} className="border border-[#e8e4dc] px-2 py-1 text-zinc-700">
+                          {row[col.name]}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+      )}
     </div>
   );
 }
  
 // --- Table Card ---
-export function TableCard({ table, tables, savedCols, onAddColumn, onAddRow, onDelete, onColumnKeyDown, onColumnChange, onToggleExpanded, onDeleteColumn, onUpdateColumn, onUpdateRowValue }: {
+export function TableCard({ table, tables, savedCols, onAddColumn, onAddRow, onDelete, onColumnKeyDown, onColumnChange, onToggleExpanded, onDeleteColumn, onUpdateColumn, onUpdateRowValue, onFetchRows }: {
   table: Table;
   tables: Table[];
   savedCols: Record<string, boolean>;
@@ -158,6 +165,7 @@ export function TableCard({ table, tables, savedCols, onAddColumn, onAddRow, onD
   onDeleteColumn: (idx: number) => void;
   onUpdateColumn: (idx: number, patch: Partial<Column>) => void;
   onUpdateRowValue: (rowIdx: number, colName: string, value: string) => void;
+  onFetchRows: () => void;
 }) {
   return (
     <div className="border border-[#c9bfab] rounded-lg bg-white overflow-hidden">
@@ -179,7 +187,7 @@ export function TableCard({ table, tables, savedCols, onAddColumn, onAddRow, onD
           />
         ))}
       </div>
-      <RowPreview table={table} tables={tables} onUpdateRowValue={onUpdateRowValue} />
+      <RowPreview table={table} tables={tables} onUpdateRowValue={onUpdateRowValue} onFetchRows={onFetchRows} />
     </div>
   );
 }
