@@ -1,0 +1,93 @@
+import { useContext, useEffect, useState } from "react";
+import { ProjectMetaContext, ProjectContext } from "../layout";
+import { patchRoutes, patchRoutesNested } from "./wireframehelpers";
+import { patchProjectMetadata } from "@/app/handlers/projects";
+
+export function useWireframe() {
+  const { projectWS, projectName, projectId } = useContext(ProjectContext)!;
+  const { db_schema, endpoints, pages, setPages } = useContext(ProjectMetaContext)!;
+
+  const [showInput, setShowInput] = useState(false);
+  const [activeSection, setActiveSection] = useState<"pages" | "endpoints" | null>(null);
+  const [inputValue, setInputValue] = useState("");
+  const [routesFileContent, setRoutesFileContent] = useState<string | null>(null);
+  const [parentPage, setParentPage] = useState<{ name: string; path: string } | null>(null);
+
+  useEffect(() => {
+    if (!projectWS) return;
+    const handleOutput = (data: string) => {
+      try {
+        const msg = JSON.parse(data);
+        if (msg.type === "FILE_CONTENT") setRoutesFileContent(msg.content);
+      } catch {
+        if (data.startsWith("FILE_CONTENT:"))
+          setRoutesFileContent(data.replace("FILE_CONTENT:", ""));
+      }
+    };
+    projectWS.onOutput(handleOutput);
+    return () => projectWS.onOutput?.(handleOutput);
+  }, [projectWS]);
+
+  useEffect(() => {
+    if (!projectWS || !projectName) return;
+    projectWS.sendCommand(JSON.stringify({
+      type: "READ_FILE",
+      path: `/app/workspace/frontend/${projectName}/src/Routes.jsx`,
+    }));
+  }, [projectWS, projectName]);
+
+  const openInput = (section: "pages" | "endpoints") => {
+    setActiveSection(section);
+    setShowInput(true);
+  };
+
+  const closeInput = () => {
+    setShowInput(false);
+    setInputValue("");
+    setParentPage(null);
+  };
+
+  const handleCreate = async () => {
+    if (!inputValue || !projectName || !projectId || !projectWS) return;
+
+    const name = inputValue.charAt(0).toUpperCase() + inputValue.slice(1);
+    const path = inputValue.toLowerCase();
+
+    if (activeSection === "pages") {
+      projectWS.sendCommand(JSON.stringify({
+        type: "WRITE_FILE",
+        path: `/app/workspace/frontend/${projectName}/src/${name}.jsx`,
+        content: `export default function ${name}() {\n  return(\n    <>\n      <h1>Welcome to your ${name} page</h1>\n    </>\n  );\n}`,
+      }));
+
+      if (routesFileContent) {
+        projectWS.sendCommand(JSON.stringify({
+          type: "WRITE_FILE",
+          path: `/app/workspace/frontend/${projectName}/src/Routes.jsx`,
+          content: parentPage
+            ? patchRoutesNested(routesFileContent, name, path, parentPage.name, parentPage.path)
+            : patchRoutes(routesFileContent, name, path),
+        }));
+      }
+
+      const newPages = [
+        ...pages,
+        {
+          route: parentPage ? `/${parentPage.path}/${path}` : `/${path}`,
+          file: `src/${name}.jsx`,
+        },
+      ];
+      setPages(newPages);
+      await patchProjectMetadata(projectId, { pages: newPages });
+    }
+
+    closeInput();
+  };
+
+  return {
+    db_schema, endpoints, pages,
+    showInput, activeSection, setActiveSection, inputValue, parentPage,
+    setInputValue, setParentPage,
+    openInput, closeInput, handleCreate, setShowInput
+  };
+}

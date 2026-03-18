@@ -70,7 +70,7 @@ export function DbSection({ db_schema }: DbSectionProps) {
   )
 }
  
-export function CreateModal({ activeSection, inputValue, onChange, onConfirm, onCancel }: CreateModalProps) {
+export function CreateModal({ activeSection, inputValue, onChange, onConfirm, pages, parentPage, onParentChange, onCancel }: CreateModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-[#111318] border rounded-lg p-6 flex flex-col gap-4 w-80">
@@ -86,6 +86,24 @@ export function CreateModal({ activeSection, inputValue, onChange, onConfirm, on
           placeholder={activeSection === "pages" ? "Dashboard" : "/api/items"}
           className="px-3 py-2 rounded bg-zinc-600 border text-sm"
         />
+        {activeSection === "pages" && (
+          <select
+            value={parentPage ? `/${parentPage.path}` : ""}
+            onChange={(e) => {
+              const selected = pages.find(p => p.route === e.target.value);
+              onParentChange(selected ? {
+                name: selected.file.replace("src/", "").replace(".jsx", ""),
+                path: selected.route.replace("/", "")
+              } : null);
+            }}
+            className="px-3 py-2 rounded bg-zinc-600 border text-sm"
+          >
+            <option value="">No parent (top level)</option>
+            {pages.map(p => (
+              <option key={p.route} value={p.route}>{p.route}</option>
+            ))}
+          </select>
+        )}
         <div className="flex gap-2 justify-end">
           <button onClick={onCancel} className="px-3 py-1.5 text-sm rounded hover:bg-muted hover:text-white">
             Cancel

@@ -38,4 +38,7 @@ export interface CreateModalProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   onConfirm: () => void
   onCancel: () => void
+  pages: { route: string; file: string }[];
+  parentPage: { name: string; path: string } | null;
+  onParentChange: (p: { name: string; path: string } | null) => void;
 }
