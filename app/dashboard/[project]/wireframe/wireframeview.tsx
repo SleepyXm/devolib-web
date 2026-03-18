@@ -2,7 +2,7 @@
 "use client";
 
 import { useContextMenu } from "@/app/components/Contextmenu";
-import { useWireframe } from "./usewireframe";
+import { useWireframe } from "./wireframehooks";
 import { SectionPanel, PageRow, EndpointRow, DbSection, CreateModal} from "./wireframecomponents";
 import LogsPanel from "../helpers/logspanel";
 import { pagesMenuItems, endpointsMenuItems } from "@/app/components/Contextmenu/wireframemenu";
