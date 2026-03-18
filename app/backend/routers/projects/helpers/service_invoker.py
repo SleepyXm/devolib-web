@@ -38,6 +38,9 @@ async def handle_db_command(container, command: dict, q: asyncio.Queue, project_
         await q.put("[✓] Test data inserted\n")
         await push_schema(container, project_id, q)
         return True
+    
+    sql = command.get('sql', '').replace('\n', ' ')
+    result = container.exec_run(['psql', '-U', 'postgres', '-d', 'myapp', '-c', sql])
 
     if result.exit_code != 0:
         await q.put(f"[✗] SQL Error: {result.output.decode()}\n")
