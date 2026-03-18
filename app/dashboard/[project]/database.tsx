@@ -58,7 +58,7 @@ export default function DatabasePage() {
 }, [projectWS]);
 
   return (
-  <div className="p-6 space-y-4 w-[60vw]">
+  <div className="p-6 space-y-4 max-h-full overflow-y-auto">
     <h2 className="text-4xl ">
       Alter Schema
     </h2>
@@ -68,6 +68,7 @@ export default function DatabasePage() {
       onAdd={() => { addTable(tableName); setTableName(""); }}
       onInsertTestData={() => insertTestData(projectWS)}
     />
+    <div className="p-6 space-y-4 w-[60vw]">
     {tables.map((table) => (
       <TableCard
         key={table.id}
@@ -89,6 +90,7 @@ export default function DatabasePage() {
         onFetchRows={() => fetchRows(table.name)}
       />
     ))}
+    </div>
   </div>
 );
 }

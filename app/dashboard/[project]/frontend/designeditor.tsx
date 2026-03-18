@@ -151,7 +151,7 @@ export default function DesignEditor() {
   }, [handleContextMenu, code]);
 
   return (
-    <div className="flex flex-col h-120px min-h-screen w-full border rounded-lg">
+    <div className="flex flex-col h-120px max-h-screen w-full border rounded-lg">
       {/* Header */}
       <div className="p-2 bg-gray-900 text-white flex justify-between items-center">
         <h2>Design Editor</h2>
@@ -203,7 +203,7 @@ export default function DesignEditor() {
             {/* Iframe */}
             <div className="flex-1 relative">
               <iframe
-                className="w-full h-full"
+                className="w-full max-h-screen"
                 srcDoc={srcDoc}
                 sandbox="allow-scripts allow-same-origin"
                 title="preview"
