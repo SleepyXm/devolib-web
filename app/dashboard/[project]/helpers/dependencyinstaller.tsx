@@ -124,7 +124,7 @@ export default function DependencyInstallerPage() {
             <button
               onClick={addToQueue}
               disabled={!input.trim()}
-              className="px-3 py-1.5 rounded text-xs font-bold text-zinc-400 border border-[#1e2228] hover:border-zinc-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 rounded text-xs font-bold text-zinc-400 border border-[#c9bfab] bg-[#f8f4ec] hover:border-zinc-600 disabled:opacity-70 disabled:cursor-not-allowed transition-colors"
             >
               + Add
             </button>
