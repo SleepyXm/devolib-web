@@ -26,7 +26,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[os.getenv("DEV_SERVER"), os.getenv("FRONT-END-PROD"), ""],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"],
+    allow_methods=["GET", "POST", "OPTIONS", "PATCH", "PUT", "DELETE"],
     allow_headers=["Authorization", "Content-Type"],
 )
 
