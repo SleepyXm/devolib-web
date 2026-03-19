@@ -10,6 +10,7 @@ export const useTableManager = (projectWS: any) => {
   const [tables, setTables] = useState<Table[]>([]);
   const [tableCounter, setTableCounter] = useState(1);
   const { setDbSchema } = useContext(ProjectMetaContext)!;
+  const [inserting, setInserting] = useState(false);
 
   const executeCommand = (command: DBCommand) => {
     console.log(`${command.operation}:`, command);
@@ -198,12 +199,16 @@ export const useTableManager = (projectWS: any) => {
   };
 
   const insertTestData = async (projectWS: any) => {
-    const schema = Object.fromEntries(tables.map(t => [t.name, t.columns.map(c => ({ column: c.name, type: c.type, nullable: true }))]));
-    const result = await gen_test_data(schema);
-    console.log("result:", result);
-    console.log("sql:", result.sql);
-    projectWS?.sendCommand(JSON.stringify(DBCommandBuilder.build("INSERT_TEST_DATA", "", undefined, result.sql)));
+    setInserting(true);
+    try {
+      const schema = Object.fromEntries(tables.map(t => [t.name, t.columns.map(c => ({ column: c.name, type: c.type, nullable: true }))]));
+      const result = await gen_test_data(schema);
+      projectWS?.sendCommand(JSON.stringify(DBCommandBuilder.build("INSERT_TEST_DATA", "", undefined, result.sql)));
+    } finally {
+      setInserting(false);
+    }
   };
+
 
   const fetchRows = (tableName: string) => {
     executeCommand(DBCommandBuilder.build('GET_ROWS', tableName));
@@ -215,6 +220,7 @@ export const useTableManager = (projectWS: any) => {
 
   return {
     tables,
+    inserting,
     loadSchema,
     addTable,
     deleteTable,

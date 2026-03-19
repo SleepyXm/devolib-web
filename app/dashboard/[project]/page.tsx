@@ -21,7 +21,7 @@ export default function ProjectPage() {
   const { serviceStatus, isConnected } = context;
 
   return (
-  <div className="flex flex-col h-full">
+  <div className="flex flex-col h-screen overflow-hidden">
     <div className="flex gap-2 p-2 bg-[#1a1e24] relative after:absolute after:bottom-0 after:left-0 after:w-full after:h-px after:bg-gradient-to-l after:from-gray-200/80 after:to-gray-500">
       <div className="flex rounded py-1 px-1 bg-[#36383b40] border border-[#ffffff20]">
         <ServiceTab label="Frontend"  active={activeView === "frontend"}  hasDot online={serviceStatus.frontend}  onClick={() => { setActiveView("frontend");  if (!serviceStatus.frontend)  context.startService("frontend")  }} />

@@ -34,7 +34,8 @@ export default function DatabasePage() {
     updateRowValue,
     insertTestData,
     fetchRows,
-    loadRows
+    loadRows,
+    inserting
   } = useTableManager(projectWS);
 
   useEffect(() => {
@@ -65,6 +66,7 @@ export default function DatabasePage() {
       onChange={(e) => setTableName(e.target.value)}
       onAdd={() => { addTable(tableName); setTableName(""); }}
       onInsertTestData={() => insertTestData(projectWS)}
+      inserting={inserting}
     />
     <div className="p-6 space-y-4 w-[60vw]">
     {tables.map((table) => (

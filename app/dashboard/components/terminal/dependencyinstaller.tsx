@@ -6,7 +6,7 @@ import { ProjectContext } from "../../[project]/layout";
 import { buildInstallPayload, validatePackageName, PackageManager, QueuedPackage, buildPreview } from "../../[project]/helpers/DepsHandler/depshelper";
 
 export default function DependencyInstallerPage() {
-  const { projectWS, isRunning, isConnected, start, connect, stop, logs, setProjectId } = useContext(ProjectContext)!;
+  const { projectWS, isRunning, setProjectId } = useContext(ProjectContext)!;
   const params = useParams();
   const projectId = Array.isArray(params?.project) ? params.project[0] : params?.project;
 
@@ -65,7 +65,7 @@ export default function DependencyInstallerPage() {
   const preview = buildPreview(pm, queue);
 
   return (
-    <div className="flex flex-col h-full gap-3 font-mono">
+    <div className="flex flex-col h-full gap-3 font-mono overflow-hidden">
 
       {installing ? (
         <div className="flex flex-col items-center justify-center gap-3 py-8 text-zinc-600">

@@ -2,6 +2,7 @@ import { useState, useContext } from "react";
 import { ProjectMetaContext } from "../../layout";
 import { METHOD_COLORS } from "../requestflow/requestflow";
 import { useTestSuiteManager, TestStatus } from "./testsuitemanager";
+import { EmptyState, LoadingState } from "@/app/components/loader";
 
 const STATUS_COLORS: Record<TestStatus, string> = {
   idle: "text-gray-400",
@@ -109,20 +110,19 @@ export default function TestSuite({ projectWS }: TestSuiteProps) {
 
         {/* Empty state */}
         {tests.length === 0 && !generating && (
-          <div className="flex flex-col items-center justify-center h-48 gap-3 text-gray-600 select-none">
+          <EmptyState
+          icon={
             <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
               <rect x="4" y="4" width="28" height="28" rx="6" stroke="currentColor" strokeWidth="1.5" />
               <path d="M12 18h12M18 12v12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
-            <p className="text-xs">Generate tests from your endpoints</p>
-          </div>
+          }
+          message="Generate tests from your endpoints"
+          />
         )}
 
         {generating && (
-          <div className="flex flex-col items-center justify-center h-48 gap-2 text-gray-500">
-            <span className="animate-spin inline-block w-5 h-5 border-2 border-indigo-400 border-t-transparent rounded-full" />
-            <span className="text-xs">Generating tests…</span>
-          </div>
+          <LoadingState message="Generating tests…" />
         )}
 
         {/* Test cases */}

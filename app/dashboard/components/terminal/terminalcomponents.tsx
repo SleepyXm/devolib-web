@@ -37,7 +37,7 @@ export function Terminal({ logs, isConnected, onCommand }: {
 
   // autoscroll on new output
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [logs, buffer]);
 
   // focus container on mount so keydown works immediately
@@ -96,7 +96,7 @@ export function Terminal({ logs, isConnected, onCommand }: {
 
 export function LogOutput({ logs }: { logs: string }) {
   return (
-    <div className="flex-1 overflow-y-auto rounded-md p-3 text-sm leading-relaxed" style={{ background: "#0e1018", border: "1px solid #1e2228" }}>
+    <div className="flex-1 min-h-0 overflow-y-auto p-3 leading-relaxed" style={{ background: "#0e1018", border: "1px solid #1e2228" }}>
       {logs
         ? logs.split("\n").map((line, i) => <div key={i} className={getLogColor(line)}>{line}</div>)
         : <span className="text-zinc-600">Waiting for container output...</span>

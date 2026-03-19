@@ -1,5 +1,5 @@
 import { COLUMN_TYPES } from "../dbtypes"; // adjust import path as needed
-import { useState, useEffect } from "react";
+import { useState } from "react";
  
 type Column = {
   name: string;
@@ -193,11 +193,12 @@ export function TableCard({ table, tables, savedCols, onAddColumn, onAddRow, onD
 }
  
 // --- DB Controls (top input + button) ---
-export function DBControls({ tableName, onChange, onAdd, onInsertTestData }: {
+export function DBControls({ tableName, onChange, onAdd, onInsertTestData, inserting }: {
   tableName: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onAdd: () => void;
   onInsertTestData: () => void;
+  inserting: boolean;
 }) {
   return (
     <div className="flex items-center gap-2">
@@ -217,9 +218,15 @@ export function DBControls({ tableName, onChange, onAdd, onInsertTestData }: {
 
       <button
         onClick={onInsertTestData}
+        disabled={inserting}
         className="text-sm px-3 py-1.5 rounded border border-[#c9bfab] bg-[#f8f4ec] text-[#111318] transition-all duration-300 hover:bg-[#c2bdb2] disabled:opacity-40 disabled:cursor-not-allowed"
       >
-        Insert Test Data
+        {inserting ? (
+          <span className="flex items-center gap-1.5">
+            <span className="animate-spin inline-block w-3 h-3 border-2 border-[#111318] border-t-transparent rounded-full" />
+            Inserting…
+          </span>
+        ) : "Insert Test Data"}
       </button>
     </div>
   );
