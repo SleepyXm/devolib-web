@@ -66,7 +66,7 @@ export default function WireframeView() {
         <>
           <div className="fixed inset-0 z-40" onClick={handleClick} />
           <div
-            className="fixed z-50 bg-card border rounded shadow-lg py-1"
+            className="fixed z-50 bg-[#f8f4ec] border border-[#00000060] rounded shadow-lg py-1"
             style={{ top: contextMenu.y, left: contextMenu.x }}
           >
             {(activeSection === "pages" ? pagesMenuItems : endpointsMenuItems).map((item) => (

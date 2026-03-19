@@ -151,7 +151,7 @@ export default function DesignEditor() {
   }, [handleContextMenu, code]);
 
   return (
-    <div className="flex flex-col h-120px max-h-screen w-full border rounded-lg">
+    <div className="flex flex-col h-screen w-full border rounded-lg">
       {/* Header */}
       <div className="p-2 bg-gray-900 text-white flex justify-between items-center">
         <h2>Design Editor</h2>
@@ -164,7 +164,7 @@ export default function DesignEditor() {
         onClick={handleClick}
       >
         <>
-          <div className="flex flex-col w-1/2 h-[calc(100vh-13.5rem)]">
+          <div className="flex flex-col w-1/2 h-[calc(100vh-11rem)]">
             <MonacoEditor
               initialCode={code}
               language="html"

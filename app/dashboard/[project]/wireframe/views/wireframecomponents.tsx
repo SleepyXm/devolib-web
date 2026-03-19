@@ -115,10 +115,10 @@ export function CreateModal({ activeSection, inputValue, onChange, onConfirm, pa
           </select>
         )}
         <div className="flex gap-2 justify-end">
-          <button onClick={onCancel} className="px-3 py-1.5 text-sm rounded hover:bg-muted hover:text-white">
+          <button onClick={onCancel} className="px-3 py-1.5 text-sm rounded text-zinc-600 transition-all duration-300 hover:bg-muted hover:text-white">
             Cancel
           </button>
-          <button onClick={onConfirm} className="px-3 py-1.5 text-sm rounded bg-primary text-primary-foreground">
+          <button onClick={onConfirm} className="px-3 py-1.5 text-sm rounded bg-primary text-zinc-600 transition-all duration-300 hover:text-white">
             Create
           </button>
         </div>
