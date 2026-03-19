@@ -4,7 +4,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 import os, re, json
 from helpers.limiter import limiter
-from schemas import MessageInput, SchemaInput
+from schemas import MessageInput, SchemaInput, TestInput
 
 load_dotenv()
 
@@ -90,7 +90,7 @@ async def generate_test_data(request: Request, data: SchemaInput):
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a SQL assistant. Return only raw SQL INSERT statements, no markdown, no code blocks, no explanation."
+                    "content": "You are a SQL assistant. Return only raw SQL INSERT statements, no markdown, no code blocks, no slash N no explanation."
                 },
                 {
                     "role": "user",
@@ -101,6 +101,44 @@ async def generate_test_data(request: Request, data: SchemaInput):
         sql = response.choices[0].message.content.strip()
         sql = extract_sql_from_response(sql).replace('\\n', ' ')
         return { "sql": sql }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+@router.post("/generate-tests")
+@limiter.limit("10/minute")
+async def generate_tests(request: Request, data: TestInput):
+    endpoint_list = "\n".join(
+        f"{ep['method'].upper()} {ep['path']}" for ep in data.endpoints
+    )
+
+    try:
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[
+                {
+                    "role": "system",
+                    "content": """You are a FastAPI test generator. Given a list of endpoints, generate one test per endpoint.
+Return ONLY a JSON array. Each object must have:
+- id: snake_case string e.g. "test_get_health"
+- name: human readable e.g. "GET /api/health returns 200"
+- endpoint: the path e.g. "/api/health"
+- method: HTTP method uppercase
+- description: one sentence
+- payload: realistic JSON object for POST/PUT/PATCH, null for GET/DELETE
+No markdown. No prose. No backticks. Pure JSON array only."""
+                },
+                {
+                    "role": "user",
+                    "content": f"Endpoints:\n{endpoint_list}"
+                }
+            ]
+        )
+        raw = response.choices[0].message.content.strip()
+        tests = json.loads(raw.replace("```json", "").replace("```", "").strip())
+        return { "tests": tests }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
