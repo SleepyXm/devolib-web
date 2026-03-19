@@ -104,6 +104,11 @@ export async function stopProject(project_id: string): Promise<{ ok: boolean; co
   return res;
 }
 
+export async function fetchProjectDetails(project_id: string): Promise<Project & { access_token: string }> {
+  const res = await request(`${project_endpoint}/${project_id}`, { method: "GET" });
+  return res;
+}
+
 export type ProjectWS = {
   sendCommand: (cmd: string) => void;
   onOutput: (callback: (data: string) => void) => void;
@@ -111,13 +116,11 @@ export type ProjectWS = {
   onStatus: (callback: (data: ServiceStatus) => void) => void;
   onSchema: (callback: (data: any) => void) => void;
   onLog: (callback: (data: any) => void) => void;
+  onFile: (callback: (data: string) => void) => void;
+  removeFile: (callback: (data: string) => void) => void;
   close: () => void;
 };
 
-export async function fetchProjectDetails(project_id: string): Promise<Project & { access_token: string }> {
-  const res = await request(`${project_endpoint}/${project_id}`, { method: "GET" });
-  return res;
-}
 
 export function connectToProject(project_id: string, access_token: string): ProjectWS {
   const ws = new WebSocket(`${WSAPI_BASE}${container_endpoint}/ws/${project_id}?access_token=${access_token}`);
@@ -126,6 +129,7 @@ export function connectToProject(project_id: string, access_token: string): Proj
   let statusCallback: ((data: ServiceStatus) => void) | null = null;
   let schemaCallback: ((data: any) => void) | null = null;
   let logCallback: ((data: any) => void) | null = null;
+  let fileCallbacks: ((data: string) => void)[] = [];
 
   ws.onmessage = (event) => {
     try {
@@ -137,6 +141,11 @@ export function connectToProject(project_id: string, access_token: string): Proj
       // For schema retrieval on project
       if (message.type === 'DATABASE_SCHEMA' && schemaCallback) {
         schemaCallback(message);
+        return;
+      }
+
+      if (message.type === 'FILE_CONTENT' || message.type === 'FILE_SAVED') {
+        fileCallbacks.forEach(cb => cb(event.data));
         return;
       }
 
@@ -185,6 +194,9 @@ export function connectToProject(project_id: string, access_token: string): Proj
     onLog: (callback: (data: any) => void) => {
       logCallback = callback;
     },
+    onFile: (callback) => { fileCallbacks.push(callback); },
+    
+    removeFile: (callback) => { fileCallbacks = fileCallbacks.filter(cb => cb !== callback); },
 
     close: () => {
       ws.close();

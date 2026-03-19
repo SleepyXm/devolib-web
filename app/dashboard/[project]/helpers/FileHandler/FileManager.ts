@@ -14,8 +14,21 @@ export const useFileManager = (projectWS: any) => {
 
   const readFile = (path: string) => {
     setCurrentPath(path);
+
+    const handler = (data: string) => {
+      try {
+        const msg = JSON.parse(data);
+        if (msg.type === 'FILE_CONTENT' && msg.path === path) {
+          loadFileContent(msg.content);
+          projectWS.removeFile(handler); // changed
+        }
+      } catch {}
+    };
+
+    projectWS.onFile(handler); // changed
     executeCommand(FileCommandBuilder.readFile(path));
   };
+
 
   const writeFile = (content: string) => {
     if (!currentPath) return;
