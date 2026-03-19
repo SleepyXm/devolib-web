@@ -109,6 +109,7 @@ async def create_project_container(
     for framework in backend_services:
         if "FastAPI" in backend_services:
             scaffold_template(container, "FastAPI", f"/app/workspace/backend")
+            container.exec_run(f"sh -c 'mkdir -p /app/workspace/backend/routers'", tty=True, detach=False)
 
         if framework in configs_map and configs_map[framework]["scaffold_command"]:
             cmd = configs_map[framework]["scaffold_command"].replace("{name}", project_name)
