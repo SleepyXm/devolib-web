@@ -22,3 +22,12 @@ export const gen_test_data = async (schema: Record<string, any>) => {
   })
   return data
 }
+
+export const gen_tests = async (endpoints: { method: string; path: string; file: string }[]) => {
+  const data = await request(`${llm_endpoint}/generate-tests`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ endpoints })
+  })
+  return data
+}
