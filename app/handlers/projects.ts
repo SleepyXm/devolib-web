@@ -107,6 +107,7 @@ export async function stopProject(project_id: string): Promise<{ ok: boolean; co
 export type ProjectWS = {
   sendCommand: (cmd: string) => void;
   onOutput: (callback: (data: string) => void) => void;
+  removeOutput: (callback: (data: string) => void) => void;
   onStatus: (callback: (data: ServiceStatus) => void) => void;
   onSchema: (callback: (data: any) => void) => void;
   onLog: (callback: (data: any) => void) => void;
@@ -139,6 +140,11 @@ export function connectToProject(project_id: string, access_token: string): Proj
         return;
       }
 
+      if (message.type === 'GET_ROWS' && schemaCallback) {
+        schemaCallback(message);
+        return;
+      }
+
       if (message.type === 'LOG_EVENT' && logCallback) {
         logCallback(message.event);
         return;
@@ -166,6 +172,9 @@ export function connectToProject(project_id: string, access_token: string): Proj
     },
     onOutput: (callback) => {
       outputCallbacks.push(callback);
+    },
+    removeOutput: (callback) => {
+      outputCallbacks = outputCallbacks.filter(cb => cb !== callback);
     },
     onStatus: (callback: (data: ServiceStatus) => void) => { 
       statusCallback = callback;
