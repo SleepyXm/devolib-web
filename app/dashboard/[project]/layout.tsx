@@ -42,6 +42,7 @@ interface ProjectMetaContextType {
     method: string; // "GET" | "POST" etc. — no longer optional, backend routes always have a method
     path: string; // "/api/health"
     file: string; // "routes/health.py" — relative to /app/workspace/backend/{name}/
+    handler?: string;
   }[];
 
   envs: { key: string; value: string; is_secret: boolean }[];

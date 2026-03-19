@@ -4,6 +4,7 @@ export type Endpoint = {
   method: string;
   path: string;
   file: string;
+  handler: string;
 };
 
 export type Page = {
@@ -17,7 +18,7 @@ export const WORKSPACE_PATHS = {
 } as const;
 
 const FRAMEWORK_PATTERNS: Record<string, RegExp> = {
-  fastapi: /@\w+\.(get|post|put|delete|patch)\(["']([^"']+)["']/gi,
+  fastapi: /@\w+\.(get|post|put|delete|patch)\(["']([^"']+)["'][^)]*\)[^\n]*\n\s*(?:async\s+)?def\s+(\w+)/gi,
   flask: /@\w+\.route\(["']([^"']+)["'](?:.*?methods=\[["']([^"']+)["']\])?/gi,
   express: /\w+\.(get|post|put|delete|patch)\(["']([^"']+)["']/gi,
   nest: /@(Get|Post|Put|Delete|Patch)\(["']([^"']+)["']\)/gi,
@@ -48,6 +49,7 @@ export const useEndpointScanner = (
         method: match[1].toUpperCase(),
         path: match[2],
         file: fileName,
+        handler: match[3] ?? null,
       });
     }
 

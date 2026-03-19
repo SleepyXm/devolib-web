@@ -32,7 +32,7 @@ export function PagesSection({ pages }: { pages: { route: string; file: string }
   )
 }
 
-export function EndpointsSection({ endpoints }: { endpoints: { method: string; path: string }[] }) {
+export function EndpointsSection({ endpoints }: { endpoints: { method: string; path: string, handler: string }[] }) {
   return (
     <section>
       <SectionHeader title="API Endpoints" />
@@ -41,6 +41,7 @@ export function EndpointsSection({ endpoints }: { endpoints: { method: string; p
             <div key={idx} className="flex gap-4 p-3 border border-gray-300 dark:border-gray-700 rounded font-mono text-sm mb-2">
               <span className="font-semibold min-w-[80px] text-blue-600 dark:text-blue-400">{ep.method}</span>
               <span className="flex-1">{ep.path}</span>
+              <span className="flex-1">{ep.handler}</span>
             </div>
           ))
         : <p className="text-gray-500 text-sm">No endpoints configured</p>
