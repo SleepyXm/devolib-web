@@ -71,3 +71,6 @@ class MessageInput(BaseModel):
 
 class SchemaInput(BaseModel):
     schema: dict
+
+class TestInput(BaseModel):
+    endpoints: list[dict]

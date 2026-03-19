@@ -95,12 +95,10 @@ async def websocket_terminal(websocket: WebSocket, project_id: str, access_token
             msg = await send_queue.get()
             if msg is None:
                 break
-            print(f"[SEND] {repr(msg)}")
             try:
                 await websocket.send_text(msg)
-                print(f"[SEND OK]")
             except Exception as e:
-                print(f"[SEND FAIL] {e}")
+                logger.warning("websocket send failed", error=str(e))
 
     sender_task = asyncio.create_task(sender())
     logd_task = asyncio.create_task(tail_logd(container, send_queue))

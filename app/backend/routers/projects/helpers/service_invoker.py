@@ -2,7 +2,7 @@ import json
 import os, tarfile, io, asyncio
 from database import database
 from helpers.packagemanager.packagemanager import PM_COMMANDS
-from helpers.Operations.operations import DBoperations, FileOperations, DependencyOperations
+from helpers.Operations.operations import DBoperations, FileOperations, DependencyOperations, GeneralOperations
 
 
 # --------------------------------- DB Command -------------------------------------- #
@@ -158,12 +158,6 @@ async def handle_package_command(container, command: dict, q: asyncio.Queue):
             await q.put(f"[✗] Rejected suspicious package name: {pkg}\n")
             return False
 
-    PM_COMMANDS = {
-        'npm':   lambda pkgs, dev: ['npm', 'install', '--save-dev' if dev else '--save'] + pkgs,
-        'pip':   lambda pkgs, _:   ['pip', 'install'] + pkgs,
-        'yarn':  lambda pkgs, dev: ['yarn', 'add', '--dev' if dev else None] + pkgs if not dev else ['yarn', 'add', '--dev'] + pkgs,
-        'cargo': lambda pkgs, dev: ['cargo', 'add'] + (['--dev'] if dev else []) + pkgs,
-    }
 
     cmd = PM_COMMANDS[pm](packages, dev)
     cmd = [c for c in cmd if c is not None]  # strip None from yarn non-dev
@@ -202,3 +196,30 @@ async def handle_package_command(container, command: dict, q: asyncio.Queue):
     await q.put(f"[✓] Installed {len(packages)} package(s) via {pm}\n")
     await q.put(json.dumps({"type": "INSTALL_DONE", "success": True}))
     return True
+
+
+# --------------- General Operations ----------------- #
+async def handle_general_commands(container, command: dict, q: asyncio.Queue):
+    if command['type'] == 'CURL':
+        method = command.get('method', 'GET')
+        path = command.get('path')
+        payload = command.get('payload')
+
+        curl_cmd = ['curl', '-s', '-o', '-', '-w', '%{http_code}',
+                    f'http://localhost:8000{path}']
+
+        if method != 'GET' and payload:
+            curl_cmd += ['-X', method, '-H', 'Content-Type: application/json',
+                         '-d', json.dumps(payload)]
+
+        result = container.exec_run(curl_cmd)
+        output = result.output.decode()
+        status_code = output[-3:]
+        body = output[:-3]
+
+        await q.put(json.dumps({
+            "type": "CURL",
+            "test_id": command.get('test_id'),
+            "status_code": status_code,
+            "body": body
+        }))

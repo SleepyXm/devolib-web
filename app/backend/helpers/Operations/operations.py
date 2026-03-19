@@ -25,3 +25,8 @@ DependencyOperations = {
     'REMOVE_PACKAGE',
     'UPGRADE'
 }
+
+
+GeneralOperations = {
+    'CURL'
+}
