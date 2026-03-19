@@ -16,23 +16,23 @@ export function useWireframe() {
   const [endpointType, setEndpointType] = useState<"endpoint" | "router">("endpoint");
 
   useEffect(() => {
-  if (!projectWS) return;
-  const handleOutput = (data: string) => {
-    console.log("WS output:", data);
-    try {
-      const msg = JSON.parse(data);
-      if (msg.type === "FILE_CONTENT") {
-        if (msg.path?.endsWith("main.py")) setMainPyContent(msg.content);
-        else setRoutesFileContent(msg.content);
+    if (!projectWS) return;
+    const handleOutput = (data: string) => {
+      console.log("WS output:", data);
+      try {
+        const msg = JSON.parse(data);
+        if (msg.type === "FILE_CONTENT") {
+          if (msg.path?.endsWith("main.py")) setMainPyContent(msg.content);
+          else setRoutesFileContent(msg.content);
+        }
+      } catch {
+        if (data.startsWith("FILE_CONTENT:"))
+          setRoutesFileContent(data.replace("FILE_CONTENT:", ""));
       }
-    } catch {
-      if (data.startsWith("FILE_CONTENT:"))
-        setRoutesFileContent(data.replace("FILE_CONTENT:", ""));
-    }
-  };
-  projectWS.onOutput(handleOutput);
-  return () => projectWS.onOutput?.(handleOutput);
-}, [projectWS]);
+    };
+    projectWS.onFile(handleOutput);
+    return () => projectWS.removeFile(handleOutput);
+  }, [projectWS]);
 
   useEffect(() => {
     if (!projectWS || !projectName) return;
