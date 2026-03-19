@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { ProjectMetaContext, ProjectContext } from "../layout";
-import { patchRoutes, patchRoutesNested } from "./wireframehelpers";
-import { patchProjectMetadata } from "@/app/handlers/projects";
+import { patchRoutes, patchRoutesNested, generateRouter, patchMainPy } from "./wireframehelpers";
+import { patchProjectMetadata } from "@/app/handlers/projects"
 
 export function useWireframe() {
   const { projectWS, projectName, projectId } = useContext(ProjectContext)!;
@@ -11,22 +11,28 @@ export function useWireframe() {
   const [activeSection, setActiveSection] = useState<"pages" | "endpoints" | null>(null);
   const [inputValue, setInputValue] = useState("");
   const [routesFileContent, setRoutesFileContent] = useState<string | null>(null);
+  const [mainPyContent, setMainPyContent] = useState<string | null>(null);
   const [parentPage, setParentPage] = useState<{ name: string; path: string } | null>(null);
+  const [endpointType, setEndpointType] = useState<"endpoint" | "router">("endpoint");
 
   useEffect(() => {
-    if (!projectWS) return;
-    const handleOutput = (data: string) => {
-      try {
-        const msg = JSON.parse(data);
-        if (msg.type === "FILE_CONTENT") setRoutesFileContent(msg.content);
-      } catch {
-        if (data.startsWith("FILE_CONTENT:"))
-          setRoutesFileContent(data.replace("FILE_CONTENT:", ""));
+  if (!projectWS) return;
+  const handleOutput = (data: string) => {
+    console.log("WS output:", data);
+    try {
+      const msg = JSON.parse(data);
+      if (msg.type === "FILE_CONTENT") {
+        if (msg.path?.endsWith("main.py")) setMainPyContent(msg.content);
+        else setRoutesFileContent(msg.content);
       }
-    };
-    projectWS.onOutput(handleOutput);
-    return () => projectWS.onOutput?.(handleOutput);
-  }, [projectWS]);
+    } catch {
+      if (data.startsWith("FILE_CONTENT:"))
+        setRoutesFileContent(data.replace("FILE_CONTENT:", ""));
+    }
+  };
+  projectWS.onOutput(handleOutput);
+  return () => projectWS.onOutput?.(handleOutput);
+}, [projectWS]);
 
   useEffect(() => {
     if (!projectWS || !projectName) return;
@@ -39,12 +45,19 @@ export function useWireframe() {
   const openInput = (section: "pages" | "endpoints") => {
     setActiveSection(section);
     setShowInput(true);
+    if (section === "endpoints" && projectWS && projectName) {
+      projectWS.sendCommand(JSON.stringify({
+        type: "READ_FILE",
+        path: `/app/workspace/backend/main.py`,
+      }));
+    }
   };
 
   const closeInput = () => {
     setShowInput(false);
     setInputValue("");
     setParentPage(null);
+    setEndpointType("endpoint");
   };
 
   const handleCreate = async () => {
@@ -81,6 +94,20 @@ export function useWireframe() {
       await patchProjectMetadata(projectId, { pages: newPages });
     }
 
+    if (activeSection === "endpoints" && endpointType === "router" && mainPyContent) {
+      projectWS.sendCommand(JSON.stringify({
+        type: "WRITE_FILE",
+        path: `/app/workspace/backend/routers/${path}.py`,
+        content: generateRouter(path),
+      }));
+
+      projectWS.sendCommand(JSON.stringify({
+        type: "WRITE_FILE",
+        path: `/app/workspace/backend/main.py`,
+        content: patchMainPy(mainPyContent, path),
+      }));
+    }
+
     closeInput();
   };
 
@@ -88,6 +115,6 @@ export function useWireframe() {
     db_schema, endpoints, pages,
     showInput, activeSection, setActiveSection, inputValue, parentPage,
     setInputValue, setParentPage,
-    openInput, closeInput, handleCreate, setShowInput
+    openInput, closeInput, handleCreate, setShowInput, endpointType, setEndpointType
   };
 }

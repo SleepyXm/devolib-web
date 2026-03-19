@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useState } from "react";
 import { useContextMenu } from "@/app/components/Contextmenu";
 import { useWireframe } from "../wireframehooks";
 import { SectionPanel, PageRow, EndpointRow, DbSection, CreateModal} from "./wireframecomponents";
@@ -12,7 +13,7 @@ export default function WireframeView() {
     db_schema, endpoints, pages,
     showInput, activeSection, setActiveSection, inputValue, parentPage,
     setInputValue, setParentPage,
-    openInput, closeInput, handleCreate, setShowInput
+    openInput, closeInput, handleCreate, setShowInput, endpointType, setEndpointType
   } = useWireframe();
 
   const { contextMenu, handleContextMenu, handleClick } = useContextMenu();
@@ -31,6 +32,8 @@ export default function WireframeView() {
           pages={pages}
           parentPage={parentPage}
           onParentChange={setParentPage}
+          endpointType={endpointType}
+          onEndpointTypeChange={setEndpointType}
         />
       )}
 
@@ -70,7 +73,11 @@ export default function WireframeView() {
               <button
                 key={item.label}
                 className="block px-4 py-2 text-sm hover:bg-muted w-full text-left"
-                onClick={() => { if (item.action === "add-page" || item.action === "add-endpoint") setShowInput(true); handleClick(); }}
+                onClick={() => {
+                  if (item.action === "add-page") openInput("pages");
+                  if (item.action === "add-endpoint") openInput("endpoints");
+                  handleClick();
+                }}
               >
                 {item.label}
               </button>

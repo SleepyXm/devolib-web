@@ -25,3 +25,36 @@ export const BackendBase = {
 
   sequence: ["validate", "allocate", "db_operation", "logic", "return"],
 };
+
+
+
+export type RoutePayload = {
+  route: {
+    method: string;
+    path: string;
+  };
+  definition: {
+    name: string;
+    auth: "required" | "optional" | "none";
+    inputs: ("path_param" | "query_param" | "body" | "none")[];
+  };
+  query: {
+    operation: "fetch_one" | "fetch_all" | "execute" | "none";
+    table: string;
+    columns: string[];
+    condition?: string;
+  };
+  response: {
+    type: "single" | "list" | "message";
+    key: string;
+  };
+};
+
+export type Placeholder = {
+  tabStop: number;
+  options: string[];
+  line: number;
+  col: number;
+  end: number;
+  type: "dropdown" | "text";
+};

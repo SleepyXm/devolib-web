@@ -41,4 +41,6 @@ export interface CreateModalProps {
   pages: { route: string; file: string }[];
   parentPage: { name: string; path: string } | null;
   onParentChange: (p: { name: string; path: string } | null) => void;
+  endpointType: "endpoint" | "router";
+  onEndpointTypeChange: (type: "endpoint" | "router") => void;
 }

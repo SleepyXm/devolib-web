@@ -73,7 +73,7 @@ async def handle_file_command(container, command: dict, q: asyncio.Queue):
         if result.exit_code != 0:
             await q.put(f"[✗] File not found: {path}\n")
             return False
-        await q.put(f"FILE_CONTENT:{result.output.decode()}")
+        await q.put(json.dumps({"type": "FILE_CONTENT", "path": path, "content": result.output.decode()}))
         return True
 
     if command['type'] == 'WRITE_FILE':

@@ -12,7 +12,6 @@ export function patchRoutes(content: string, name: string, path: string): string
   );
 }
 
-
 export function patchRoutesNested(
   content: string,
   name: string,
@@ -53,4 +52,35 @@ export function patchRoutesNested(
     openParent,
     `$1$2  <Route path="${path}" element={<${name} />} />\n$3`,
   );
+}
+
+
+
+export function patchMainPy(content: string, name: string): string {
+  const routerName = name.toLowerCase();
+  const importLine = `from routers.${routerName} import router as ${routerName}_router`;
+  const includeLine = `app.include_router(${routerName}_router)`;
+
+  if (!content.includes("# -- ROUTER IMPORTS --") || !content.includes("# -- ROUTERS --")) {
+    throw new Error("main.py is missing router sentinels");
+  }
+
+  return content
+    .replace("# -- ROUTER IMPORTS -- #", `# -- ROUTER IMPORTS -- #\n${importLine}`)
+    .replace("# -- ROUTERS -- #", `# -- ROUTERS -- #\n${includeLine}`);
+}
+
+
+
+export function generateRouter(name: string): string {
+  const routerName = name.toLowerCase();
+  return `from fastapi import APIRouter
+from sqlalchemy import text
+
+router = APIRouter(prefix="/api/${routerName}", tags=["${routerName}"])
+
+@router.get("/")
+async def ${routerName}_index():
+    return {"message": "Hello from ${routerName}!"}
+`;
 }
