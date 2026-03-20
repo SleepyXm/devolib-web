@@ -6,7 +6,7 @@ import { saveEndpoints } from "../backend/models/backendoperations";
 
 export function useWireframe() {
   const { projectWS, projectName, projectId } = useContext(ProjectContext)!;
-  const { db_schema, endpoints, pages, setPages } = useContext(ProjectMetaContext)!;
+  const { db_schema, endpoints, setEndpoints, pages, setPages } = useContext(ProjectMetaContext)!;
 
   const [showInput, setShowInput] = useState(false);
   const [activeSection, setActiveSection] = useState<"pages" | "endpoints" | null>(null);
@@ -118,7 +118,9 @@ export function useWireframe() {
           file: `routers/${path}.py`,
           handler: `${path}_index` 
         }
+      
       ];
+      setEndpoints(newEndpoints);
       await saveEndpoints(projectId, newEndpoints);
       }
 

@@ -1,6 +1,5 @@
 import { useState, useEffect, useContext } from "react";
 import { useMonaco, Editor } from "@monaco-editor/react";
-import { ElementNode } from "@/app/types/tailwindstuff";
 import { ProjectMetaContext } from "../../../layout";
 import { generateRouteSnippet } from "../../models/generator/backendgenerator";
 import { resolveSnippetToPlain, activatePlaceholder } from "../../routes/routerehandler";
@@ -9,19 +8,24 @@ interface EditorProps {
   initialCode?: string;
   language: string;
   onChange?: (value: string) => void;
+  files: string[];
+  selectedFile: string | null;
+  onFileSelect: (file: string) => void;
 }
 
 export default function BackendEditor({
   initialCode,
   language,
   onChange,
+  files,
+  selectedFile,
+  onFileSelect,
 }: EditorProps) {
   const meta = useContext(ProjectMetaContext);
   const db_schema = meta?.db_schema ?? {};
   const monaco = useMonaco();
   const [code, setCode] = useState(initialCode);
 
-  // ADD THIS: Update code when initialCode prop changes
   useEffect(() => {
     if (initialCode !== undefined && initialCode !== code) {
       setCode(initialCode);
@@ -32,24 +36,6 @@ export default function BackendEditor({
     const newValue = value || "";
     setCode(newValue);
     if (onChange) onChange(newValue);
-  };
-
-  const [elements, setElements] = useState<ElementNode[]>([
-    {
-      id: "node-1",
-      type: "div",
-      classState: { p: "p-4" },
-      content: "Test content",
-    },
-  ]);
-
-  const serializeElements = (nodes: ElementNode[]) => {
-    return nodes
-      .map((node) => {
-        const classes = Object.values(node.classState).join(" ");
-        return `<${node.type} class="${classes}">${node.content || ""}</${node.type}>`;
-      })
-      .join("\n");
   };
 
   useEffect(() => {
@@ -66,13 +52,25 @@ export default function BackendEditor({
     }
   }, [monaco]);
 
-  useEffect(() => {
-    const html = serializeElements(elements);
-    setCode(html);
-  }, [elements]);
-
   return (
     <div className="flex flex-1 overflow-hidden">
+      <div className="w-36 bg-gray-800 text-white flex flex-col overflow-y-auto shrink-0">
+        <div className="p-2 text-xs text-gray-400 uppercase tracking-wide border-b border-gray-700">
+          Files
+        </div>
+        {files.map((file) => (
+          <button
+            key={file}
+            onClick={() => onFileSelect(file)}
+            className={`px-3 py-2 text-left hover:bg-gray-700 border-b border-gray-700/50 flex flex-col ${
+              selectedFile === file ? "bg-gray-700" : ""
+            }`}
+          >
+            <span className="text-xs text-gray-300 truncate">{file}</span>
+          </button>
+        ))}
+      </div>
+
       <Editor
         height="100%"
         defaultLanguage={language}
@@ -95,7 +93,6 @@ export default function BackendEditor({
               const snippet = generateRouteSnippet(db_schema);
               const { text, placeholders } = resolveSnippetToPlain(snippet);
               const position = ed.getPosition()!;
-
               ed.executeEdits("", [
                 {
                   range: {
@@ -107,8 +104,6 @@ export default function BackendEditor({
                   text,
                 },
               ]);
-
-              // start at first placeholder
               activatePlaceholder(ed, placeholders, 0, position);
             },
           });
