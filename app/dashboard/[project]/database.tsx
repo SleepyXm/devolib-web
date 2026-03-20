@@ -42,6 +42,10 @@ export default function DatabasePage() {
   if (!projectWS) return;
 
   projectWS.onSchema((data) => {
+    if (data.type === "GET_ROWS") {
+      loadRows(data.table, data.rows);
+      return;
+    }
     loadSchema(data);
   });
 
