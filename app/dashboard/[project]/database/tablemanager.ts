@@ -90,7 +90,7 @@ export const useTableManager = (projectWS: any) => {
   const addColumn = (tableId: number) => {
     const table = tables.find(t => t.id === tableId);
     if (!table) return;
-    const newCol: Column = { name: "new_column", type: "STRING", expanded: true, pending: true };
+    const newCol: Column = { name: "new_column", type: "VARCHAR(255)", expanded: true, pending: true };
     
     setTables(prev => prev.map(t => 
       t.id === tableId ? { ...t, columns: [...t.columns, newCol] } : t
@@ -98,22 +98,24 @@ export const useTableManager = (projectWS: any) => {
 
   };
 
-  const confirmColumn = (tableId: number, colIdx: number) => {
+  const confirmColumn = (tableId: number, colIdx: number, name: string) => {
     const table = tables.find(t => t.id === tableId);
     if (!table) return;
     const col = table.columns[colIdx];
     if (!col?.pending) return;
-    
+
+    const confirmedCol = { ...col, name, pending: false };
+
     setTables(prev => prev.map(t =>
       t.id === tableId ? {
         ...t,
-        columns: t.columns.map((c, i) => i === colIdx ? { ...c, pending: false } : c)
+        columns: t.columns.map((c, i) => i === colIdx ? confirmedCol : c)
       } : t
     ));
-    
+
     executeCommand(DBCommandBuilder.build('ALTER_TABLE', table.name, {
       action: 'ADD_COLUMN',
-      column: col
+      column: confirmedCol
     }));
   };
 

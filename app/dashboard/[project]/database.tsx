@@ -83,10 +83,17 @@ export default function DatabasePage() {
         onAddColumn={() => addColumn(table.id)}
         onAddRow={() => addRow(table.id)}
         onDelete={() => deleteTable(table.id)}
-        onConfirmColumn={(idx) => confirmColumn(table.id, idx)}
+        onConfirmColumn={(idx) => confirmColumn(table.id, idx, table.columns[idx]?.name)}
         onColumnKeyDown={(idx, e) => {
-          if (e.key === "Enter") handleColumnNameSave(table.id, idx, e.currentTarget.value);
-          else setSavedCols((prev) => ({ ...prev, [`${table.id}-${idx}`]: false }));
+          if (e.key === "Enter") {
+            if (table.columns[idx]?.pending) {
+              confirmColumn(table.id, idx, e.currentTarget.value);
+            } else {
+              handleColumnNameSave(table.id, idx, e.currentTarget.value);
+            }
+          } else {
+            setSavedCols((prev) => ({ ...prev, [`${table.id}-${idx}`]: false }));
+          }
         }}
         onColumnChange={(idx) => setSavedCols((prev) => ({ ...prev, [`${table.id}-${idx}`]: false }))}
         onToggleExpanded={(idx) => toggleExpanded(table.id, idx)}
