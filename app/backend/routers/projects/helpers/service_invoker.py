@@ -113,6 +113,30 @@ async def push_schema(container, project_id, q: asyncio.Queue):
         'ORDER BY table_name, ordinal_position;\\""'
     )
     result = container.exec_run(schema_cmd)
+
+    foreignkey_cmd = (
+        'su - postgres -c "psql -d myapp -t -A -F\'|\' '
+        '-c \\"SELECT kcu.table_name, kcu.column_name, ccu.table_name, ccu.column_name '
+        'FROM information_schema.table_constraints tc '
+        'JOIN information_schema.key_column_usage kcu ON tc.constraint_name = kcu.constraint_name '
+        'JOIN information_schema.constraint_column_usage ccu ON tc.constraint_name = ccu.constraint_name '
+        'WHERE tc.constraint_type = \'FOREIGN KEY\';\\""'
+    )
+    foreignkey_result = container.exec_run(foreignkey_cmd)
+
+    foreign_keys = {}
+    for line in foreignkey_result.output.decode().strip().split("\n"):
+        if not line:
+            continue
+        parts = line.split("|")
+        if len(parts) != 4:
+            continue
+        table, column, ref_table, ref_column = parts
+        foreign_keys.setdefault(table, {})[column] = {
+            "referencedTable": ref_table,
+            "referencedColumn": ref_column
+        }
+
     tables = {}
     for line in result.output.decode().strip().split("\n"):
         if not line:
@@ -122,7 +146,9 @@ async def push_schema(container, project_id, q: asyncio.Queue):
             "column": column,
             "type": dtype,
             "nullable": nullable == "YES",
+            "foreignKey": foreign_keys.get(table, {}).get(column)
         })
+
     await database.execute(
         """
         UPDATE project_metadata 
