@@ -2,6 +2,7 @@ import { useContext, useEffect, useState } from "react";
 import { ProjectMetaContext, ProjectContext } from "../layout";
 import { patchRoutes, patchRoutesNested, generateRouter, patchMainPy } from "./wireframehelpers";
 import { patchProjectMetadata } from "@/app/handlers/projects"
+import { saveEndpoints } from "../backend/backendoperations";
 
 export function useWireframe() {
   const { projectWS, projectName, projectId } = useContext(ProjectContext)!;
@@ -90,6 +91,8 @@ export function useWireframe() {
           file: `src/${name}.jsx`,
         },
       ];
+
+
       setPages(newPages);
       await patchProjectMetadata(projectId, { pages: newPages });
     }
@@ -106,10 +109,21 @@ export function useWireframe() {
         path: `/app/workspace/backend/main.py`,
         content: patchMainPy(mainPyContent, path),
       }));
-    }
 
-    closeInput();
-  };
+      const newEndpoints = [
+        ...endpoints,
+        {
+          method: "GET",
+          path: `/api/${path}/`,
+          file: `routers/${path}.py`,
+          handler: `${path}_index` 
+        }
+      ];
+      await saveEndpoints(projectId, newEndpoints);
+      }
+
+      closeInput();
+    };
 
   return {
     db_schema, endpoints, pages,

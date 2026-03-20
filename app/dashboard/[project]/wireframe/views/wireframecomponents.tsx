@@ -1,4 +1,4 @@
-import { SectionPanelProps, PageRowProps, EndpointRowProps, MethodBadgeProps, DbSectionProps, CreateModalProps } from '../wireframeprops';
+import { SectionPanelProps, PageRowProps, EndpointRowProps, MethodBadgeProps, DbSectionProps, CreateModalProps, EndpointsByFile } from '../wireframeprops';
  
 
  
@@ -24,12 +24,29 @@ export function PageRow({ route, file }: PageRowProps) {
   )
 }
  
-export function EndpointRow({ method, path, file }: EndpointRowProps) {
+export function groupEndpointsByFile(endpoints: EndpointRowProps[]): EndpointsByFile {
+  return endpoints.reduce((acc, ep) => {
+    acc[ep.file] = acc[ep.file] ? [...acc[ep.file], ep] : [ep];
+    return acc;
+  }, {} as EndpointsByFile);
+}
+
+export function EndpointSection({ file, endpoints }: { file: string; endpoints: EndpointRowProps[] }) {
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-widest text-[#7d7668] bg-[#f0ebe0] p-1 pl-4">{file}</p>
+      <div className="divide-y text-xs">
+        {endpoints.map((ep, i) => <EndpointRow key={i} method={ep.method} path={ep.path} file={ep.file} />)}
+      </div>
+    </div>
+  )
+}
+
+export function EndpointRow({ method, path }: EndpointRowProps) {
   return (
     <div className="flex items-center gap-2 text-sm px-6 py-3 border-b border-black/30 hover:bg-muted/50 transition-colors">
       <MethodBadge method={method} />
       <span className="font-mono truncate text-[#1a6888]">{path}</span>
-      <span className="text-zinc-800/70 text-xs ml-auto font-mono">{file}</span>
     </div>
   )
 }

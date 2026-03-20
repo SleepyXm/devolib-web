@@ -18,6 +18,8 @@ export interface EndpointRowProps {
   file: string
 }
  
+export type EndpointsByFile = Record<string, EndpointRowProps[]>
+
 export interface MethodBadgeProps {
   method: string
 }

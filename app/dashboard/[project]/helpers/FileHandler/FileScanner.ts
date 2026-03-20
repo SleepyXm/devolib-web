@@ -4,7 +4,7 @@ export type Endpoint = {
   method: string;
   path: string;
   file: string;
-  handler: string;
+  handler?: string;
 };
 
 export type Page = {

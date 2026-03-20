@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { useContextMenu } from "@/app/components/Contextmenu";
 import { useWireframe } from "../wireframehooks";
-import { SectionPanel, PageRow, EndpointRow, DbSection, CreateModal} from "./wireframecomponents";
+import { SectionPanel, PageRow, EndpointRow, DbSection, CreateModal, EndpointSection, groupEndpointsByFile} from "./wireframecomponents";
 import LogsPanel from "./logspanel";
 import { pagesMenuItems, endpointsMenuItems } from "@/app/components/Contextmenu/wireframemenu";
 
@@ -47,8 +47,10 @@ export default function WireframeView() {
 
         <SectionPanel title="API Endpoints" onContextMenu={(e) => { setActiveSection("endpoints"); handleContextMenu(e); }}>
           {endpoints.length === 0
-            ? <p className="text-sm text-muted-foreground">No endpoints found.</p>
-            : endpoints.map((ep, i) => <EndpointRow key={i} method={ep.method} path={ep.path} file={ep.file} />)
+          ? <p className="text-sm text-muted-foreground">No endpoints found.</p>
+          : Object.entries(groupEndpointsByFile(endpoints)).map(([file, eps]) => (
+          <EndpointSection key={file} file={file} endpoints={eps} />
+          ))
           }
         </SectionPanel>
 
