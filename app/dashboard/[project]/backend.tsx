@@ -1,0 +1,22 @@
+"use client";
+
+import BackendEditor from "./backend/editor/backendeditor";
+import { BackendControls } from "./backend/backendcomponents";
+import { useBackendManager } from "./backend/backendmanager";
+import RightPanel from "./backend/rightpanel/panel";
+
+export default function BackendPage() {
+  const { fileContent, writeFile, hasUnsavedChanges, save } = useBackendManager();
+
+  return (
+    <div className="text-white flex flex-col h-full">
+      <BackendControls hasUnsavedChanges={hasUnsavedChanges} onSave={save} />
+      <div className="flex flex-1 overflow-hidden relative w-full">
+        <BackendEditor initialCode={fileContent} onChange={(value) => writeFile(value)} language="python" />
+        <div className="w-1/2 flex flex-col overflow-hidden">
+          <RightPanel code={fileContent} />
+        </div>
+      </div>
+    </div>
+  );
+}
