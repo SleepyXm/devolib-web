@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { useContextMenu } from "@/app/components/Contextmenu";
 import { useWireframe } from "../wireframehooks";
-import { SectionPanel, PageRow, EndpointRow, DbSection, CreateModal, EndpointSection, groupEndpointsByFile} from "./wireframecomponents";
+import { SectionPanel, PageRow, DbSection, CreateModal, EndpointSection, groupEndpointsByFile} from "./wireframecomponents";
 import LogsPanel from "./logspanel";
 import { pagesMenuItems, endpointsMenuItems } from "@/app/components/Contextmenu/wireframemenu";
 

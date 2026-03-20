@@ -16,14 +16,7 @@ export default function FrontendPage() {
   const [iframeMode, setIframeMode] = useState<"srcDoc" | "live">("srcDoc");
 
   const { contextMenu, handleContextMenu, handleClick } = useContextMenu();
-  const {
-    fileContent,
-    writeFile,
-    saveFile,
-    readFile,
-    loadFileContent,
-    hasUnsavedChanges,
-  } = useFileManager(projectWS);
+  const { fileContent, writeFile, saveFile, readFile, loadFileContent, hasUnsavedChanges,} = useFileManager(projectWS);
   const [selectedPage, setSelectedPage] = useState<{ route: string; file: string } | null>(null);
 
   const handlePageSelect = (page: { route: string; file: string }) => {

@@ -1,4 +1,5 @@
 import { ReactNode } from 'react'
+import { Column } from '../database/dbtypes'
 
 
 export interface SectionPanelProps {
