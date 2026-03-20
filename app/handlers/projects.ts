@@ -23,7 +23,7 @@ export type ProjectMetaData = {
   envs: Array<{key: string; value: string; is_secret: boolean}>;
   db_schema: Record<string, Array<{column: string; type: string; nullable: boolean}>>;
   pages: Array<{ route: string; file: string }>;
-  endpoints: Array<{ method: string; path: string; file: string; handler: string; }>;
+  endpoints: Array<{ method: string; path: string; file: string; handler?: string; }>;
   updated_at: string | null;
 }
 
