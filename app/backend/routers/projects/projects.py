@@ -149,15 +149,16 @@ async def create_project(
 
     await database.execute(
         """
-        INSERT INTO project_metadata (project_id, envs, db_schema, pages, endpoints)
-        VALUES (:project_id, CAST(:envs AS jsonb), CAST(:db_schema AS jsonb), CAST(:pages AS jsonb), CAST(:endpoints AS jsonb))
+        INSERT INTO project_metadata (project_id, envs, db_schema, pages, endpoints, components)
+        VALUES (:project_id, CAST(:envs AS jsonb), CAST(:db_schema AS jsonb), CAST(:pages AS jsonb), CAST(:endpoints AS jsonb), CAST(:components AS jsonb))
         """,
         {
             "project_id": project_id,
             "envs": json.dumps(default_envs),
             "db_schema": json.dumps({}),
             "pages": json.dumps(default_pages),
-            "endpoints": json.dumps(default_endpoints)
+            "endpoints": json.dumps(default_endpoints),
+            "components": json.dumps(default_components)
         }
     )
     
