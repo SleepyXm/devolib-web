@@ -102,11 +102,28 @@ async def create_project(
 
     default_pages = []
     default_endpoints = []
+    default_components = []
 
     if frontend == "React":
         default_pages.append({
             "route": "/",
             "file": "src/App.jsx"
+        })
+
+        default_components.append({
+            "library": "requests",
+            "name": "api",
+            "filepath": "src/components/handlers/api.js"
+        })
+        default_components.append({
+            "library": "requests",
+            "name": "auth",
+            "filepath": "src/components/handlers/auth.js"
+        })
+        default_components.append({
+            "library": "requests",
+            "name": "requests",
+            "filepath": "src/components/handlers/requests.js"
         })
     elif frontend == "Next.js":
         default_pages.append({
@@ -212,7 +229,7 @@ async def get_metadata(
     
     # Get metadata
     query = """
-    SELECT envs, db_schema, endpoints, pages, updated_at
+    SELECT envs, db_schema, endpoints, pages, components, updated_at
     FROM project_metadata
     WHERE project_id = :project_id
     """
@@ -222,8 +239,8 @@ async def get_metadata(
         # Create default metadata
         await database.execute(
             """
-            INSERT INTO project_metadata (project_id, envs, db_schema, pages, endpoints)
-            VALUES (:project_id, '[]'::jsonb, '{}'::jsonb, '[]'::jsonb, '[]'::jsonb)
+            INSERT INTO project_metadata (project_id, envs, db_schema, pages, endpoints, components)
+            VALUES (:project_id, '[]'::jsonb, '{}'::jsonb, '[]'::jsonb, '[]'::jsonb, '[]'::jsonb)
             """,
             {"project_id": project_id}
         )
@@ -232,6 +249,7 @@ async def get_metadata(
             "db_schema": {},
             "pages": [],
             "endpoints": [],
+            "components": [],
             "updated_at": None
         }
     
@@ -240,6 +258,7 @@ async def get_metadata(
         "db_schema": json.loads(metadata["db_schema"]) if isinstance(metadata["db_schema"], str) else (metadata["db_schema"] or {}),
         "pages": json.loads(metadata["pages"]) if isinstance(metadata["pages"], str) else (metadata["pages"] or []),
         "endpoints": json.loads(metadata["endpoints"]) if isinstance(metadata["endpoints"], str) else (metadata["endpoints"] or []),
+        "components": json.loads(metadata["components"]) if isinstance(metadata["components"], str) else (metadata["components"] or []),
         "updated_at": metadata["updated_at"]
     }
 

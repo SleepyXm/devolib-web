@@ -45,12 +45,19 @@ interface ProjectMetaContextType {
     handler?: string;
   }[];
 
+  components: {
+    library: string;
+    name: string;
+    filepath: string;
+  }[];
+
   envs: { key: string; value: string; is_secret: boolean }[];
   updated_at: string | null;
   fetchMeta: () => Promise<void>;
   setDbSchema: (schema: ProjectMetaContextType["db_schema"]) => void;
   setEndpoints: (endpoints: ProjectMetaContextType["endpoints"]) => void;
   setPages: (pages: ProjectMetaContextType["pages"]) => void;
+  setComponents: (components: ProjectMetaContextType["components"]) => void;
 }
 
 export const ProjectMetaContext = createContext<ProjectMetaContextType | null>(
@@ -98,6 +105,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
   const [db_schema, setDbSchema] = useState<ProjectMetaContextType["db_schema"]>({});
   const [pages, setPages] = useState<ProjectMetaContextType["pages"]>([]);
   const [endpoints, setEndpoints] = useState<ProjectMetaContextType["endpoints"]>([]);
+  const [components, setComponents] = useState<ProjectMetaContextType["components"]>([]);
   const [envs, setEnvs] = useState<ProjectMetaContextType["envs"]>([]);
   const [updated_at, setUpdatedAt] = useState<string | null>(null);
 
@@ -109,6 +117,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
     setEndpoints(meta.endpoints);
     setDbSchema(meta.db_schema);
     setUpdatedAt(meta.updated_at);
+    setComponents(meta.components);
   };
 
   useEffect(() => {
@@ -193,7 +202,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
       }}
     >
       <ProjectMetaContext.Provider
-        value={{ db_schema, pages, endpoints, envs, updated_at, fetchMeta, setDbSchema, setEndpoints, setPages, }}>
+        value={{ db_schema, pages, endpoints, envs, updated_at, fetchMeta, setDbSchema, setEndpoints, setPages, components, setComponents }}>
         <ProjectLogsContext.Provider
           value={{ logs: logEvents, clearLogs: () => setLogEvents([]) }}
         >

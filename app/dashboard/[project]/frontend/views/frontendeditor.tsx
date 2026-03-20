@@ -11,7 +11,7 @@ import { usePageScanner } from "../../helpers/FileHandler/FileScanner";
 
 export default function FrontendPage() {
   const { projectWS, projectName } = useContext(ProjectContext)!;
-  const { pages } = useContext(ProjectMetaContext)!;
+  const { pages, components } = useContext(ProjectMetaContext)!;
   const [srcDoc, setSrcDoc] = useState("");
   const [iframeMode, setIframeMode] = useState<"srcDoc" | "live">("srcDoc");
 
@@ -22,6 +22,10 @@ export default function FrontendPage() {
   const handlePageSelect = (page: { route: string; file: string }) => {
     setSelectedPage(page);
     readFile(`/app/workspace/frontend/${projectName}/${page.file}`);
+  };
+
+  const handleComponentSelect = (component: { name: string; filepath: string }) => {
+    readFile(`/app/workspace/frontend/${projectName}/${component.filepath}`);
   };
 
 
@@ -170,12 +174,28 @@ export default function FrontendPage() {
             <button
               key={page.route}
               onClick={() => handlePageSelect(page)}
-              className={`px-3 py-2 text-left hover:bg-gray-700 border-b border-gray-700/50 flex flex-col ${
+              className={`px-3 py-2 text-sm text-left hover:bg-gray-700 border-b border-gray-700/50 flex flex-col ${
                 selectedPage?.route === page.route ? "bg-gray-700" : ""
               }`}
             >
               <span className="text-sm">{page.route}</span>
               <span className="text-xs text-gray-400">{page.file}</span>
+            </button>
+          ))}
+
+          <div className="p-2 text-xs text-gray-400 uppercase tracking-wide border-b border-gray-700">
+            Components
+          </div>
+          {components.map((component) => (
+            <button
+              key={component.name}
+              onClick={() => handleComponentSelect(component)}
+              className={`px-3 py-2 text-sm text-left hover:bg-gray-700 border-b border-gray-700/50 flex flex-col ${
+                selectedPage?.route === component.name ? "bg-gray-700" : ""
+              }`}
+            >
+              <span className="text-sm">{component.name}</span>
+              <span className="text-xs text-gray-400">{component.filepath}</span>
             </button>
           ))}
         </div>
