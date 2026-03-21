@@ -1,4 +1,3 @@
-
 import { useContext, useEffect, useState } from "react";
 import { Table, Row, Column, mapType } from "./dbtypes";
 import { DBCommand, DBCommandBuilder } from "./dboperations";
