@@ -124,7 +124,7 @@ async def create_project(
             "name": "auth",
             "type": "hook",
             "category": "auth", 
-            "filepath": "src/components/handlers/auth.js",
+            "filepath": "src/components/handlers/auth.jsx",
             "compatibility": "React"
         })
         default_utils.append({
