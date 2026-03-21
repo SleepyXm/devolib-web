@@ -3,6 +3,7 @@ import { useMonaco, Editor } from "@monaco-editor/react";
 import { ProjectMetaContext } from "../../../layout";
 import { generateRouteSnippet } from "../../models/generator/backendgenerator";
 import { resolveSnippetToPlain, activatePlaceholder } from "../../routes/routerehandler";
+import FileTree from "../../../helpers/FileHandler/FileTree";
 
 interface EditorProps {
   initialCode?: string;
@@ -55,20 +56,7 @@ export default function BackendEditor({
   return (
     <div className="flex flex-1 overflow-hidden">
       <div className="w-36 bg-gray-800 text-white flex flex-col overflow-y-auto shrink-0">
-        <div className="p-2 text-xs text-gray-400 uppercase tracking-wide border-b border-gray-700">
-          Files
-        </div>
-        {files.map((file) => (
-          <button
-            key={file}
-            onClick={() => onFileSelect(file)}
-            className={`px-3 py-2 text-left hover:bg-gray-700 border-b border-gray-700/50 flex flex-col ${
-              selectedFile === file ? "bg-gray-700" : ""
-            }`}
-          >
-            <span className="text-xs text-gray-300 truncate">{file}</span>
-          </button>
-        ))}
+        <FileTree label="Files" items={files.map(f => ({ name: f, filepath: f }))} selected={selectedFile ?? undefined} onSelect={(item) => onFileSelect(item.name)}  />
       </div>
 
       <Editor

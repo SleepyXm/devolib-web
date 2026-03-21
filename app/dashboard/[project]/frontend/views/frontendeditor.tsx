@@ -8,24 +8,30 @@ import { EditorMenuItem } from "@/app/components/Contextmenu/menuactions";
 import { ProjectContext, ProjectMetaContext } from "../../layout";
 import { useFileManager } from "../../helpers/FileHandler/FileManager";
 import { usePageScanner } from "../../helpers/FileHandler/FileScanner";
+import FileTree from "../../helpers/FileHandler/FileTree";
 
 export default function FrontendPage() {
   const { projectWS, projectName } = useContext(ProjectContext)!;
-  const { pages, utils } = useContext(ProjectMetaContext)!;
+  const { pages, utils, components } = useContext(ProjectMetaContext)!;
   const [srcDoc, setSrcDoc] = useState("");
   const [iframeMode, setIframeMode] = useState<"srcDoc" | "live">("srcDoc");
 
   const { contextMenu, handleContextMenu, handleClick } = useContextMenu();
   const { fileContent, writeFile, saveFile, readFile, loadFileContent, hasUnsavedChanges,} = useFileManager(projectWS);
   const [selectedPage, setSelectedPage] = useState<{ route: string; file: string } | null>(null);
+  const [selected, setSelected] = useState<{ name: string; filepath: string } | null>(null);
 
   const handlePageSelect = (page: { route: string; file: string }) => {
     setSelectedPage(page);
     readFile(`/app/workspace/frontend/${projectName}/${page.file}`);
   };
 
-  const handleUtilSelect = (utils: { name: string; filepath: string }) => {
-    readFile(`/app/workspace/frontend/${projectName}/${utils.filepath}`);
+  const handleUtilSelect = (util: { name: string; filepath: string }) => {
+    readFile(`/app/workspace/frontend/${projectName}/${util.filepath}`);
+  };
+
+  const handleComponentSelect = (component: { type: string; filepath: string }) => {
+    readFile(`/app/workspace/frontend/${projectName}/${component.filepath}`);
   };
 
 
@@ -167,38 +173,11 @@ export default function FrontendPage() {
         onClick={handleClick}
       >
         <div className="w-36 bg-gray-800 text-white flex flex-col overflow-y-auto shrink-0">
-          <div className="p-2 text-xs text-gray-400 uppercase tracking-wide border-b border-gray-700">
-            Pages
-          </div>
-          {pages.map((page) => (
-            <button
-              key={page.route}
-              onClick={() => handlePageSelect(page)}
-              className={`px-3 py-2 text-sm text-left hover:bg-gray-700 border-b border-gray-700/50 flex flex-col ${
-                selectedPage?.route === page.route ? "bg-gray-700" : ""
-              }`}
-            >
-              <span className="text-sm">{page.route}</span>
-              <span className="text-xs text-gray-400">{page.file}</span>
-            </button>
-          ))}
-
-          <div className="p-2 text-xs text-gray-400 uppercase tracking-wide border-b border-gray-700">
-            Utils
-          </div>
-          {utils.map((util) => (
-            <button
-              key={util.name}
-              onClick={() => handleUtilSelect(util)}
-              className={`px-3 py-2 text-sm text-left hover:bg-gray-700 border-b border-gray-700/50 flex flex-col ${
-                selectedPage?.route === util.name ? "bg-gray-700" : ""
-              }`}
-            >
-              <span className="text-sm">{util.name}</span>
-              <span className="text-xs text-gray-400">{util.filepath}</span>
-            </button>
-          ))}
+          <FileTree label="Pages"      items={pages.map(p => ({ name: p.route, filepath: p.file }))}      selected={selectedPage?.route}    onSelect={(item) => handlePageSelect({ route: item.name, file: item.filepath })} />
+          <FileTree label="Utils"      items={utils.map(u => ({ name: u.name, filepath: u.filepath }))}      selected={undefined}    onSelect={(item) => handleUtilSelect({ name: item.name, filepath: item.filepath })} />
+          <FileTree label="Components" items={components.map(c => ({ name: c.type, filepath: c.filepath }))}      selected={undefined}    onSelect={(item) => handleComponentSelect({ type: item.name, filepath: item.filepath })} />
         </div>
+
         <MonacoEditor
           initialCode={fileContent}
           language={iframeMode === "srcDoc" ? "html" : "typescript"}
