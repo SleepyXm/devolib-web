@@ -11,7 +11,7 @@ import { usePageScanner } from "../../helpers/FileHandler/FileScanner";
 
 export default function FrontendPage() {
   const { projectWS, projectName } = useContext(ProjectContext)!;
-  const { pages, components } = useContext(ProjectMetaContext)!;
+  const { pages, utils } = useContext(ProjectMetaContext)!;
   const [srcDoc, setSrcDoc] = useState("");
   const [iframeMode, setIframeMode] = useState<"srcDoc" | "live">("srcDoc");
 
@@ -24,8 +24,8 @@ export default function FrontendPage() {
     readFile(`/app/workspace/frontend/${projectName}/${page.file}`);
   };
 
-  const handleComponentSelect = (component: { name: string; filepath: string }) => {
-    readFile(`/app/workspace/frontend/${projectName}/${component.filepath}`);
+  const handleUtilSelect = (utils: { name: string; filepath: string }) => {
+    readFile(`/app/workspace/frontend/${projectName}/${utils.filepath}`);
   };
 
 
@@ -184,18 +184,18 @@ export default function FrontendPage() {
           ))}
 
           <div className="p-2 text-xs text-gray-400 uppercase tracking-wide border-b border-gray-700">
-            Components
+            Utils
           </div>
-          {components.map((component) => (
+          {utils.map((util) => (
             <button
-              key={component.name}
-              onClick={() => handleComponentSelect(component)}
+              key={util.name}
+              onClick={() => handleUtilSelect(util)}
               className={`px-3 py-2 text-sm text-left hover:bg-gray-700 border-b border-gray-700/50 flex flex-col ${
-                selectedPage?.route === component.name ? "bg-gray-700" : ""
+                selectedPage?.route === util.name ? "bg-gray-700" : ""
               }`}
             >
-              <span className="text-sm">{component.name}</span>
-              <span className="text-xs text-gray-400">{component.filepath}</span>
+              <span className="text-sm">{util.name}</span>
+              <span className="text-xs text-gray-400">{util.filepath}</span>
             </button>
           ))}
         </div>

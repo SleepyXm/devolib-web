@@ -103,6 +103,9 @@ async def create_project(
     default_pages = []
     default_endpoints = []
     default_components = []
+    default_utils = []
+
+    
 
     if frontend == "React":
         default_pages.append({
@@ -110,21 +113,29 @@ async def create_project(
             "file": "src/App.jsx"
         })
 
-        default_components.append({
-            "library": "requests",
+        default_utils.append({
             "name": "api",
-            "filepath": "src/components/handlers/api.js"
+            "type": "wrapper",  # types: wrappers, hooks, helper, middleware
+            "category": "http", # categories: http, validation, auth, payment
+            "filepath": "src/components/handlers/api.js",
+            "compatibility": "React"
         })
-        default_components.append({
-            "library": "requests",
+        default_utils.append({
             "name": "auth",
-            "filepath": "src/components/handlers/auth.js"
+            "type": "hook",
+            "category": "auth", 
+            "filepath": "src/components/handlers/auth.js",
+            "compatibility": "React"
         })
-        default_components.append({
-            "library": "requests",
+        default_utils.append({
             "name": "requests",
-            "filepath": "src/components/handlers/requests.js"
+            "type": "wrapper",
+            "category": "http",
+            "filepath": "src/components/handlers/requests.js",
+            "compatibility": "React"
         })
+
+        
     elif frontend == "Next.js":
         default_pages.append({
             "route": "/",
@@ -149,8 +160,8 @@ async def create_project(
 
     await database.execute(
         """
-        INSERT INTO project_metadata (project_id, envs, db_schema, pages, endpoints, components)
-        VALUES (:project_id, CAST(:envs AS jsonb), CAST(:db_schema AS jsonb), CAST(:pages AS jsonb), CAST(:endpoints AS jsonb), CAST(:components AS jsonb))
+        INSERT INTO project_metadata (project_id, envs, db_schema, pages, endpoints, components, utils)
+        VALUES (:project_id, CAST(:envs AS jsonb), CAST(:db_schema AS jsonb), CAST(:pages AS jsonb), CAST(:endpoints AS jsonb), CAST(:components AS jsonb), CAST(:utils AS jsonb))
         """,
         {
             "project_id": project_id,
@@ -158,7 +169,8 @@ async def create_project(
             "db_schema": json.dumps({}),
             "pages": json.dumps(default_pages),
             "endpoints": json.dumps(default_endpoints),
-            "components": json.dumps(default_components)
+            "components": json.dumps(default_components),
+            "utils": json.dumps(default_utils),
         }
     )
     
@@ -230,7 +242,7 @@ async def get_metadata(
     
     # Get metadata
     query = """
-    SELECT envs, db_schema, endpoints, pages, components, updated_at
+    SELECT envs, db_schema, endpoints, pages, components, utils, updated_at
     FROM project_metadata
     WHERE project_id = :project_id
     """
@@ -240,8 +252,8 @@ async def get_metadata(
         # Create default metadata
         await database.execute(
             """
-            INSERT INTO project_metadata (project_id, envs, db_schema, pages, endpoints, components)
-            VALUES (:project_id, '[]'::jsonb, '{}'::jsonb, '[]'::jsonb, '[]'::jsonb, '[]'::jsonb)
+            INSERT INTO project_metadata (project_id, envs, db_schema, pages, endpoints, components, utils)
+            VALUES (:project_id, '[]'::jsonb, '{}'::jsonb, '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, '[]'::jsonb)
             """,
             {"project_id": project_id}
         )
@@ -251,6 +263,7 @@ async def get_metadata(
             "pages": [],
             "endpoints": [],
             "components": [],
+            "utils": [],
             "updated_at": None
         }
     
@@ -260,6 +273,7 @@ async def get_metadata(
         "pages": json.loads(metadata["pages"]) if isinstance(metadata["pages"], str) else (metadata["pages"] or []),
         "endpoints": json.loads(metadata["endpoints"]) if isinstance(metadata["endpoints"], str) else (metadata["endpoints"] or []),
         "components": json.loads(metadata["components"]) if isinstance(metadata["components"], str) else (metadata["components"] or []),
+        "utils": json.loads(metadata["utils"]) if isinstance(metadata["utils"], str) else (metadata["utils"] or []),
         "updated_at": metadata["updated_at"]
     }
 

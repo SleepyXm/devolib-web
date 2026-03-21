@@ -47,8 +47,18 @@ interface ProjectMetaContextType {
 
   components: {
     library: string;
-    name: string;
+    type: string;
+    style: string;
+    colourScheme: string;
     filepath: string;
+  }[];
+
+  utils: {
+    name: string;
+    type: string;
+    category: string;
+    filepath: string;
+    compatibility: string;
   }[];
 
   envs: { key: string; value: string; is_secret: boolean }[];
@@ -58,6 +68,7 @@ interface ProjectMetaContextType {
   setEndpoints: (endpoints: ProjectMetaContextType["endpoints"]) => void;
   setPages: (pages: ProjectMetaContextType["pages"]) => void;
   setComponents: (components: ProjectMetaContextType["components"]) => void;
+  setUtils: (utils: ProjectMetaContextType["utils"]) => void;
 }
 
 export const ProjectMetaContext = createContext<ProjectMetaContextType | null>(
@@ -106,6 +117,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
   const [pages, setPages] = useState<ProjectMetaContextType["pages"]>([]);
   const [endpoints, setEndpoints] = useState<ProjectMetaContextType["endpoints"]>([]);
   const [components, setComponents] = useState<ProjectMetaContextType["components"]>([]);
+  const [utils, setUtils] = useState<ProjectMetaContextType["utils"]>([]);
   const [envs, setEnvs] = useState<ProjectMetaContextType["envs"]>([]);
   const [updated_at, setUpdatedAt] = useState<string | null>(null);
 
@@ -118,6 +130,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
     setDbSchema(meta.db_schema);
     setUpdatedAt(meta.updated_at);
     setComponents(meta.components);
+    setUtils(meta.utils);
   };
 
   useEffect(() => {
@@ -202,7 +215,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
       }}
     >
       <ProjectMetaContext.Provider
-        value={{ db_schema, pages, endpoints, envs, updated_at, fetchMeta, setDbSchema, setEndpoints, setPages, components, setComponents }}>
+        value={{ db_schema, pages, endpoints, envs, updated_at, fetchMeta, setDbSchema, setEndpoints, setPages, components, setComponents, utils, setUtils}}>
         <ProjectLogsContext.Provider
           value={{ logs: logEvents, clearLogs: () => setLogEvents([]) }}
         >

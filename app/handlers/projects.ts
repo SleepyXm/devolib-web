@@ -24,7 +24,8 @@ export type ProjectMetaData = {
   db_schema: Record<string, Array<{column: string; type: string; nullable: boolean}>>;
   pages: Array<{ route: string; file: string }>;
   endpoints: Array<{ method: string; path: string; file: string; handler?: string; }>;
-  components: Array<{ library: string; name: string; filepath: string }>;
+  components: Array<{ library: string; type: string; style: string; colourScheme: string; filepath: string }>;
+  utils: Array<{ name: string; type: string; category: string; filepath: string; compatibility: string }>;
   updated_at: string | null;
 }
 
