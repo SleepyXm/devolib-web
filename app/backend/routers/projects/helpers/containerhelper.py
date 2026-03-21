@@ -120,6 +120,9 @@ def scaffold_template(container, framework: str, destination: str):
             ("main.jsx", "src/main.jsx"),
             ("index.css", "src/index.css"),
             ("Routes.jsx", "src/Routes.jsx"),
+            ("components/handlers/auth.jsx", "src/components/handlers/auth.jsx"),
+            ("components/handlers/requests.js", "src/components/handlers/requests.js"),
+            ("components/handlers/api.js", "src/components/handlers/api.js"),
         ],
         "FastAPI": [
             ("main.py", "main.py"),
