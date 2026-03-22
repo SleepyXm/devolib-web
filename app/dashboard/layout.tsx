@@ -13,8 +13,8 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
-  const user = useUser();
-  const name = user?.user?.username;
+  const { user, resolved } = useUser();
+  const name = user?.username;
   const router = useRouter();
 
 
@@ -28,14 +28,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const activeTab = pathname.split("/").pop();
 
   useEffect(() => {
-    if (user && !user.user) {
-      router.replace("/login");
-    }
-  }, [user, router]);
-
-  if (!user) {
-    return null;
+  if (resolved && !user) {
+    router.replace("/login");
   }
+}, [resolved, user, router]);
+
+if (!resolved) return null;
 
 
   return (
