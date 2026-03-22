@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { signup, login, validateUser } from "@/app/handlers/auth";
+import { signup, login, loginWithGitHub, handleGitHubCallback, validateUser } from "@/app/handlers/auth";
 import { useUser } from "@/app/provider/UserProvider";
 import ErrorPopup from "@/app/components/ErrorPopup";
 import { AuthInput, AuthDivider, AuthFooter, GithubButton } from "./logincomponents";
@@ -49,6 +49,17 @@ export default function Auth() {
     setError("Username or Password was inccorect. Try again");
   }
 }
+
+async function handleGitHubLogin() {
+  try {
+    loginWithGitHub(); // triggers the redirect
+  } catch (err) {
+    setError("GitHub login failed. Try again.");
+  }
+}
+
+
+
   return (
   <div className="grid grid-rows-[5vh_1fr_5vh] items-center justify-items-center min-h-screen gap-[5vh]">
     <ErrorPopup message={error} onClose={() => setError("")} />
@@ -127,7 +138,7 @@ export default function Auth() {
                 </button>
 
                 <AuthDivider />
-                <GithubButton />
+                <GithubButton onClick={handleGitHubLogin} />
               </form>
 
               <AuthFooter isSignUp={isSignUp} onToggle={() => setIsSignUp(!isSignUp)} />

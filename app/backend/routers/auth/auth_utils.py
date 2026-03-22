@@ -2,7 +2,10 @@ from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from fastapi import Request, HTTPException, status
 from database import database
+from fastapi.responses import JSONResponse
 import os
+from passlib.context import CryptContext
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -10,6 +13,14 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 240))
+
+GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
+GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
+DEV_SERVER = os.getenv("DEV_SERVER")
+
+DUMMY_PASSWORD_HASH = (
+    "$2b$12$C6UzMDM.H6dfI/f/IKcEeO9u9wZK0s8AjtKoa6HgMHqmpYyqn1cG."
+)
 
 
 
@@ -47,3 +58,25 @@ async def get_current_user(request: Request):
         raise HTTPException(status_code=404, detail="User not found")
 
     return user
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(password: str):
+    return pwd_context.hash(password)
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+def set_auth_cookie(resp: JSONResponse, token: str) -> JSONResponse:
+    resp.set_cookie(
+        key="access_token",
+        value=f"Bearer {token}",
+        httponly=True,
+        max_age=60 * 60 * 24 * 7,
+        expires=60 * 60 * 24 * 7,
+        path="/",
+        secure=True,
+        samesite="lax",
+    )
+    return resp

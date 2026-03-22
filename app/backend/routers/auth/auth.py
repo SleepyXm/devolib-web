@@ -1,25 +1,16 @@
 from fastapi import APIRouter, HTTPException, Depends, Cookie, Request
 from fastapi import Response
-from fastapi.responses import JSONResponse
-from passlib.context import CryptContext
+from fastapi.responses import JSONResponse, RedirectResponse
 from database import database
-from routers.auth.auth_utils import create_access_token, get_current_user
-import uuid
+from routers.auth.auth_utils import create_access_token, get_current_user, hash_password, verify_password, GITHUB_CLIENT_SECRET, GITHUB_CLIENT_ID, DEV_SERVER, DUMMY_PASSWORD_HASH, set_auth_cookie
+from routers.auth.auth_helpers import exchange_github_code, find_or_link_github_user, auth_redirect
+import uuid, httpx, os
 from schemas import UserCreate, UserLogin
 from helpers.limiter import limiter
 
-DUMMY_PASSWORD_HASH = (
-    "$2b$12$C6UzMDM.H6dfI/f/IKcEeO9u9wZK0s8AjtKoa6HgMHqmpYyqn1cG."
-)
+
 
 router = APIRouter()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-def hash_password(password: str):
-    return pwd_context.hash(password)
-
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
 
 @router.post("/signup")
 @limiter.limit("5/minute")
@@ -51,44 +42,51 @@ async def signup(request: Request, user: UserCreate):
     return {"message": "User created successfully"}
 
 
-
 @router.post("/login")
 @limiter.limit("5/minute")
-async def login(request: Request, user: UserLogin, response: Response):
-
-    query = "SELECT id, password FROM users WHERE username = :username"
-
-    db_user = await database.fetch_one(query=query, values={"username": user.username})
-    
-    password_hash = (
-    db_user["password"]
-    if db_user is not None
-    else DUMMY_PASSWORD_HASH
+async def login(request: Request, user: UserLogin):
+    db_user = await database.fetch_one(
+        "SELECT id, password FROM users WHERE username = :username",
+        values={"username": user.username}
     )
 
+    password_hash = db_user["password"] if db_user is not None else DUMMY_PASSWORD_HASH
     password_ok = verify_password(user.password, password_hash)
-
 
     if not password_ok or db_user is None:
         raise HTTPException(400, "Username or Password Incorrect")
-    
-    access_token = create_access_token(str(db_user["id"]))
 
-    # Set JWT as HttpOnly cookie
-    resp = JSONResponse(content={"message": "Login successful", "token": access_token})
-    resp.set_cookie(
-        key="access_token",
-        value=f"Bearer {access_token}",
-        httponly=True,
-        max_age=60 * 60 * 24 * 7,
-        expires=60 * 60 * 24 * 7,
-        path="/",
-        secure=True,  # Set True in production with HTTPS
-        samesite="lax",
+    token = create_access_token(str(db_user["id"]))
+    resp = JSONResponse(content={"message": "Login successful", "token": token})
+    return set_auth_cookie(resp, token)
+
+
+
+@router.get("/github")
+def github_login():
+    return RedirectResponse(
+        f"https://github.com/login/oauth/authorize"
+        f"?client_id={GITHUB_CLIENT_ID}&scope=user:email"
     )
 
 
-    return resp
+
+@router.get("/github/callback")
+async def github_callback(code: str):
+    async with httpx.AsyncClient() as client:
+        token, github_user, primary_email = await exchange_github_code(client, code)
+
+    if not token:
+        return RedirectResponse(f"{DEV_SERVER}/login?error=oauth_failed")
+
+    user_id = await find_or_link_github_user(
+        github_id=str(github_user["id"]),
+        github_username=github_user["login"],
+        primary_email=primary_email
+    )
+    return auth_redirect(user_id)
+
+
 
 @router.get("/me")
 async def me(current_user: dict = Depends(get_current_user)):
@@ -103,6 +101,7 @@ async def me(current_user: dict = Depends(get_current_user)):
 async def logout(response: Response):
     response.delete_cookie("access_token") 
     return {"message": "Logged out successfully"}
+
 
 
 @router.get("/hi")
