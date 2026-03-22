@@ -1,14 +1,19 @@
 from database import database
-import httpx, uuid, resend, os
+import httpx, uuid, resend, os, hashlib, base64
 from fastapi import Response
 from fastapi.responses import RedirectResponse
 from routers.auth.auth_utils import create_access_token, set_auth_cookie, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, DEV_SERVER, DEV_SERVER_BACKEND, encrypt, decrypt
 
 
-async def exchange_github_code(client: httpx.AsyncClient, code: str) -> tuple[str | None, dict, str | None]:
+async def exchange_github_code(client: httpx.AsyncClient, code: str, code_verifier: str) -> tuple[str | None, dict, str | None]:
     token_res = await client.post(
         "https://github.com/login/oauth/access_token",
-        json={"client_id": GITHUB_CLIENT_ID, "client_secret": GITHUB_CLIENT_SECRET, "code": code},
+        json={
+            "client_id": GITHUB_CLIENT_ID,
+            "client_secret": GITHUB_CLIENT_SECRET,
+            "code": code,
+            "code_verifier": code_verifier
+        },
         headers={"Accept": "application/json"}
     )
     token = token_res.json().get("access_token")
@@ -26,6 +31,13 @@ async def exchange_github_code(client: httpx.AsyncClient, code: str) -> tuple[st
         None
     )
     return token, github_user, primary_email
+
+def generate_pkce_pair():
+    code_verifier = base64.urlsafe_b64encode(os.urandom(32)).rstrip(b"=").decode()
+    code_challenge = base64.urlsafe_b64encode(
+        hashlib.sha256(code_verifier.encode()).digest()
+    ).rstrip(b"=").decode()
+    return code_verifier, code_challenge
 
 
 async def find_or_link_github_user(github_id: str, github_username: str, primary_email: str | None, access_token: str) -> str:
