@@ -107,6 +107,15 @@ export async function login(username: string, password: string) {
   return { ...res, user: userObj };
 }
 
+export function loginWithGitHub() {
+  window.location.href = `${API_BASE}/auth/github`;
+}
+
+export async function handleGitHubCallback() {
+  const user = await request("/auth/me", { method: "GET" });
+  return { user };
+}
+
 export async function logout() {
   await request("/auth/logout", { method: "POST" });
   currentUser = null;
