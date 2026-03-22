@@ -42,7 +42,6 @@ export default function Auth() {
     } else {
       const res = await login(userName, password);
       setUser(res);
-      console.log("Logged in token:", res.token);
       router.push(`/dashboard`);
     }
   } catch (err) {
