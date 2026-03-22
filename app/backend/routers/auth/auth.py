@@ -2,9 +2,9 @@ from fastapi import APIRouter, HTTPException, Depends, Cookie, Request
 from fastapi import Response
 from fastapi.responses import JSONResponse, RedirectResponse
 from database import database
-from routers.auth.auth_utils import create_access_token, get_current_user, hash_password, verify_password, GITHUB_CLIENT_SECRET, GITHUB_CLIENT_ID, DEV_SERVER, DUMMY_PASSWORD_HASH, set_auth_cookie
-from routers.auth.auth_helpers import exchange_github_code, find_or_link_github_user, auth_redirect
-import uuid, httpx, os
+from routers.auth.auth_utils import create_access_token, get_current_user, hash_password, verify_password, GITHUB_CLIENT_ID, DEV_SERVER, DUMMY_PASSWORD_HASH, set_auth_cookie
+from routers.auth.auth_helpers import exchange_github_code, find_or_link_github_user, auth_redirect, send_verification_email
+import uuid, httpx, secrets
 from schemas import UserCreate, UserLogin
 from helpers.limiter import limiter
 
@@ -15,6 +15,10 @@ router = APIRouter()
 @router.post("/signup")
 @limiter.limit("5/minute")
 async def signup(request: Request, user: UserCreate):
+    for field, value in [("password", user.password), ("email", user.email), ("username", user.username)]:
+        if value is None:
+            raise HTTPException(status_code=400, detail=f"{field} can't be empty")
+    
     query = "SELECT * FROM users WHERE username = :username"
     existing_user = await database.fetch_one(query=query, values={"username": user.username})
     if existing_user:
@@ -22,14 +26,19 @@ async def signup(request: Request, user: UserCreate):
     # Check if email exists
     query = "SELECT * FROM users WHERE email = :email"
     existing_email = await database.fetch_one(query=query, values={"email": user.email})
+
+
     if existing_email:
         raise HTTPException(status_code=400, detail="Email already registered")
     
     hashed_pw = hash_password(user.password)
+    verification_token = secrets.token_urlsafe(32)
+
     insert_query = """
-    INSERT INTO users (id, username, email, password, created_at)
-    VALUES (:id, :username, :email, :password, NOW())
+    INSERT INTO users (id, username, email, password, verification_token, verified, created_at)
+    VALUES (:id, :username, :email, :password, :verification_token, FALSE, NOW())
     """
+
     await database.execute(
         query=insert_query,
         values={
@@ -37,8 +46,10 @@ async def signup(request: Request, user: UserCreate):
             "username": user.username,
             "email": user.email,
             "password": hashed_pw,
+            "verification_token": verification_token,
         }
     )
+    await send_verification_email(user.email, verification_token)
     return {"message": "User created successfully"}
 
 
@@ -51,6 +62,10 @@ async def login(request: Request, user: UserLogin):
     )
 
     password_hash = db_user["password"] if db_user is not None else DUMMY_PASSWORD_HASH
+
+    if db_user is not None and db_user["password"] is None:
+        raise HTTPException(403, "This account uses GitHub login.")
+
     password_ok = verify_password(user.password, password_hash)
 
     if not password_ok or db_user is None:
@@ -82,10 +97,26 @@ async def github_callback(code: str):
     user_id = await find_or_link_github_user(
         github_id=str(github_user["id"]),
         github_username=github_user["login"],
-        primary_email=primary_email
+        primary_email=primary_email,
+        access_token=token
     )
     return auth_redirect(user_id)
 
+
+@router.get("/verify")
+async def verify_email(token: str):
+    user = await database.fetch_one(
+        "SELECT id FROM users WHERE verification_token = :token",
+        values={"token": token}
+    )
+    if not user:
+        return RedirectResponse(f"{DEV_SERVER}/login?error=invalid_token")
+
+    await database.execute(
+        "UPDATE users SET verified = TRUE, verification_token = NULL WHERE id = :id",
+        values={"id": str(user["id"])}
+    )
+    return RedirectResponse(f"{DEV_SERVER}/login?verified=true")
 
 
 @router.get("/me")

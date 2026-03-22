@@ -3,27 +3,31 @@ from jose import JWTError, jwt
 from fastapi import Request, HTTPException, status
 from database import database
 from fastapi.responses import JSONResponse
-import os
+import os, resend
 from passlib.context import CryptContext
+from cryptography.fernet import Fernet
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
+fernet = Fernet(os.getenv("ENCRYPTION_KEY"))
+
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 240))
 
+
 GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
 GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
-DEV_SERVER = os.getenv("DEV_SERVER")
 
+
+DEV_SERVER = os.getenv("DEV_SERVER")
+DEV_SERVER_BACKEND = os.getenv("DEV_SERVER_BACKEND")
+RESEND_API_KEY = resend.api_key = os.getenv("RESEND_API_KEY")
 DUMMY_PASSWORD_HASH = (
     "$2b$12$C6UzMDM.H6dfI/f/IKcEeO9u9wZK0s8AjtKoa6HgMHqmpYyqn1cG."
 )
-
-
-
 
 def create_access_token(username: str):
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -66,6 +70,12 @@ def hash_password(password: str):
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
+
+def encrypt(value: str) -> str:
+    return fernet.encrypt(value.encode()).decode()
+
+def decrypt(value: str) -> str:
+    return fernet.decrypt(value.encode()).decode()
 
 
 def set_auth_cookie(resp: JSONResponse, token: str) -> JSONResponse:
