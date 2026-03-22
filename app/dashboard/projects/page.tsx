@@ -4,7 +4,7 @@ import { listProjects, handleCreateProject, deleteProject, Project } from "@/app
 import { useUser } from "@/app/provider/UserProvider";
 import { useRouter } from "next/navigation";
 import Popup from "@/app/components/ErrorPopup";
-import { CreatingOverlay, CreateProjectBar, ProjectList } from "./projectcomponents";
+import { CreatingOverlay, CreateProjectModal, ProjectList, ProjectFormData } from "./projectcomponents";
 
 const BACKEND_OPTIONS = ["FastAPI", "Node.js", "Rust"];
 const FRONTEND_OPTIONS = ["React", "HTML/CSS", "Next.js", "Angular.js"];
@@ -29,12 +29,18 @@ export default function ProjectsPage() {
   const [success, setSuccess] = useState("");
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
-  const [projectName, setProjectName] = useState("");
   const [creating, setCreating] = useState(false);
   const [loaderStep, setLoaderStep] = useState(0);
-  const [backend, setBackend] = useState(BACKEND_OPTIONS[0]);
+
+  // modal
+  const [modalOpen, setModalOpen] = useState(false);
+  const [tab, setTab] = useState<"blank" | "import" | "templates">("blank");
+  const [name, setName] = useState("");
   const [frontend, setFrontend] = useState(FRONTEND_OPTIONS[0]);
+  const [backend, setBackend] = useState(BACKEND_OPTIONS[0]);
   const [db, setDb] = useState(DATABASE_OPTIONS[0]);
+  const [repoUrl, setRepoUrl] = useState("");
+  const [selectedTemplate, setSelectedTemplate] = useState("");
 
   useEffect(() => {
     if (!username) return;
@@ -48,16 +54,19 @@ export default function ProjectsPage() {
   const refreshProjects = () =>
     listProjects().then(setProjects).catch(() => setError("Failed to refresh projects"));
 
-  const handleCreate = async () => {
+  const handleSubmit = async (data: ProjectFormData) => {
     if (!username) return;
+    setModalOpen(false);
     setCreating(true);
     setLoaderStep(0);
     const interval = setInterval(() =>
       setLoaderStep((p) => (p < LOADER_MESSAGES.length - 1 ? p + 1 : p)), 4000);
     try {
-      await handleCreateProject(username, projectName, frontend, backend, db);
+      if (data.type === "blank") {
+        await handleCreateProject(username, data.name, data.frontend, data.backend, data.db);
+      }
+      // import and template wired up later
       await refreshProjects();
-      setProjectName("");
       setSuccess("Project created!");
     } catch {
       setError("Failed to create project");
@@ -82,16 +91,23 @@ export default function ProjectsPage() {
       {creating && <CreatingOverlay step={loaderStep} messages={LOADER_MESSAGES} />}
       <Popup message={error} onClose={() => setError("")} type="error" />
       <Popup message={success} onClose={() => setSuccess("")} type="success" />
-      <CreateProjectBar
-        projectName={projectName} onNameChange={setProjectName}
-        backend={backend} onBackendChange={setBackend}
+
+      <button onClick={() => setModalOpen(true)} className="mb-4 px-4 py-2 rounded-lg text-sm font-medium text-white bg-gray-700 ring-1 ring-white/10 hover:bg-gray-600 transition">
+        + New Project
+      </button>
+
+      <CreateProjectModal
+        open={modalOpen} onClose={() => setModalOpen(false)} onSubmit={handleSubmit} loading={loading}
+        backendOptions={BACKEND_OPTIONS} frontendOptions={FRONTEND_OPTIONS} dbOptions={DATABASE_OPTIONS}
+        tab={tab} onTabChange={setTab}
+        name={name} onNameChange={setName}
         frontend={frontend} onFrontendChange={setFrontend}
+        backend={backend} onBackendChange={setBackend}
         db={db} onDbChange={setDb}
-        loading={loading} onCreate={handleCreate}
-        backendOptions={BACKEND_OPTIONS}
-        frontendOptions={FRONTEND_OPTIONS}
-        dbOptions={DATABASE_OPTIONS}
+        repoUrl={repoUrl} onRepoUrlChange={setRepoUrl}
+        selectedTemplate={selectedTemplate} onTemplateSelect={setSelectedTemplate}
       />
+
       <ProjectList
         projects={projects}
         loading={loading}
