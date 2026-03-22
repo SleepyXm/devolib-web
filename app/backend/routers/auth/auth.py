@@ -3,7 +3,7 @@ from fastapi import Response
 from fastapi.responses import JSONResponse, RedirectResponse
 from database import database
 from routers.auth.auth_utils import create_access_token, get_current_user, hash_password, verify_password, GITHUB_CLIENT_ID, DEV_SERVER, DUMMY_PASSWORD_HASH, set_auth_cookie
-from routers.auth.auth_helpers import exchange_github_code, find_or_link_github_user, auth_redirect, send_verification_email
+from routers.auth.auth_helpers import exchange_github_code, find_or_link_github_user, auth_redirect, send_verification_email, generate_pkce_pair
 import uuid, httpx, secrets
 from schemas import UserCreate, UserLogin
 from helpers.limiter import limiter
@@ -78,18 +78,26 @@ async def login(request: Request, user: UserLogin):
 
 
 @router.get("/github")
-def github_login():
-    return RedirectResponse(
+def github_login(response: Response):
+    code_verifier, code_challenge = generate_pkce_pair()
+    redirect = RedirectResponse(
         f"https://github.com/login/oauth/authorize"
         f"?client_id={GITHUB_CLIENT_ID}&scope=user:email"
+        f"&code_challenge={code_challenge}&code_challenge_method=S256"
     )
+    redirect.set_cookie("pkce_verifier", code_verifier, httponly=True, secure=True, samesite="lax", max_age=300)
+    return redirect
 
 
 
 @router.get("/github/callback")
-async def github_callback(code: str):
+async def github_callback(request: Request, code: str):
+    code_verifier = request.cookies.get("pkce_verifier")
+    if not code_verifier:
+        return RedirectResponse(f"{DEV_SERVER}/login?error=pkce_missing")
+
     async with httpx.AsyncClient() as client:
-        token, github_user, primary_email = await exchange_github_code(client, code)
+        token, github_user, primary_email = await exchange_github_code(client, code, code_verifier)
 
     if not token:
         return RedirectResponse(f"{DEV_SERVER}/login?error=oauth_failed")

@@ -32,6 +32,7 @@ async def exchange_github_code(client: httpx.AsyncClient, code: str, code_verifi
     )
     return token, github_user, primary_email
 
+
 def generate_pkce_pair():
     code_verifier = base64.urlsafe_b64encode(os.urandom(32)).rstrip(b"=").decode()
     code_challenge = base64.urlsafe_b64encode(
