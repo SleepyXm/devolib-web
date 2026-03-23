@@ -100,6 +100,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
     setPages(meta.pages);
     setEndpoints(meta.endpoints);
     setDbSchema(meta.db_schema);
+    setGroups(meta.groups);
     setUpdatedAt(meta.updated_at);
   };
 
