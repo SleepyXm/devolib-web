@@ -87,7 +87,7 @@ export function DbSection({ db_schema }: DbSectionProps) {
   )
 }
  
-export function CreateModal({ activeSection, inputValue, onChange, onConfirm, pages, parentPage, onParentChange, onEndpointTypeChange, endpointType, onCancel, groupRoot, onGroupRootChange }: CreateModalProps) {
+export function CreateModal({ activeSection, inputValue, onChange, onConfirm, pages, parentPage, onParentChange, onEndpointTypeChange, endpointType, onCancel, groupRoot, onGroupRootChange, groupWorkspace, onGroupWorkspaceChange }: CreateModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-[#111318] border rounded-lg p-6 flex flex-col gap-4 w-80">
@@ -133,13 +133,22 @@ export function CreateModal({ activeSection, inputValue, onChange, onConfirm, pa
         )}
 
         {activeSection === "groups" && (
-          <div className="flex flex-col gap-1">
-            <p className="text-xs text-zinc-400">Root path</p>
+          <div className="flex flex-col gap-2">
+            <select
+            value={groupWorkspace}
+            onChange={(e) => onGroupWorkspaceChange(e.target.value as "frontend" | "backend" | "database" | "workspace")}
+            className="px-3 py-2 rounded bg-zinc-600 border text-sm"
+            >
+              <option value="frontend">Frontend</option>
+              <option value="backend">Backend</option>
+              <option value="database">Database</option>
+              <option value="workspace">Workspace</option>
+            </select>
             <input
             type="text"
             value={groupRoot}
             onChange={(e) => onGroupRootChange(e.target.value)}
-            placeholder="src/myfolder"
+            placeholder="src/components"
             className="px-3 py-2 rounded bg-zinc-600 border text-sm"
             />
           </div>

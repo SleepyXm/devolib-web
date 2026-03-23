@@ -16,6 +16,7 @@ export function useWireframe() {
   const [parentPage, setParentPage] = useState<{ name: string; path: string } | null>(null);
   const [endpointType, setEndpointType] = useState<"endpoint" | "router">("endpoint");
   const [groupRoot, setGroupRoot] = useState("");
+  const [groupWorkspace, setGroupWorkspace] = useState<"frontend" | "backend" | "database" | "workspace">("frontend");
 
   useEffect(() => {
     if (!projectWS) return;
@@ -61,6 +62,7 @@ export function useWireframe() {
     setParentPage(null);
     setEndpointType("endpoint");
     setGroupRoot("");
+    setGroupWorkspace("frontend");
   };
   
 
@@ -135,9 +137,16 @@ export function useWireframe() {
   const handleCreateGroup = async () => {
     if (!inputValue || !projectId) return;
 
+    const bases: Record<string, string> = {
+      frontend: `/app/workspace/frontend/${projectName}`,
+      backend: `/app/workspace/backend`,
+      database: `/app/workspace/database`,
+      workspace: `/app/workspace`,
+    };
+
     const newGroup: ProjectGroup = {
-      label: inputValue,
-      root: groupRoot || `src/${inputValue.toLowerCase()}`,
+      label: groupRoot.split("/").pop() || groupRoot,
+      root: `${bases[groupWorkspace]}/${groupRoot}`,
       files: []
     };
 
@@ -152,6 +161,6 @@ export function useWireframe() {
     db_schema, endpoints, pages, groups,
     showInput, activeSection, setActiveSection, inputValue, parentPage,
     setInputValue, setParentPage,
-    openInput, closeInput, handleCreate, setShowInput, endpointType, setEndpointType, groupRoot, setGroupRoot
+    openInput, closeInput, handleCreate, setShowInput, endpointType, setEndpointType, groupRoot, setGroupRoot, groupWorkspace, setGroupWorkspace
   };
 }

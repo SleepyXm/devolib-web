@@ -11,9 +11,10 @@ import { pagesMenuItems, endpointsMenuItems, groupsMenuItems } from "@/app/compo
 export default function WireframeView() {
   const {
     db_schema, endpoints, pages, groups,
-    showInput, activeSection, setActiveSection, inputValue, parentPage,
-    setInputValue, setParentPage,
-    openInput, closeInput, handleCreate, setShowInput, endpointType, setEndpointType, groupRoot, setGroupRoot
+    showInput, activeSection, setActiveSection, inputValue, setInputValue,
+    parentPage, setParentPage,
+    openInput, closeInput, handleCreate, setShowInput, endpointType, setEndpointType,
+    groupRoot, setGroupRoot, groupWorkspace, setGroupWorkspace
   } = useWireframe();
 
   const { contextMenu, handleContextMenu, handleClick } = useContextMenu();
@@ -42,6 +43,8 @@ export default function WireframeView() {
           onEndpointTypeChange={setEndpointType}
           groupRoot={groupRoot}
           onGroupRootChange={setGroupRoot}
+          groupWorkspace={groupWorkspace}
+          onGroupWorkspaceChange={setGroupWorkspace}
         />
       )}
 

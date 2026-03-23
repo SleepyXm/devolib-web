@@ -39,7 +39,7 @@ export interface CreateModalProps {
   activeSection: "pages" | "endpoints" | "groups"
   inputValue: string
 
-  
+
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   onConfirm: () => void
   onCancel: () => void
@@ -56,4 +56,7 @@ export interface CreateModalProps {
 
   groupRoot: string;
   onGroupRootChange: (root: string) => void;
+
+  groupWorkspace: "frontend" | "backend" | "database" | "workspace";
+  onGroupWorkspaceChange: (workspace: "frontend" | "backend" | "database" | "workspace") => void;
 }
