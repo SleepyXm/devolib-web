@@ -102,8 +102,7 @@ async def create_project(
 
     default_pages = []
     default_endpoints = []
-    default_components = []
-    default_utils = []
+    default_groups = []
 
     
 
@@ -112,34 +111,44 @@ async def create_project(
             "route": "/",
             "file": "src/App.jsx"
         })
+        default_groups.append({
+            "label": "Utils",
+            "root": "src/components/handlers",
+            "files": [
+                {
+                    "name": "api",
+                    "filepath": "api.js",
+                    "meta": {"type": "wrapper", "category": "http", "compatibility": "React"}
+                },
+                {
+                    "name": "auth",
+                    "filepath": "auth.jsx",
+                    "meta": {"type": "hook", "category": "auth", "compatibility": "React"}
+                },
+                {
+                    "name": "requests",
+                    "filepath": "requests.js",
+                    "meta": {"type": "wrapper", "category": "http", "compatibility": "React"}
+                },
+            ]
+        })
+        default_groups.append({
+            "label": "Components",
+            "root": "src/components",
+            "files": []
+        })
 
-        default_utils.append({
-            "name": "api",
-            "type": "wrapper",  # types: wrappers, hooks, helper, middleware
-            "category": "http", # categories: http, validation, auth, payment
-            "filepath": "src/components/handlers/api.js",
-            "compatibility": "React"
-        })
-        default_utils.append({
-            "name": "auth",
-            "type": "hook",
-            "category": "auth", 
-            "filepath": "src/components/handlers/auth.jsx",
-            "compatibility": "React"
-        })
-        default_utils.append({
-            "name": "requests",
-            "type": "wrapper",
-            "category": "http",
-            "filepath": "src/components/handlers/requests.js",
-            "compatibility": "React"
-        })
 
         
     elif frontend == "Next.js":
         default_pages.append({
             "route": "/",
             "file": "src/app/page.tsx"
+        })
+        default_groups.append({
+            "label": "Components",
+            "root": "src/components",
+            "files": []
         })
 
     if backend == "Express":
@@ -160,8 +169,8 @@ async def create_project(
 
     await database.execute(
         """
-        INSERT INTO project_metadata (project_id, envs, db_schema, pages, endpoints, components, utils)
-        VALUES (:project_id, CAST(:envs AS jsonb), CAST(:db_schema AS jsonb), CAST(:pages AS jsonb), CAST(:endpoints AS jsonb), CAST(:components AS jsonb), CAST(:utils AS jsonb))
+        INSERT INTO project_metadata (project_id, envs, db_schema, pages, endpoints, groups)
+        VALUES (:project_id, CAST(:envs AS jsonb), CAST(:db_schema AS jsonb), CAST(:pages AS jsonb), CAST(:endpoints AS jsonb), CAST(:groups AS jsonb))
         """,
         {
             "project_id": project_id,
@@ -169,8 +178,7 @@ async def create_project(
             "db_schema": json.dumps({}),
             "pages": json.dumps(default_pages),
             "endpoints": json.dumps(default_endpoints),
-            "components": json.dumps(default_components),
-            "utils": json.dumps(default_utils),
+            "groups": json.dumps(default_groups),
         }
     )
     
@@ -242,7 +250,7 @@ async def get_metadata(
     
     # Get metadata
     query = """
-    SELECT envs, db_schema, endpoints, pages, components, utils, updated_at
+    SELECT envs, db_schema, endpoints, pages, groups, updated_at
     FROM project_metadata
     WHERE project_id = :project_id
     """
@@ -252,8 +260,8 @@ async def get_metadata(
         # Create default metadata
         await database.execute(
             """
-            INSERT INTO project_metadata (project_id, envs, db_schema, pages, endpoints, components, utils)
-            VALUES (:project_id, '[]'::jsonb, '{}'::jsonb, '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, '[]'::jsonb)
+            INSERT INTO project_metadata (project_id, envs, db_schema, pages, endpoints, groups)
+            VALUES (:project_id, '[]'::jsonb, '{}'::jsonb, '[]'::jsonb, '[]'::jsonb, '[]'::jsonb)
             """,
             {"project_id": project_id}
         )
@@ -262,8 +270,7 @@ async def get_metadata(
             "db_schema": {},
             "pages": [],
             "endpoints": [],
-            "components": [],
-            "utils": [],
+            "groups": [],
             "updated_at": None
         }
     
@@ -272,8 +279,7 @@ async def get_metadata(
         "db_schema": json.loads(metadata["db_schema"]) if isinstance(metadata["db_schema"], str) else (metadata["db_schema"] or {}),
         "pages": json.loads(metadata["pages"]) if isinstance(metadata["pages"], str) else (metadata["pages"] or []),
         "endpoints": json.loads(metadata["endpoints"]) if isinstance(metadata["endpoints"], str) else (metadata["endpoints"] or []),
-        "components": json.loads(metadata["components"]) if isinstance(metadata["components"], str) else (metadata["components"] or []),
-        "utils": json.loads(metadata["utils"]) if isinstance(metadata["utils"], str) else (metadata["utils"] or []),
+        "groups": json.loads(metadata["groups"]) if isinstance(metadata["groups"], str) else (metadata["groups"] or []),
         "updated_at": metadata["updated_at"]
     }
 
@@ -287,7 +293,7 @@ async def update_metadata(project_id: str, body: dict, current_user: dict = Depe
     if not project:
         raise HTTPException(status_code=404, detail="Project not found or not owned by user")
 
-    allowed = {"envs", "db_schema", "pages", "endpoints"}
+    allowed = {"envs", "db_schema", "pages", "endpoints", "groups"}
     updates = {k: v for k, v in body.items() if k in allowed}
     if not updates:
         raise HTTPException(status_code=400, detail="No valid fields to update")

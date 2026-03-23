@@ -1,20 +1,21 @@
 import { useContext, useEffect, useState } from "react";
 import { ProjectMetaContext, ProjectContext } from "../layout";
 import { patchRoutes, patchRoutesNested, generateRouter, patchMainPy } from "./wireframehelpers";
-import { patchProjectMetadata } from "@/app/handlers/projects"
+import { patchProjectMetadata, ProjectGroup } from "@/app/handlers/projects"
 import { saveEndpoints } from "../backend/models/backendoperations";
 
 export function useWireframe() {
   const { projectWS, projectName, projectId } = useContext(ProjectContext)!;
-  const { db_schema, endpoints, setEndpoints, pages, setPages } = useContext(ProjectMetaContext)!;
+  const { db_schema, endpoints, setEndpoints, pages, setPages, groups, setGroups } = useContext(ProjectMetaContext)!;
 
   const [showInput, setShowInput] = useState(false);
-  const [activeSection, setActiveSection] = useState<"pages" | "endpoints" | null>(null);
+  const [activeSection, setActiveSection] = useState<"pages" | "endpoints" | "groups" | null>(null);
   const [inputValue, setInputValue] = useState("");
   const [routesFileContent, setRoutesFileContent] = useState<string | null>(null);
   const [mainPyContent, setMainPyContent] = useState<string | null>(null);
   const [parentPage, setParentPage] = useState<{ name: string; path: string } | null>(null);
   const [endpointType, setEndpointType] = useState<"endpoint" | "router">("endpoint");
+  const [groupRoot, setGroupRoot] = useState("");
 
   useEffect(() => {
     if (!projectWS) return;
@@ -43,7 +44,7 @@ export function useWireframe() {
     }));
   }, [projectWS, projectName]);
 
-  const openInput = (section: "pages" | "endpoints") => {
+  const openInput = (section: "pages" | "endpoints" | "groups") => {
     setActiveSection(section);
     setShowInput(true);
     if (section === "endpoints" && projectWS && projectName) {
@@ -59,13 +60,17 @@ export function useWireframe() {
     setInputValue("");
     setParentPage(null);
     setEndpointType("endpoint");
+    setGroupRoot("");
   };
+  
 
   const handleCreate = async () => {
     if (!inputValue || !projectName || !projectId || !projectWS) return;
 
     const name = inputValue.charAt(0).toUpperCase() + inputValue.slice(1);
     const path = inputValue.toLowerCase();
+
+    if (activeSection === "groups") return handleCreateGroup();
 
     if (activeSection === "pages") {
       projectWS.sendCommand(JSON.stringify({
@@ -127,10 +132,26 @@ export function useWireframe() {
       closeInput();
     };
 
+  const handleCreateGroup = async () => {
+    if (!inputValue || !projectId) return;
+
+    const newGroup: ProjectGroup = {
+      label: inputValue,
+      root: groupRoot || `src/${inputValue.toLowerCase()}`,
+      files: []
+    };
+
+    const newGroups = [...groups, newGroup];
+    setGroups(newGroups);
+    await patchProjectMetadata(projectId, { groups: newGroups });
+    closeInput();
+  };
+
+
   return {
-    db_schema, endpoints, pages,
+    db_schema, endpoints, pages, groups,
     showInput, activeSection, setActiveSection, inputValue, parentPage,
     setInputValue, setParentPage,
-    openInput, closeInput, handleCreate, setShowInput, endpointType, setEndpointType
+    openInput, closeInput, handleCreate, setShowInput, endpointType, setEndpointType, groupRoot, setGroupRoot
   };
 }

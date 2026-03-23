@@ -2,6 +2,7 @@
 
 import { useRef, useState, ReactNode, createContext, useEffect } from "react";
 import { ProjectWS, connectToProject, startProject, stopProject, fetchProjectDetails, getProjectMetadata, } from "@/app/handlers/projects";
+import { ProjectEnv, ProjectDbColumn, ProjectPage, ProjectEndpoint, ProjectGroup } from "@/app/handlers/projects";
 
 interface ProjectContextType {
   projectWS: ProjectWS | null;
@@ -28,47 +29,19 @@ export interface ServiceStatus {
 export const ProjectContext = createContext<ProjectContextType | null>(null);
 
 interface ProjectMetaContextType {
-  db_schema: Record<
-    string,
-    { column: string; type: string; nullable: boolean }[]
-  >;
-
-  pages: {
-    route: string; // "/" | "/about" etc.
-    file: string; // "src/App.jsx" — relative to /app/workspace/frontend/{name}/
-  }[];
-
-  endpoints: {
-    method: string; // "GET" | "POST" etc. — no longer optional, backend routes always have a method
-    path: string; // "/api/health"
-    file: string; // "routes/health.py" — relative to /app/workspace/backend/{name}/
-    handler?: string;
-  }[];
-
-  components: {
-    library: string;
-    type: string;
-    style: string;
-    colourScheme: string;
-    filepath: string;
-  }[];
-
-  utils: {
-    name: string;
-    type: string;
-    category: string;
-    filepath: string;
-    compatibility: string;
-  }[];
-
-  envs: { key: string; value: string; is_secret: boolean }[];
+  db_schema: Record<string, ProjectDbColumn[]>;
+  pages: ProjectPage[];
+  endpoints: ProjectEndpoint[];
+  groups: ProjectGroup[];
+  envs: ProjectEnv[];
   updated_at: string | null;
+
   fetchMeta: () => Promise<void>;
   setDbSchema: (schema: ProjectMetaContextType["db_schema"]) => void;
-  setEndpoints: (endpoints: ProjectMetaContextType["endpoints"]) => void;
-  setPages: (pages: ProjectMetaContextType["pages"]) => void;
-  setComponents: (components: ProjectMetaContextType["components"]) => void;
-  setUtils: (utils: ProjectMetaContextType["utils"]) => void;
+  setPages: (pages: ProjectPage[]) => void;
+  setEndpoints: (endpoints: ProjectEndpoint[]) => void;
+  setGroups: (groups: ProjectGroup[]) => void;
+  setEnvs: (envs: ProjectEnv[]) => void;
 }
 
 export const ProjectMetaContext = createContext<ProjectMetaContextType | null>(
@@ -116,9 +89,8 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
   const [db_schema, setDbSchema] = useState<ProjectMetaContextType["db_schema"]>({});
   const [pages, setPages] = useState<ProjectMetaContextType["pages"]>([]);
   const [endpoints, setEndpoints] = useState<ProjectMetaContextType["endpoints"]>([]);
-  const [components, setComponents] = useState<ProjectMetaContextType["components"]>([]);
-  const [utils, setUtils] = useState<ProjectMetaContextType["utils"]>([]);
   const [envs, setEnvs] = useState<ProjectMetaContextType["envs"]>([]);
+  const [groups, setGroups] = useState<ProjectMetaContextType["groups"]>([]);
   const [updated_at, setUpdatedAt] = useState<string | null>(null);
 
   const fetchMeta = async () => {
@@ -129,8 +101,6 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
     setEndpoints(meta.endpoints);
     setDbSchema(meta.db_schema);
     setUpdatedAt(meta.updated_at);
-    setComponents(meta.components);
-    setUtils(meta.utils);
   };
 
   useEffect(() => {
@@ -215,7 +185,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
       }}
     >
       <ProjectMetaContext.Provider
-        value={{ db_schema, pages, endpoints, envs, updated_at, fetchMeta, setDbSchema, setEndpoints, setPages, components, setComponents, utils, setUtils}}>
+        value={{ db_schema, pages, endpoints, envs, setEnvs, updated_at, fetchMeta, setDbSchema, setEndpoints, setPages, groups, setGroups}}>
         <ProjectLogsContext.Provider
           value={{ logs: logEvents, clearLogs: () => setLogEvents([]) }}
         >

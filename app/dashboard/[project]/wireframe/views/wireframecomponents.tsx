@@ -87,12 +87,12 @@ export function DbSection({ db_schema }: DbSectionProps) {
   )
 }
  
-export function CreateModal({ activeSection, inputValue, onChange, onConfirm, pages, parentPage, onParentChange, onEndpointTypeChange, endpointType, onCancel }: CreateModalProps) {
+export function CreateModal({ activeSection, inputValue, onChange, onConfirm, pages, parentPage, onParentChange, onEndpointTypeChange, endpointType, onCancel, groupRoot, onGroupRootChange }: CreateModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-[#111318] border rounded-lg p-6 flex flex-col gap-4 w-80">
         <p className="text-sm font-semibold text-zinc-400">
-          {activeSection === "pages" ? "New Page Name" : "New Endpoint Path"}
+          {activeSection === "pages" ? "New Page Name" : activeSection === "groups" ? "New Folder" : "New Endpoint Path"}
         </p>
         <input
           autoFocus
@@ -100,7 +100,7 @@ export function CreateModal({ activeSection, inputValue, onChange, onConfirm, pa
           value={inputValue}
           onChange={onChange}
           onKeyDown={(e) => e.key === "Enter" && onConfirm()}
-          placeholder={activeSection === "pages" ? "Dashboard" : activeSection === "endpoints" && endpointType === "router" ? "items" : "/api/items"}
+          placeholder={ activeSection === "pages" ? "Dashboard" : activeSection === "groups" ? "My Folder" : endpointType === "router" ? "items" : "/api/items" }
           className="px-3 py-2 rounded bg-zinc-600 border text-sm"
         />
         {activeSection === "pages" && (
@@ -131,6 +131,19 @@ export function CreateModal({ activeSection, inputValue, onChange, onConfirm, pa
             <option value="router">Router</option>
           </select>
         )}
+
+        {activeSection === "groups" && (
+          <div className="flex flex-col gap-1">
+            <p className="text-xs text-zinc-400">Root path</p>
+            <input
+            type="text"
+            value={groupRoot}
+            onChange={(e) => onGroupRootChange(e.target.value)}
+            placeholder="src/myfolder"
+            className="px-3 py-2 rounded bg-zinc-600 border text-sm"
+            />
+          </div>
+        )}
         <div className="flex gap-2 justify-end">
           <button onClick={onCancel} className="px-3 py-1.5 text-sm rounded text-zinc-600 transition-all duration-300 hover:bg-muted hover:text-white">
             Cancel
@@ -139,6 +152,31 @@ export function CreateModal({ activeSection, inputValue, onChange, onConfirm, pa
             Create
           </button>
         </div>
+      </div>
+    </div>
+  )
+}
+
+export function GroupRow({ name, filepath }: { name: string; filepath: string }) {
+  return (
+    <div className="flex items-center gap-2 text-sm px-6 py-3 border-b border-black/30 hover:bg-muted/50 transition-colors">
+      <span className="font-mono text-[#1a6888]">{name}</span>
+      <span className="text-zinc-800/70 text-xs ml-auto font-mono">{filepath}</span>
+    </div>
+  )
+}
+
+export function GroupSection({ group }: { group: { label: string; root: string; files: { name: string; filepath: string }[] } }) {
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-widest text-[#7d7668] bg-[#f0ebe0] p-1 pl-4">
+        {group.label} <span className="normal-case text-[#b0a898]">· {group.root}</span>
+      </p>
+      <div className="divide-y text-xs">
+        {group.files.length === 0
+          ? <p className="text-zinc-400 px-6 py-3 text-xs">No files yet.</p>
+          : group.files.map((f, i) => <GroupRow key={i} name={f.name} filepath={f.filepath} />)
+        }
       </div>
     </div>
   )

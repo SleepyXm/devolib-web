@@ -4,19 +4,25 @@
 import { useState } from "react";
 import { useContextMenu } from "@/app/components/Contextmenu";
 import { useWireframe } from "../wireframehooks";
-import { SectionPanel, PageRow, DbSection, CreateModal, EndpointSection, groupEndpointsByFile} from "./wireframecomponents";
+import { SectionPanel, PageRow, DbSection, CreateModal, EndpointSection, groupEndpointsByFile, GroupRow, GroupSection} from "./wireframecomponents";
 import LogsPanel from "./logspanel";
-import { pagesMenuItems, endpointsMenuItems } from "@/app/components/Contextmenu/wireframemenu";
+import { pagesMenuItems, endpointsMenuItems, groupsMenuItems } from "@/app/components/Contextmenu/wireframemenu";
 
 export default function WireframeView() {
   const {
-    db_schema, endpoints, pages,
+    db_schema, endpoints, pages, groups,
     showInput, activeSection, setActiveSection, inputValue, parentPage,
     setInputValue, setParentPage,
-    openInput, closeInput, handleCreate, setShowInput, endpointType, setEndpointType
+    openInput, closeInput, handleCreate, setShowInput, endpointType, setEndpointType, groupRoot, setGroupRoot
   } = useWireframe();
 
   const { contextMenu, handleContextMenu, handleClick } = useContextMenu();
+
+  const menuItems = {
+  pages: pagesMenuItems,
+  endpoints: endpointsMenuItems,
+  groups: groupsMenuItems,
+};
 
   return (
     <div className="flex flex-col w-full p-6 gap-6 overflow-auto text-foreground">
@@ -34,6 +40,8 @@ export default function WireframeView() {
           onParentChange={setParentPage}
           endpointType={endpointType}
           onEndpointTypeChange={setEndpointType}
+          groupRoot={groupRoot}
+          onGroupRootChange={setGroupRoot}
         />
       )}
 
@@ -61,6 +69,13 @@ export default function WireframeView() {
           }
         </SectionPanel>
 
+        <SectionPanel title="Folders" onContextMenu={(e) => { setActiveSection("groups"); handleContextMenu(e); }}>
+          {groups.length === 0
+          ? <p className="text-sm text-muted-foreground">No folders found.</p>
+          : groups.map((g, i) => <GroupSection key={i} group={g} />)
+          }
+        </SectionPanel>
+
         <LogsPanel />
       </div>
 
@@ -71,19 +86,20 @@ export default function WireframeView() {
             className="fixed z-50 bg-[#f8f4ec] border border-[#00000060] rounded shadow-lg py-1"
             style={{ top: contextMenu.y, left: contextMenu.x }}
           >
-            {(activeSection === "pages" ? pagesMenuItems : endpointsMenuItems).map((item) => (
-              <button
-                key={item.label}
-                className="block px-4 py-2 text-sm hover:bg-muted w-full text-left"
-                onClick={() => {
-                  if (item.action === "add-page") openInput("pages");
-                  if (item.action === "add-endpoint") openInput("endpoints");
-                  handleClick();
-                }}
-              >
-                {item.label}
-              </button>
-            ))}
+            {(menuItems[activeSection!] ?? []).map((item) => (
+  <button
+    key={item.label}
+    className="block px-4 py-2 text-sm hover:bg-muted w-full text-left"
+    onClick={() => {
+      if (item.action === "add-page") openInput("pages");
+      if (item.action === "add-endpoint") openInput("endpoints");
+      if (item.action === "add-group") openInput("groups");
+      handleClick();
+    }}
+  >
+    {item.label}
+  </button>
+))}
           </div>
         </>
       )}

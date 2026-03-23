@@ -5,8 +5,6 @@ import { WSAPI_BASE } from "../handlers/auth";
 const project_endpoint = `/projects`;
 const container_endpoint = `/container`;
 
-
-
 export type Project = {
     project_id: string;
     name: string;
@@ -19,13 +17,59 @@ export type Project = {
     last_online: string;
 }
 
+export interface ProjectEnv {
+  key: string;
+  value: string;
+  is_secret: boolean;
+}
+
+export interface ProjectDbColumn {
+  column: string;
+  type: string;
+  nullable: boolean;
+}
+
+export interface ProjectPage {
+  route: string;
+  file: string; // relative to /app/workspace/frontend/{name}/
+}
+
+export interface ProjectEndpoint {
+  method: string;
+  path: string;
+  file: string; // relative to /app/workspace/backend/{name}/
+  handler?: string;
+}
+
+export interface ProjectGroupFileMeta {
+  type?: "wrapper" | "hook" | "helper" | "middleware";
+  category?: "http" | "validation" | "auth" | "payment";
+  compatibility?: string;
+  library?: string;
+  style?: string;
+  colourScheme?: string;
+  [key: string]: unknown;
+}
+
+export interface ProjectGroupFile {
+  name: string;
+  filepath: string; // relative to root
+  meta?: ProjectGroupFileMeta;
+}
+
+export interface ProjectGroup {
+  label: string;
+  root: string;
+  icon?: string;
+  files: ProjectGroupFile[];
+}
+
 export type ProjectMetaData = {
-  envs: Array<{key: string; value: string; is_secret: boolean}>;
-  db_schema: Record<string, Array<{column: string; type: string; nullable: boolean}>>;
-  pages: Array<{ route: string; file: string }>;
-  endpoints: Array<{ method: string; path: string; file: string; handler?: string; }>;
-  components: Array<{ library: string; type: string; style: string; colourScheme: string; filepath: string }>;
-  utils: Array<{ name: string; type: string; category: string; filepath: string; compatibility: string }>;
+  envs: ProjectEnv[];
+  db_schema: Record<string, ProjectDbColumn[]>;
+  pages: ProjectPage[];
+  endpoints: ProjectEndpoint[];
+  groups: ProjectGroup[];
   updated_at: string | null;
 }
 

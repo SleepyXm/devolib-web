@@ -12,26 +12,25 @@ import FileTree from "../../helpers/FileHandler/FileTree";
 
 export default function FrontendPage() {
   const { projectWS, projectName } = useContext(ProjectContext)!;
-  const { pages, utils, components } = useContext(ProjectMetaContext)!;
+  const { pages, groups } = useContext(ProjectMetaContext)!;
   const [srcDoc, setSrcDoc] = useState("");
   const [iframeMode, setIframeMode] = useState<"srcDoc" | "live">("srcDoc");
 
   const { contextMenu, handleContextMenu, handleClick } = useContextMenu();
   const { fileContent, writeFile, saveFile, readFile, loadFileContent, hasUnsavedChanges,} = useFileManager(projectWS);
   const [selectedPage, setSelectedPage] = useState<{ route: string; file: string } | null>(null);
-  const [selected, setSelected] = useState<{ name: string; filepath: string } | null>(null);
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
   const handlePageSelect = (page: { route: string; file: string }) => {
     setSelectedPage(page);
+    setSelectedFile(null);
     readFile(`/app/workspace/frontend/${projectName}/${page.file}`);
   };
 
-  const handleUtilSelect = (util: { name: string; filepath: string }) => {
-    readFile(`/app/workspace/frontend/${projectName}/${util.filepath}`);
-  };
-
-  const handleComponentSelect = (component: { type: string; filepath: string }) => {
-    readFile(`/app/workspace/frontend/${projectName}/${component.filepath}`);
+  const handleFileSelect = (filepath: string) => {
+    setSelectedFile(filepath);
+    setSelectedPage(null);
+    readFile(`/app/workspace/frontend/${projectName}/${filepath}`);
   };
 
 
@@ -174,8 +173,9 @@ export default function FrontendPage() {
       >
         <div className="w-36 bg-gray-800 text-white flex flex-col overflow-y-auto shrink-0">
           <FileTree label="Pages"      items={pages.map(p => ({ name: p.route, filepath: p.file }))}      selected={selectedPage?.route}    onSelect={(item) => handlePageSelect({ route: item.name, file: item.filepath })} />
-          <FileTree label="Utils"      items={utils.map(u => ({ name: u.name, filepath: u.filepath }))}      selected={undefined}    onSelect={(item) => handleUtilSelect({ name: item.name, filepath: item.filepath })} />
-          <FileTree label="Components" items={components.map(c => ({ name: c.type, filepath: c.filepath }))}      selected={undefined}    onSelect={(item) => handleComponentSelect({ type: item.name, filepath: item.filepath })} />
+          {groups.map(group => (
+            <FileTree key={group.label} label={group.label} items={group.files.map(f => ({ name: f.name, filepath: `${group.root}/${f.filepath}` }))} selected={undefined} onSelect={(item) => handleFileSelect(item.filepath)}/>
+          ))}
         </div>
 
         <MonacoEditor

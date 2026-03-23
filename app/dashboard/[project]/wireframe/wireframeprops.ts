@@ -36,14 +36,24 @@ export interface DbSectionProps {
 }
  
 export interface CreateModalProps {
-  activeSection: "pages" | "endpoints"
+  activeSection: "pages" | "endpoints" | "groups"
   inputValue: string
+
+  
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   onConfirm: () => void
   onCancel: () => void
+
+
   pages: { route: string; file: string }[];
   parentPage: { name: string; path: string } | null;
   onParentChange: (p: { name: string; path: string } | null) => void;
+
+
   endpointType: "endpoint" | "router";
   onEndpointTypeChange: (type: "endpoint" | "router") => void;
+
+
+  groupRoot: string;
+  onGroupRootChange: (root: string) => void;
 }
