@@ -57,7 +57,7 @@ async def signup(request: Request, user: UserCreate):
 @limiter.limit("5/minute")
 async def login(request: Request, user: UserLogin):
     db_user = await database.fetch_one(
-        "SELECT id, password FROM users WHERE username = :username",
+        "SELECT id, password, email, github_id, github_username FROM users WHERE username = :username",
         values={"username": user.username}
     )
 
@@ -72,7 +72,7 @@ async def login(request: Request, user: UserLogin):
         raise HTTPException(400, "Username or Password Incorrect")
 
     token = create_access_token(str(db_user["id"]))
-    resp = JSONResponse(content={"message": "Login successful", "token": token})
+    resp = JSONResponse(content={"message": "Login successful", "token": token, "email": db_user["email"], "github_id": db_user["github_id"], "github_username": db_user["github_username"]})
     return set_auth_cookie(resp, token)
 
 
@@ -129,11 +129,14 @@ async def verify_email(token: str):
 
 @router.get("/me")
 async def me(current_user: dict = Depends(get_current_user)):
-    query = "SELECT username FROM users WHERE id = :id"
+    query = "SELECT username, email, github_id, github_username FROM users WHERE id = :id"
     db_user = await database.fetch_one(query=query, values={"id": current_user["id"]})
 
     return {
-        "username": db_user["username"]
+        "username": db_user["username"],
+        "email": db_user["email"],
+        "github_id": db_user["github_id"],
+        "github_username": db_user["github_username"]
     }
 
 @router.post("/logout")

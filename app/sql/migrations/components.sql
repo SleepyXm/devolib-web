@@ -22,3 +22,6 @@ ALTER TABLE project_metadata
   DROP COLUMN components,
   DROP COLUMN utils,
   ADD COLUMN groups JSONB NOT NULL DEFAULT '[]'::jsonb;
+
+
+ALTER TABLE users ADD COLUMN github_username VARCHAR(255);

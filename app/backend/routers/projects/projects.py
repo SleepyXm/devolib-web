@@ -3,10 +3,10 @@ from fastapi import APIRouter, Depends, Body, HTTPException, Request
 from database import database
 from routers.auth.auth_utils import get_current_user
 from .images import create_project_container, delete_project_container
-import secrets
-import json
+import secrets, json, httpx
 from helpers.limiter import limiter
 from helpers.queries.projectquery import list_projects_query, create_project_query
+from routers.auth.auth_utils import decrypt
 
 router = APIRouter()
 
@@ -39,6 +39,53 @@ async def list_projects(current_user: dict = Depends(get_current_user)):
             })
     
     return {"projects": list(projects_dict.values())}
+
+
+@router.get("/repos")
+async def get_github_repos(current_user: dict = Depends(get_current_user)):
+    user = await database.fetch_one(
+        "SELECT github_access_token FROM users WHERE id = :id",
+        values={"id": current_user["id"]}  # fixed
+    )
+
+    if not user or not user["github_access_token"]:
+        raise HTTPException(status_code=400, detail="No GitHub account connected")
+
+    token = decrypt(user["github_access_token"])
+
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            "https://api.github.com/user/repos",
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/vnd.github+json"
+            },
+            params={
+                "per_page": 100,
+                "sort": "updated",
+                "affiliation": "owner"
+            }
+        )
+
+    if response.status_code != 200:
+        raise HTTPException(status_code=502, detail="Failed to fetch repos from GitHub")
+
+    repos = response.json()
+
+    return {
+        "projects": [  # wrapped to match frontend
+            {
+                "id": r["id"],
+                "name": r["name"],
+                "full_name": r["full_name"],
+                "private": r["private"],
+                "url": r["html_url"],
+                "default_branch": r["default_branch"],
+                "updated_at": r["updated_at"],
+            }
+            for r in repos
+        ]
+    }
 
 
 

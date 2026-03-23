@@ -25,6 +25,8 @@ export async function request(path: string, options: RequestInit) {
 
 export type User = {
     username: string;
+    email: string;
+    github_id?: string;
 };
 
 

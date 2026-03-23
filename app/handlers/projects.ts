@@ -17,6 +17,16 @@ export type Project = {
     last_online: string;
 }
 
+export type GithubRepo = {
+    id: number;
+    name: string;
+    full_name: string;
+    private: boolean;
+    url: string;
+    default_branch: string;
+    updated_at: string;
+}
+
 export interface ProjectEnv {
   key: string;
   value: string;
@@ -85,6 +95,12 @@ export async function listProjects(): Promise<Project[]> {
   const res = await request(`${project_endpoint}/list`, { method: "GET" });
   return res.projects;
 }
+
+export async function listGithubRepos(): Promise<GithubRepo[]> {
+  const res = await request(`${project_endpoint}/repos`, { method: "GET" });
+  return res.projects;
+}
+
 
 export async function getProject(id: string): Promise<Project> {
   const res = await request(`${project_endpoint}/${id}`, { method: "GET" });
