@@ -30,13 +30,13 @@ export default function Popup({ message, onClose, type = "error" }: PopupProps) 
             borderRadius: "10px",
             backgroundColor: isSuccess ? "#4caf82" : "#e26161",
             border: `1px solid ${isSuccess ? "#a0b9ac" : "#b9a0a0"}`,
-            color: "#cfcfcf"
+            color: "#ffffff"
           }}
         >
           {isSuccess ? (
             <svg viewBox="0 0 100 100" width="24" height="36">
               <circle cx="50" cy="50" r="40" fill="rgb(255 255 255 /0.1)" stroke="#ffffff" strokeWidth="5" />
-              <path d="M 30 50 L 45 65 L 70 35" fill="none" stroke="#cfcfcf" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M 30 50 L 45 65 L 70 35" fill="none" stroke="#ffffff" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           ) : (
             <svg viewBox="0 0 100 100" width="24" height="36">
