@@ -90,6 +90,13 @@ async def get_github_repos(current_user: dict = Depends(get_current_user)):
 
 
 
+
+
+
+
+
+
+
 @router.post("/create")
 @limiter.limit("3/minute")
 async def create_project(
@@ -98,11 +105,11 @@ async def create_project(
     backend: str = Body(None, embed=True),
     frontend: str = Body(None, embed=True),
     db: str = Body(None, embed=True),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    import_url: str = Body(None, embed=True),
 ):
     project_id = str(uuid.uuid4())
     access_token = secrets.token_urlsafe(32)
-    
 
     await database.execute(
         query=create_project_query(),
@@ -113,106 +120,68 @@ async def create_project(
             "access_token": access_token,
         },
     )
-    
+
     # Insert into project_services junction table
     service_frameworks = [s for s in [backend, frontend, db] if s]
-    
     if service_frameworks:
-        services_query = """
-        SELECT id FROM services WHERE framework = ANY(:frameworks)
-        """
         services = await database.fetch_all(
-            query=services_query,
+            "SELECT id FROM services WHERE framework = ANY(:frameworks)",
             values={"frameworks": service_frameworks}
         )
-        print(f"Found {len(services)} services: {services}")
         for service in services:
             await database.execute(
-                query="""
-                INSERT INTO project_services (id, project_id, service_id, created_at)
-                VALUES (:id, :project_id, :service_id, NOW())
-                """,
-                values={
-                    "id": str(uuid.uuid4()),
-                    "project_id": project_id,
-                    "service_id": service["id"],
-                },
+                "INSERT INTO project_services (id, project_id, service_id, created_at) VALUES (:id, :project_id, :service_id, NOW())",
+                values={"id": str(uuid.uuid4()), "project_id": project_id, "service_id": service["id"]},
             )
 
-    
-    
     default_envs = [
         {"key": "FRONTEND_URL", "value": f"{name}.localhost", "is_secret": False},
         {"key": "BACKEND_URL", "value": "http://localhost:8000", "is_secret": False},
         {"key": "DATABASE_URL", "value": "postgresql://postgres@localhost:5432/myapp", "is_secret": True},
     ]
 
-    default_pages = []
-    default_endpoints = []
-    default_groups = []
+    # Run container first for imports so we can scan
+    container_info = await create_project_container(
+        project_id,
+        name,
+        backend_services=[backend] if backend else [],
+        frontend_services=[frontend] if frontend else [],
+        db=[db] if db else [],
+        import_url=import_url,
+    )
 
-    
+    # Resolve pages/endpoints/groups — scan result for imports, defaults for blank
+    if import_url:
+        scan = container_info.get("scan")
+        pages = scan.pages if scan else []
+        endpoints = scan.endpoints if scan else []
+        groups = scan.groups if scan else []
+    else:
+        pages = []
+        endpoints = []
+        groups = []
 
-    if frontend == "React":
-        default_pages.append({
-            "route": "/",
-            "file": "src/App.jsx"
-        })
-        default_groups.append({
-            "label": "Utils",
-            "root": "src/components/handlers",
-            "files": [
-                {
-                    "name": "api",
-                    "filepath": "api.js",
-                    "meta": {"type": "wrapper", "category": "http", "compatibility": "React"}
-                },
-                {
-                    "name": "auth",
-                    "filepath": "auth.jsx",
-                    "meta": {"type": "hook", "category": "auth", "compatibility": "React"}
-                },
-                {
-                    "name": "requests",
-                    "filepath": "requests.js",
-                    "meta": {"type": "wrapper", "category": "http", "compatibility": "React"}
-                },
-            ]
-        })
-        default_groups.append({
-            "label": "Components",
-            "root": "src/components",
-            "files": []
-        })
+        if frontend == "React":
+            pages.append({"route": "/", "file": "src/App.jsx"})
+            groups.append({
+                "label": "Utils",
+                "root": "src/components/handlers",
+                "files": [
+                    {"name": "api", "filepath": "api.js", "meta": {"type": "wrapper", "category": "http", "compatibility": "React"}},
+                    {"name": "auth", "filepath": "auth.jsx", "meta": {"type": "hook", "category": "auth", "compatibility": "React"}},
+                    {"name": "requests", "filepath": "requests.js", "meta": {"type": "wrapper", "category": "http", "compatibility": "React"}},
+                ]
+            })
+            groups.append({"label": "Components", "root": "src/components", "files": []})
 
+        elif frontend == "Next.js":
+            pages.append({"route": "/", "file": "src/app/page.tsx"})
+            groups.append({"label": "Components", "root": "src/components", "files": []})
 
-        
-    elif frontend == "Next.js":
-        default_pages.append({
-            "route": "/",
-            "file": "src/app/page.tsx"
-        })
-        default_groups.append({
-            "label": "Components",
-            "root": "src/components",
-            "files": []
-        })
-
-    if backend == "Express":
-        default_endpoints.append({
-            "method": "GET",
-            "path": "/api/health",
-            "file": "routes/main.js"
-        })
-
-    elif backend == "FastAPI":
-        default_endpoints.append({
-            "method": "GET",
-            "path": "/api/health",
-            "file": "main.py"
-        })
-
-    print(f"frontend: '{frontend}', backend: '{backend}'")
+        if backend == "Express":
+            endpoints.append({"method": "GET", "path": "/api/health", "file": "routes/main.js"})
+        elif backend == "FastAPI":
+            endpoints.append({"method": "GET", "path": "/api/health", "file": "main.py"})
 
     await database.execute(
         """
@@ -223,21 +192,22 @@ async def create_project(
             "project_id": project_id,
             "envs": json.dumps(default_envs),
             "db_schema": json.dumps({}),
-            "pages": json.dumps(default_pages),
-            "endpoints": json.dumps(default_endpoints),
-            "groups": json.dumps(default_groups),
+            "pages": json.dumps(pages),
+            "endpoints": json.dumps(endpoints),
+            "groups": json.dumps(groups),
         }
     )
-    
-    container_info = await create_project_container(
-        project_id, 
-        name, 
-        backend_services=[backend] if backend else [],
-        frontend_services=[frontend] if frontend else [],
-        db=[db] if db else []
-    )
-    
+
     return {"ok": True, "project_id": project_id, "container_id": container_info["container_id"], "name": name, "access_token": access_token}
+
+
+
+
+
+
+
+
+
 
 
 @router.get("/{project_id}")
