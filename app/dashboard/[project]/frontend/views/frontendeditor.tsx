@@ -24,7 +24,7 @@ export default function FrontendPage() {
   const handlePageSelect = (page: { route: string; file: string }) => {
     setSelectedPage(page);
     setSelectedFile(null);
-    readFile(`/app/workspace/frontend/${projectName}/${page.file}`);
+    readFile(`${roots?.frontend_root}/${page.file}`);
   };
 
   const handleFileSelect = (filepath: string) => {

@@ -216,6 +216,8 @@ async def create_project(
         values={"fr": frontend_root, "br": backend_root, "dr": db_root, "id": project_id}
     )
 
+    print(f"[DEBUG] Setting frontend_root = {frontend_root}")
+
     await database.execute(
         """
         INSERT INTO project_metadata (project_id, envs, db_schema, pages, endpoints, groups)

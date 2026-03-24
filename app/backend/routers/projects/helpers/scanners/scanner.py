@@ -11,6 +11,7 @@ class ScanResult:
     frontend_framework: str | None = None
     backend_framework: str | None = None
     db_framework: str | None = None
+    backend_root: str | None = None
     pages: list = field(default_factory=list)
     endpoints: list = field(default_factory=list)
     groups: list = field(default_factory=list)
@@ -43,10 +44,12 @@ def scan_project(container, repo_path: str) -> ScanResult:
         result.pages = _scan_vanilla_pages(container, repo_path)
  
     # ── Backend
-    if _detect_fastapi(container, repo_path):
+    elif _detect_fastapi(container, repo_path):
         result.backend_framework = "FastAPI"
+        result.backend_root = _find_backend_root(container, repo_path, "FastAPI")
         result.endpoints = _scan_fastapi_endpoints(container, repo_path)
- 
+
+        
     elif _detect_flask(container, repo_path):
         result.backend_framework = "Flask"
  
@@ -57,10 +60,6 @@ def scan_project(container, repo_path: str) -> ScanResult:
     elif _detect_rust_actix(container, repo_path):
         result.backend_framework = "Actix"
 
-    if _detect_fastapi(container, repo_path):
-        result.backend_framework = "FastAPI"
-        result.backend_root = _find_backend_root(container, repo_path, "FastAPI")
-        result.endpoints = _scan_fastapi_endpoints(container, repo_path)
  
     # ── Database
     result.db_framework = _detect_db(container, repo_path)
