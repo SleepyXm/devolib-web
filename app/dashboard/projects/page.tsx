@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
-import { listProjects, handleCreateProject, deleteProject, Project } from "@/app/handlers/projects";
+import { listProjects, handleCreateProject, handleImportProject, deleteProject, Project } from "@/app/handlers/projects";
 import { useUser } from "@/app/provider/UserProvider";
 import { useRouter } from "next/navigation";
 import Popup from "@/app/components/ErrorPopup";
 import { CreatingOverlay, CreateProjectModal, ProjectList, ProjectFormData } from "./projectcomponents";
+import { useSearchParams } from "next/navigation";
 
 const BACKEND_OPTIONS = ["FastAPI", "Node.js", "Rust"];
 const FRONTEND_OPTIONS = ["React", "HTML/CSS", "Next.js", "Angular.js"];
@@ -24,6 +25,7 @@ export default function ProjectsPage() {
   const { user } = useUser();
   const username = user?.username;
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -51,6 +53,19 @@ export default function ProjectsPage() {
       .finally(() => setLoading(false));
   }, [username]);
 
+  useEffect(() => {
+    const modal = searchParams.get("modal");
+    const repo = searchParams.get("repo");
+    const url = searchParams.get("url");
+
+    if (modal === "import") {
+      setTab("import");
+      if (url) setRepoUrl(url);
+      if (repo) setName(repo.split("/")[1]); // use repo name as project name when user imports
+      setModalOpen(true);
+    }
+  }, []);
+
   const refreshProjects = () =>
     listProjects().then(setProjects).catch(() => setError("Failed to refresh projects"));
 
@@ -64,8 +79,9 @@ export default function ProjectsPage() {
     try {
       if (data.type === "blank") {
         await handleCreateProject(username, data.name, data.frontend, data.backend, data.db);
+      } else if (data.type === "import") {
+        await handleImportProject(data.repoUrl);
       }
-      // import and template wired up later
       await refreshProjects();
       setSuccess("Project created!");
     } catch {

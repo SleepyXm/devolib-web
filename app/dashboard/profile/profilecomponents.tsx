@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
- 
+import { useRouter } from "next/navigation";
+
 export function SidebarTab({ label, active, onClick,}:
   { label: string; active: boolean; onClick: () => void;}) 
   {
@@ -174,8 +175,9 @@ export function ProjectCard({ name, repo, stack, lastActive,}:
 }
 
 
-export function AuthorisationsCard({ name, full_name, private: isPrivate, default_branch, updated_at,}:
-  { name: string; full_name: string; private: boolean; default_branch: string; updated_at: string; }) {
+export function AuthorisationsCard({ name, full_name, private: isPrivate, default_branch, updated_at, url}:
+  { name: string; full_name: string; private: boolean; default_branch: string; updated_at: string; url: string; }) {
+    const router = useRouter();
   return (
     <div className="flex items-center justify-between border-2 border-black dark:border-white/20 rounded-lg p-3">
       <div className="flex flex-col gap-0.5">
@@ -192,7 +194,9 @@ export function AuthorisationsCard({ name, full_name, private: isPrivate, defaul
       </div>
       <div className="flex items-center gap-3 shrink-0">
         <span className="text-xs text-black/30 dark:text-zinc-600">{updated_at}</span>
-        <button className="text-xs px-3 py-1 rounded-md border-2 border-black dark:border-white/20 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all duration-200">
+        <button onClick={() => router.push(`/dashboard/projects?modal=import&repo=${full_name}&url=${url}`)}
+          className="text-xs px-3 py-1 rounded-md border-2 border-black dark:border-white/20 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all duration-200"
+        >
           Import
         </button>
       </div>

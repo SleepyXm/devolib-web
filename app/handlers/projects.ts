@@ -151,6 +151,15 @@ export const handleCreateProject = async (name: string, projectname: string, fro
     }
 }
 
+export async function handleImportProject(repoUrl: string) {
+  const name = repoUrl.split("/").pop() ?? "imported-project";
+  return await request(`${project_endpoint}/create`, {
+    method: "POST",
+    body: JSON.stringify({ name, import_url: repoUrl }),
+  });
+}
+
+
 
 export async function startProject(project_id: string): Promise<{ ok: boolean; container_id: string; status: string }> {
   const res = await request(`${container_endpoint}/start/${project_id}`, {

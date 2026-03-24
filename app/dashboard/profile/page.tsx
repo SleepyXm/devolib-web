@@ -135,6 +135,7 @@ useEffect(() => {
                     private={a.private}
                     default_branch={a.default_branch}
                     updated_at={a.updated_at}
+                    url={a.url}
                   />
                 ))
               )}
