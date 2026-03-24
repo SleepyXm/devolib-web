@@ -29,7 +29,7 @@ def scan_project(container, repo_path: str) -> ScanResult:
     if _detect_nextjs(container, repo_path):
         result.frontend_framework = "Next.js"
         result.pages = _scan_nextjs_pages(container, repo_path)
-        result.groups = _scan_groups(container, repo_path, "Next.js")
+        result.groups = _scan_groups(container, repo_path, "frontend")
  
     elif _detect_react(container, repo_path):
         result.frontend_framework = "React"
@@ -49,7 +49,7 @@ def scan_project(container, repo_path: str) -> ScanResult:
         result.backend_root = _find_backend_root(container, repo_path, "FastAPI")
         result.endpoints = _scan_fastapi_endpoints(container, repo_path)
 
-        
+
     elif _detect_flask(container, repo_path):
         result.backend_framework = "Flask"
  

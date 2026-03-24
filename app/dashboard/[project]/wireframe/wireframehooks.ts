@@ -147,6 +147,7 @@ export function useWireframe() {
     const newGroup: ProjectGroup = {
       label: groupRoot.split("/").pop() || groupRoot,
       root: `${bases[groupWorkspace]}/${groupRoot}`,
+      context: groupWorkspace === "backend" ? "backend" : "frontend",
       files: []
     };
 

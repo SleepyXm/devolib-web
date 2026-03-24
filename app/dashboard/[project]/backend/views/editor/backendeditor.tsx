@@ -26,6 +26,7 @@ export default function BackendEditor({
   const db_schema = meta?.db_schema ?? {};
   const monaco = useMonaco();
   const [code, setCode] = useState(initialCode);
+  const backendGroups = meta?.groups.filter(g => g.context === "backend") ?? [];
 
   useEffect(() => {
     if (initialCode !== undefined && initialCode !== code) {
@@ -57,6 +58,9 @@ export default function BackendEditor({
     <div className="flex flex-1 overflow-hidden">
       <div className="w-36 bg-gray-800 text-white flex flex-col overflow-y-auto shrink-0">
         <FileTree label="Files" items={files.map(f => ({ name: f, filepath: f }))} selected={selectedFile ?? undefined} onSelect={(item) => onFileSelect(item.name)}  />
+          {backendGroups.map(group => (
+            <FileTree key={group.label} label={group.label} items={group.files.map(f => ({ name: f.name, filepath: `${group.root}/${f.filepath}` }))} selected={undefined} onSelect={(item) => (item.filepath)} />
+          ))}
       </div>
 
       <Editor

@@ -77,6 +77,7 @@ export interface ProjectGroupFile {
 export interface ProjectGroup {
   label: string;
   root: string;
+  context: "frontend" | "backend";
   icon?: string;
   files: ProjectGroupFile[];
 }
