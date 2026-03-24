@@ -2,7 +2,7 @@
 
 import { useRef, useState, ReactNode, createContext, useEffect } from "react";
 import { ProjectWS, connectToProject, startProject, stopProject, fetchProjectDetails, getProjectMetadata, } from "@/app/handlers/projects";
-import { ProjectEnv, ProjectDbColumn, ProjectPage, ProjectEndpoint, ProjectGroup } from "@/app/handlers/projects";
+import { ProjectEnv, ProjectDbColumn, ProjectPage, ProjectEndpoint, ProjectGroup, ProjectRoots } from "@/app/handlers/projects";
 
 interface ProjectContextType {
   projectWS: ProjectWS | null;
@@ -17,6 +17,7 @@ interface ProjectContextType {
   setProjectId: (id: string) => void;
   projectId: string | null;
   projectName: string | null;
+  roots: ProjectRoots | null;
 }
 
 export interface ServiceStatus {
@@ -76,6 +77,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
   const [isRunning, setIsRunning] = useState(false);
   const [projectId, setProjectId] = useState<string | null>(null);
   const [projectName, setProjectName] = useState<string | null>(null);
+  const [roots, setRoots] = useState<ProjectRoots | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [wsInstance, setWsInstance] = useState<ProjectWS | null>(null);
 
@@ -109,6 +111,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
       fetchProjectDetails(projectId).then((project) => {
         setAccessToken(project.access_token);
         setProjectName(project.name);
+        setRoots(project.roots);
       });
       fetchMeta();
     }
@@ -183,6 +186,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
         setProjectId,
         projectId,
         projectName,
+        roots
       }}
     >
       <ProjectMetaContext.Provider

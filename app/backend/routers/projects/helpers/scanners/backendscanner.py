@@ -91,3 +91,23 @@ def _scan_express_endpoints(container, repo_path: str) -> list:
                     except IndexError:
                         pass
     return endpoints
+
+
+def _find_backend_root(container, repo_path: str, framework: str) -> str | None:
+    if framework == "FastAPI":
+        # Look for main.py — could be at root or in a subfolder like /backend, /api, /server
+        candidates = ["backend/main.py", "api/main.py", "server/main.py", "main.py"]
+        for candidate in candidates:
+            if _file_exists(container, f"{repo_path}/{candidate}"):
+                # Return the directory containing main.py
+                folder = "/".join(candidate.split("/")[:-1])
+                return f"{repo_path}/{folder}" if folder else repo_path
+
+    elif framework == "Express":
+        candidates = ["backend/index.js", "api/index.js", "server/index.js", "index.js", "server.js"]
+        for candidate in candidates:
+            if _file_exists(container, f"{repo_path}/{candidate}"):
+                folder = "/".join(candidate.split("/")[:-1])
+                return f"{repo_path}/{folder}" if folder else repo_path
+
+    return None

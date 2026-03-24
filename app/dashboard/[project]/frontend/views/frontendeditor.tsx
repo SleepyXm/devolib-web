@@ -11,7 +11,7 @@ import { usePageScanner } from "../../helpers/FileHandler/FileScanner";
 import FileTree from "../../helpers/FileHandler/FileTree";
 
 export default function FrontendPage() {
-  const { projectWS, projectName } = useContext(ProjectContext)!;
+  const { projectWS, projectName, roots } = useContext(ProjectContext)!;
   const { pages, groups } = useContext(ProjectMetaContext)!;
   const [srcDoc, setSrcDoc] = useState("");
   const [iframeMode, setIframeMode] = useState<"srcDoc" | "live">("srcDoc");
@@ -30,7 +30,9 @@ export default function FrontendPage() {
   const handleFileSelect = (filepath: string) => {
     setSelectedFile(filepath);
     setSelectedPage(null);
-    readFile(`/app/workspace/frontend/${projectName}/${filepath}`);
+    readFile(`${roots?.frontend_root}/${filepath}`);
+    console.log("Selected page:", roots?.frontend_root);
+    console.log("Selected file:", roots?.frontend_root + "/" + filepath);
   };
 
 

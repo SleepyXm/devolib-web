@@ -1,7 +1,7 @@
 import json
 from dataclasses import dataclass, field
 from routers.projects.helpers.scanners.frontendscanner import  _detect_nextjs, _detect_react, _detect_vue, _detect_vanilla, _scan_nextjs_pages, _scan_react_pages, _scan_vanilla_pages
-from routers.projects.helpers.scanners.backendscanner import _detect_fastapi, _detect_flask, _detect_express, _detect_rust_actix, _scan_fastapi_endpoints, _scan_express_endpoints
+from routers.projects.helpers.scanners.backendscanner import _detect_fastapi, _detect_flask, _detect_express, _detect_rust_actix, _find_backend_root, _scan_fastapi_endpoints, _scan_express_endpoints
 from routers.projects.helpers.scanners.databasescanner import _detect_db
 from routers.projects.helpers.scanners.generalscanner import _scan_groups
  
@@ -56,6 +56,11 @@ def scan_project(container, repo_path: str) -> ScanResult:
  
     elif _detect_rust_actix(container, repo_path):
         result.backend_framework = "Actix"
+
+    if _detect_fastapi(container, repo_path):
+        result.backend_framework = "FastAPI"
+        result.backend_root = _find_backend_root(container, repo_path, "FastAPI")
+        result.endpoints = _scan_fastapi_endpoints(container, repo_path)
  
     # ── Database
     result.db_framework = _detect_db(container, repo_path)

@@ -15,6 +15,13 @@ export type Project = {
     container_id: string;
     status: string;
     last_online: string;
+    roots: ProjectRoots;
+}
+
+export type ProjectRoots = {
+    frontend_root: string | null;
+    backend_root: string | null;
+    db_root: string | null;
 }
 
 export type GithubRepo = {

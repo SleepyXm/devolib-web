@@ -150,9 +150,13 @@ async def create_project(
         import_url=import_url,
     )
 
-    # Resolve pages/endpoints/groups — scan result for imports, defaults for blank
     if import_url:
+        repo_name = import_url.rstrip("/").split("/")[-1].removesuffix(".git")
         scan = container_info.get("scan")
+
+        frontend_root = f"/app/workspace/{repo_name}"
+        backend_root = scan.backend_root if scan and scan.backend_root else None
+        db_root = None
 
         detected_frameworks = [f for f in [
             scan.frontend_framework,
@@ -170,11 +174,16 @@ async def create_project(
                     "INSERT INTO project_services (id, project_id, service_id, created_at) VALUES (:id, :project_id, :service_id, NOW())",
                     values={"id": str(uuid.uuid4()), "project_id": project_id, "service_id": service["id"]},
                 )
-        
+
         pages = scan.pages if scan else []
         endpoints = scan.endpoints if scan else []
         groups = scan.groups if scan else []
+
     else:
+        frontend_root = f"/app/workspace/frontend/{name}"
+        backend_root = "/app/workspace/backend"
+        db_root = "/app/workspace/database"
+
         pages = []
         endpoints = []
         groups = []
@@ -200,6 +209,12 @@ async def create_project(
             endpoints.append({"method": "GET", "path": "/api/health", "file": "routes/main.js"})
         elif backend == "FastAPI":
             endpoints.append({"method": "GET", "path": "/api/health", "file": "main.py"})
+
+    # Always runs for both paths
+    await database.execute(
+        "UPDATE projects SET frontend_root = :fr, backend_root = :br, db_root = :dr WHERE project_id = :id",
+        values={"fr": frontend_root, "br": backend_root, "dr": db_root, "id": project_id}
+    )
 
     await database.execute(
         """
@@ -230,13 +245,25 @@ async def create_project(
 
 @router.get("/{project_id}")
 async def get_project(project_id: str, current_user: dict = Depends(get_current_user)):
-    query = "SELECT project_id, name, access_token FROM projects WHERE project_id = :project_id AND user_id = :user_id"
+    query = "SELECT project_id, name, access_token, frontend_root, backend_root, db_root FROM projects WHERE project_id = :project_id AND user_id = :user_id"
     project = await database.fetch_one(query=query, values={"project_id": project_id, "user_id": current_user["id"]})
     
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    return dict(project)
+    project = dict(project)
+    return {
+        **project,
+        "roots": {
+            "frontend_root": project.get("frontend_root"),
+            "backend_root": project.get("backend_root"),
+            "db_root": project.get("db_root"),
+        }
+    }
+
+
+
+    
 
 @router.delete("/delete")
 async def delete_project(

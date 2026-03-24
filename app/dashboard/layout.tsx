@@ -37,7 +37,7 @@ if (!resolved) return null;
 
 
   return (
-    <div className="flex min-h-screen pt-17">
+    <div className="flex min-h-screen pt-13">
       <aside className="w-[7vw] bg-[#2a2e38] p-2 z-0">
         <h2 className="font-bold mb-4 text-gray-400">Dashboard Sidebar</h2>
         <ul className="space-y-2">
