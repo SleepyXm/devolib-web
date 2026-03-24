@@ -153,6 +153,24 @@ async def create_project(
     # Resolve pages/endpoints/groups — scan result for imports, defaults for blank
     if import_url:
         scan = container_info.get("scan")
+
+        detected_frameworks = [f for f in [
+            scan.frontend_framework,
+            scan.backend_framework,
+            scan.db_framework,
+        ] if f] if scan else []
+
+        if detected_frameworks:
+            detected_services = await database.fetch_all(
+                "SELECT id FROM services WHERE framework = ANY(:frameworks)",
+                values={"frameworks": detected_frameworks}
+            )
+            for service in detected_services:
+                await database.execute(
+                    "INSERT INTO project_services (id, project_id, service_id, created_at) VALUES (:id, :project_id, :service_id, NOW())",
+                    values={"id": str(uuid.uuid4()), "project_id": project_id, "service_id": service["id"]},
+                )
+        
         pages = scan.pages if scan else []
         endpoints = scan.endpoints if scan else []
         groups = scan.groups if scan else []
