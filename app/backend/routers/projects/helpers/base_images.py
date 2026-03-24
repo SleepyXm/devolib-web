@@ -43,7 +43,7 @@ def build_minimal():
     dockerfile = """
 FROM python:3.14-alpine
 RUN apk update && apk add --no-cache \\
-    curl bash ca-certificates git build-base \\
+    curl bash ca-certificates git openssh-client build-base \\
     && rm -rf /var/cache/apk/*
 RUN mkdir -p /app/workspace/frontend
 RUN mkdir -p /app/workspace/backend
@@ -66,7 +66,7 @@ RUN pip install --no-cache-dir \\
     psycopg2-binary \\
     redis \\
     httpx
-RUN apk add --no-cache postgresql mysql \\
+RUN apk add --no-cache postgresql openssh-client mysql \\
     && rm -rf /var/cache/apk/*
 WORKDIR /app/workspace
 CMD ["tail", "-f", "/dev/null"]
@@ -79,7 +79,7 @@ def build_node():
     dockerfile = """
 FROM node:20-alpine
 RUN apk update && apk add --no-cache \\
-    curl bash ca-certificates git python3 make g++ \\
+    curl bash ca-certificates git openssh-client python3 make g++ \\
     && rm -rf /var/cache/apk/*
 
 # CRITICAL: Set npm to auto-confirm and disable update checks
@@ -148,7 +148,7 @@ FROM python:3.14-alpine
 
 # System deps
 RUN apk update && apk add --no-cache \\
-    curl bash ca-certificates git build-base \\
+    curl bash ca-certificates git openssh-client build-base \\
     nodejs npm postgresql mysql \\
     python3 make g++ \\
     && rm -rf /var/cache/apk/*
@@ -215,11 +215,11 @@ CMD ["tail", "-f", "/dev/null"]
 def build_fullstacktest():
     """Both ecosystems in one."""
     dockerfile = """
-FROM python:3.13-alpine
+FROM devolib_minimal:latest
 
 # System deps
 RUN apk update && apk add --no-cache \\
-    curl bash ca-certificates git build-base \\
+    curl bash ca-certificates git openssh-client build-base \\
     nodejs npm postgresql postgresql-contrib \\
     python3 make g++ \\
     && rm -rf /var/cache/apk/*
