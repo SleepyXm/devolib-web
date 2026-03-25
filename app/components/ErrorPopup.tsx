@@ -28,9 +28,11 @@ export default function Popup({ message, onClose, type = "error" }: PopupProps) 
             gap: "10px",
             padding: "12px 16px",
             borderRadius: "10px",
-            backgroundColor: isSuccess ? "#4caf82" : "#e26161",
-            border: `1px solid ${isSuccess ? "#a0b9ac" : "#b9a0a0"}`,
-            color: "#ffffff"
+            backgroundColor: isSuccess ? "#4caf8250" : "#e26161",
+            border: `1px solid ${isSuccess ? "#ffffff80" : "#ffffff80"}`,
+            color: "#ffffff",
+            backdropFilter: "blur(8px)",
+            
           }}
         >
           {isSuccess ? (

@@ -3,150 +3,126 @@ import { useState, useEffect } from "react";
 import { useUser } from "../provider/UserProvider";
 import { logout } from "../handlers/auth";
 import { useRouter } from "next/navigation";
-
+ 
 const Navbar = () => {
   const { user, setUser } = useUser();
   const [mounted, setMounted] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
-
+ 
   useEffect(() => {
     setMounted(true);
   }, []);
-
+ 
   if (!mounted) return null;
-
+ 
   const handleLogout = async () => {
     await logout();
     setUser(null);
     router.push("/");
   };
-
+ 
   const links = [
     { label: "Home", url: "/" },
     ...(user
       ? [
-          { label: `${user.username}`, url: "/dashboard/profile" },
+          { label: user.username, url: "/dashboard/profile" },
           { label: "Dashboard", url: "/dashboard" },
-          { label: "Sign out", onClick: handleLogout},
+          { label: "Sign out", onClick: handleLogout },
         ]
-      : [{ label: "Sign in", url: "/login", }]),
+      : [{ label: "Sign in", url: "/login", cta: true }]),
   ];
-  // Desktop links
-
+ 
   return (
-    <header className="fixed top-0 left-0 right-0 z-300 bg-[#1a1e24] border-b-1 border-black/70 dark:border-white dark:bg-black">
-      <div className="max-w-7xl mx-auto px-6 md:px-8 py-4 flex items-center justify-between">
-        {/* Logo */}
-        <a href="/" className="flex items-center gap-3">
-          <svg
-            width="36"
-            height="36"
-            viewBox="0 0 36 36"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M16.2932 11.9774C16.1759 9.03514 18.1298 4.66446 18.1298 4.66446C15.4936 4.64047 12.9105 5.40303 10.718 6.82939L10.7286 6.83318C9.57413 9.97876 9.03203 12.5087 9.30055 16.1502C9.57132 19.8221 12.8069 24.2667 12.8069 24.2667L12.8151 24.289C13.2392 24.0337 13.6347 23.7625 13.9746 23.4789C16.0131 21.7779 18.0004 18.0004 18.0004 18.0004C18.0004 18.0004 16.3906 14.4202 16.2932 11.9774Z"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          <div className="text-sm font-semibold text-zinc-500 w-full flex items-center justify-center whitespace-nowrap">
-            {" "}
-            <svg
-              width="160"
-              height="40"
-              viewBox="0 0 540 80"
-              className="dv-accent"
-            >
-              <defs>
-                <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="currentColor" />
-                  <stop offset="100%" stopColor="currentColor" />
-                </linearGradient>
-              </defs>
-              <text
-                x="0"
-                y="60"
-                fontSize="84"
-                fontWeight="500"
-                fill="url(#grad1)"
-                className="dv-headline"
-              >
-                DevoLib
-              </text>
-            </svg>
-          </div>
-        </a>
-
-        {/* Desktop Links */}
-        <nav>
-          <ul className="hidden md:flex items-center text-sm font-medium">
-            {links.map((link) => (
-              <li key={link.label}>
-                {link.url ? (
-                  <a
-                    href={link.url}
-                    onClick={link.onClick}
-                    className="text-zinc-500 hover:text-white transition-colors duration-300 px-6 py-6 hover:bg-black/70"
-                  >
-                    {link.label}
-                  </a>
-                ) : (
-                  <button
-                    onClick={link.onClick}
-                    className="text-zinc-500 hover:text-white hover:text-white transition-colors duration-300 px-6 py-2 hover:bg-black/70"
-                  >
-                    {link.label}
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        </nav>
-
-        {/* Mobile Toggle */}
-        <button
-          className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-md bg-black/30 ring-1 ring-black/30 dark:bg-black/40"
-          onClick={() => setMobileOpen(!mobileOpen)}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-5 w-5 text-white"
-          >
-            <path d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-
-        {/* Mobile Menu */}
-        {mobileOpen && (
-          <ul className="absolute top-full left-0 w-full bg-neutral-900/70 ring-1 ring-white/10 backdrop-blur p-4 md:hidden flex flex-col gap-2 text-sm font-medium text-white/60">
-            {links.map((link) => (
-              <li key={link.label}>
+    <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-[11px] bg-white/20 dark:bg-white/[0.055] backdrop-blur-2xl border-b border-white/40 dark:border-white/[0.09]">
+ 
+      {/* Logo */}
+      <a href="/" className="flex items-center no-underline">
+        <div className="px-3 rounded-[1px] flex items-center justify-center bg-[#00e0c0] dark:bg-[#ff6219] shadow-[0_0_14px_rgba(0,224,192,0.45),0_0_32px_rgba(0,224,192,0.45)] dark:shadow-[0_0_14px_rgba(255,140,66,0.5),0_0_32px_rgba(255,140,66,0.5)] flex-shrink-0">
+          <span className="text-2xl font-thin tracking-[-0.4px] text-[#0a0a0a] whitespace-nowrap">
+            DevoLib
+          </span>
+        </div>
+      </a>
+ 
+      {/* Desktop links */}
+      <nav className="hidden md:block">
+        <ul className="flex items-center gap-0.5 list-none">
+          {links.map((link) => (
+            <li key={link.label}>
+              {link.url ? (
                 <a
                   href={link.url}
-                  className="w-full text-left hover:text-white transition-colors duration-300 px-4 py-2 rounded-full hover:bg-white/5 "
+                  className={
+                    link.cta
+                      ? // Sign in — accent pill
+                        "block px-4 py-[7px] rounded-[1px] text-xs font-medium no-underline transition-all duration-150 active:scale-[0.97] bg-[#00e0c0] dark:bg-[#ff6219] text-[#0a0a0a] shadow-[0_2px_22px_rgba(0,224,192,0.45),0_0_44px_rgba(0,224,192,0.45)] dark:shadow-[0_2px_22px_rgba(255,140,66,0.5),0_0_44px_rgba(255,140,66,0.5)] hover:brightness-110"
+                      : // Regular link — ghost pill
+                        "block px-4 py-[7px] rounded-[1px] text-xs font-medium no-underline text-black/45 dark:text-white/45 hover:bg-[#00e0c0] hover:shadow-[0_0_14px_rgba(0,224,192,0.45),0_0_32px_rgba(0,224,192,0.45)] dark:hover:bg-[#ff6219] dark:hover:shadow-[0_0_14px_rgba(255,140,66,0.5),0_0_32px_rgba(255,140,66,0.5)] hover:text-black dark:hover:text-[#000000] transition-all duration-150"
+                  }
                 >
                   {link.label}
                 </a>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+              ) : (
+                <button
+                  onClick={link.onClick}
+                  className="block px-4 py-[7px] rounded-[1px] text-xs font-medium bg-transparent border-none cursor-pointer text-black/45 dark:text-white/45 hover:bg-[#00e0c0] hover:shadow-[0_0_14px_rgba(0,224,192,0.45),0_0_32px_rgba(0,224,192,0.45)] dark:hover:bg-[#ff6219] dark:hover:shadow-[0_0_14px_rgba(255,140,66,0.5),0_0_32px_rgba(255,140,66,0.5)] hover:text-black dark:hover:text-[#000000] transition-all duration-150"
+                >
+                  {link.label}
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      </nav>
+ 
+      {/* Mobile toggle */}
+      <button
+        className="md:hidden flex items-center justify-center w-[38px] h-[38px] rounded-[10px] border-none cursor-pointer bg-white/20 dark:bg-white/[0.055] backdrop-blur-md text-black dark:text-[#f0f0f0] hover:bg-white/40 dark:hover:bg-white/[0.09] transition-all duration-150"
+        onClick={() => setMobileOpen((prev) => !prev)}
+        aria-label="Toggle menu"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+ 
+      {/* Mobile menu */}
+      {mobileOpen && (
+        <ul className="absolute top-full left-0 right-0 flex flex-col gap-0.5 list-none bg-white/20 dark:bg-white/[0.055] backdrop-blur-2xl border-b border-white/40 dark:border-white/[0.09] px-4 pb-3 pt-2 md:hidden">
+          {links.map((link) => (
+            <li key={link.label}>
+              {link.url ? (
+                <a
+                  href={link.url}
+                  className="block w-full px-[14px] py-[10px] rounded-[10px] text-sm font-medium no-underline text-black/45 dark:text-white/45 hover:bg-white/40 dark:hover:bg-white/[0.09] hover:text-black dark:hover:text-[#f0f0f0] transition-all duration-150"
+                >
+                  {link.label}
+                </a>
+              ) : (
+                <button
+                  onClick={link.onClick}
+                  className="block w-full text-left px-[14px] py-[10px] rounded-[10px] text-sm font-medium bg-transparent border-none cursor-pointer text-black/45 dark:text-white/45 hover:bg-white/40 dark:hover:bg-white/[0.09] hover:text-black dark:hover:text-[#f0f0f0] transition-all duration-150"
+                >
+                  {link.label}
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </header>
   );
 };
-
+ 
 export default Navbar;
