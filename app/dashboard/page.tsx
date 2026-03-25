@@ -70,16 +70,14 @@ export default function DashboardPage() {
             ))
           )}
         </div>
-
-        {selectedProject && (
+      </div>
+      {selectedProject && (
         <ProjectModal
           projectId={selectedProject}
           projectName={selectedProject}
           onClose={() => setSelectedProject("")}
         />
       )}
-
-      </div>
     </div>
   );
 }
