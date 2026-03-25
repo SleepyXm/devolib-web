@@ -154,7 +154,7 @@ async def create_project(
         repo_name = import_url.rstrip("/").split("/")[-1].removesuffix(".git")
         scan = container_info.get("scan")
 
-        frontend_root = f"/app/workspace/{repo_name}"
+        frontend_root = (scan.frontend_root if scan and scan.frontend_root else f"/app/workspace/{repo_name}")
         backend_root = scan.backend_root if scan and scan.backend_root else None
         db_root = None
 

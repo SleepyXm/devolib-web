@@ -110,3 +110,25 @@ def _scan_vanilla_pages(container, repo_path: str) -> list:
         route = "/" if rel == "index.html" else f"/{rel}"
         pages.append({"route": route, "file": rel})
     return pages
+
+
+def _find_frontend_root(container, repo_path: str, framework: str) -> str | None:
+    if framework == "Next.js":
+        candidates = ["next.config.js", "next.config.ts", "next.config.mjs"]
+        for candidate in candidates:
+            if _file_exists(container, f"{repo_path}/{candidate}"):
+                return repo_path  # next.config is always at the frontend root
+
+    elif framework == "React":
+        if _file_exists(container, f"{repo_path}/package.json"):
+            return repo_path
+        # Check common subdirs
+        for subdir in ["frontend", "client", "web"]:
+            if _file_exists(container, f"{repo_path}/{subdir}/package.json"):
+                return f"{repo_path}/{subdir}"
+
+    elif framework == "Vue":
+        if _file_exists(container, f"{repo_path}/package.json"):
+            return repo_path
+
+    return repo_path  # sensible default

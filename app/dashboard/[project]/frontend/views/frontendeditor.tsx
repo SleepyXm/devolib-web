@@ -178,7 +178,8 @@ export default function FrontendPage() {
         <div className="w-36 bg-gray-800 text-white flex flex-col overflow-y-auto shrink-0">
           <FileTree label="Pages"      items={pages.map(p => ({ name: p.route, filepath: p.file }))}      selected={selectedPage?.route}    onSelect={(item) => handlePageSelect({ route: item.name, file: item.filepath })} />
           {frontendGroups.map(group => (
-            <FileTree key={group.label} label={group.label} items={group.files.map(f => ({ name: f.name, filepath: `${group.root}/${f.filepath}` }))} selected={undefined} onSelect={(item) => handleFileSelect(item.filepath)} /> ))}
+            <FileTree key={group.label} label={group.label} items={group.files.map(f => ({ name: f.name, filepath: `${group.root}/${f.filepath}` }))} selected={undefined} onSelect={(item) => handleFileSelect(item.filepath)} />
+          ))}
         </div>
 
         <MonacoEditor

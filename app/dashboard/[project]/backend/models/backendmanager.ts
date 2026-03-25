@@ -5,7 +5,7 @@ import { useEndpointScanner } from "../../helpers/FileHandler/FileScanner";
 import { saveEndpoints } from "../models/backendoperations";
 
 export const useBackendManager = () => {
-  const { projectWS, projectId } = useContext(ProjectContext)!;
+  const { projectWS, projectId, roots } = useContext(ProjectContext)!;
   const { endpoints, setEndpoints } = useContext(ProjectMetaContext)!;
   const { fileContent, writeFile, saveFile, readFile, hasUnsavedChanges } = useFileManager(projectWS);
 
@@ -15,12 +15,12 @@ export const useBackendManager = () => {
 
   useEffect(() => {
     if (!projectWS) return;
-    readFile(`/app/workspace/backend/main.py`);
+    readFile(`${roots?.backend_root}/main.py`);
   }, [projectWS]);
 
   const onFileSelect = (file: string) => {
     setSelectedFile(file);
-    readFile(`/app/workspace/backend/${file}`);
+    readFile(`${roots?.frontend_root}/${file}`);
   };
 
   const save = async () => {
