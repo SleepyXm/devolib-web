@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #a49c91;
+  --bg: #c4c3c2;
   --fg: #0a0a0a;
   --mesh-1: #dedede2e;
   --mesh-2: #f5f0eb;
@@ -9,7 +9,7 @@
   --input-bg: #f5f0eb;
   --badge-bg: #f5f0b8;
   --footer-bg: #f5d4b8;
-  --dot-color: #00000065;
+  --dot-color: #00000013;
   --border-color: #0a0a0a;
   --shadow-color: #0a0a0a;
   --subtext-opacity: 0.8;
@@ -87,10 +87,20 @@ body {
   pointer-events: none;
   background-image: radial-gradient(
     circle,
-    var(--dot-color) 1px,
-    transparent 1px
+    var(--dot-color) 0.7px,
+    transparent 0.8px
   );
-  background-size: 28px 28px;
+  background-size: 12px 12px;
+}
+
+.dv-dot-grid-canvas {
+  position: fixed;
+  inset: 0;
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
 }
 
 .dv-glow {
