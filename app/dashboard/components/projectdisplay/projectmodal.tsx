@@ -21,6 +21,7 @@ export function ProjectModal({
     db_schema: {},
     endpoints: [],
     pages: [],
+    groups: [],
     updated_at: null,
   });
   const [loading, setLoading] = useState(true);
@@ -85,7 +86,7 @@ export function ProjectModal({
     <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50">
       <div
         ref={modalRef}
-        className="bg-white dark:bg-zinc-900 border-2 border-black dark:border-white w-[70vw] max-h-[85vh] overflow-hidden flex flex-col"
+        className="bg-white dark:bg-zinc-900 border-2 mt-[25%] border-black dark:border-white w-[70vw] max-h-[85vh] overflow-hidden flex flex-col"
       >
         <ModalHeader title={projectName} onClose={onClose} />
         <div className="p-6 overflow-y-auto flex-1 space-y-6">
