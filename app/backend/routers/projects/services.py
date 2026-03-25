@@ -39,6 +39,9 @@ async def start_service(container, project_id: str, project_name: str, service: 
     )
     print(f"service: {service}, row: {row}")
 
+    frontend_root = row["frontend_root"] or f"/app/workspace/{project_name}"
+    backend_root = row["backend_root"] or f"/app/workspace/{project_name}"
+
     if not row:
         await q.put(f"[✗] No {service} service configured\n")
         project_services[service] = {"enabled": False, "port": 0, "status": "missing", "name": service}
@@ -49,9 +52,9 @@ async def start_service(container, project_id: str, project_name: str, service: 
     port = row["default_port"] or 0
 
     if service == "backend":
-        container.exec_run(["sh", "-c", f"cd /app/workspace/backend && {command} >/tmp/{service}.log 2>&1 &"], detach=True)
+        container.exec_run(["sh", "-c", f"cd {backend_root} && {command} >/tmp/{service}.log 2>&1 &"], detach=True)
     elif service == "frontend":
-        container.exec_run(["sh", "-c", f"cd /app/workspace/frontend/{project_name} && {command} >/tmp/{service}.log 2>&1 &"], detach=True)
+        container.exec_run(["sh", "-c", f"cd {frontend_root} && {command} >/tmp/{service}.log 2>&1 &"], detach=True)
     elif service == "database":
         container.exec_run(["sh", "-c", f"{command} >/tmp/{service}.log 2>&1"], detach=True)
         await asyncio.sleep(0.2)

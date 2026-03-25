@@ -63,7 +63,7 @@ def scan_project(container, repo_path: str) -> ScanResult:
 
  
     # ── Database
-    result.db_framework = _detect_db(container, repo_path)
+    result.db_framework = _detect_db(container, repo_path) or "PostgreSQL"
  
     return result
  

@@ -67,7 +67,7 @@ def create_and_start_container(
                 }
             },
             network=NETWORK_NAME,
-            mem_limit="512m",
+            mem_limit="1024m",
             cpu_quota=50000,
             command=["tail", "-f", "/dev/null"],
         )
