@@ -26,7 +26,7 @@ export default function WireframeView() {
 };
 
   return (
-    <div className="flex flex-col w-full p-6 gap-6 overflow-auto text-foreground">
+    <div className="flex flex-col w-full p-6 gap-6 h-full text-foreground">
       <h2 className="text-4xl">Wireframe View</h2>
 
       {showInput && (

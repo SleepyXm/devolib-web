@@ -34,13 +34,13 @@ const Navbar = () => {
   ];
  
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-[11px] bg-white/20 dark:bg-white/[0.055] backdrop-blur-2xl border-b border-white/40 dark:border-white/[0.09]">
+    <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-[12px] bg-white/20 dark:bg-white/[0.055] backdrop-blur-2xl border-b border-white/40 dark:border-white/[0.09]">
  
       {/* Logo */}
       <a href="/" className="flex items-center no-underline">
         <div className="px-3 rounded-[1px] flex items-center justify-center bg-[#00e0c0] dark:bg-[#ff6219] shadow-[0_0_14px_rgba(0,224,192,0.45),0_0_32px_rgba(0,224,192,0.45)] dark:shadow-[0_0_14px_rgba(255,140,66,0.5),0_0_32px_rgba(255,140,66,0.5)] flex-shrink-0">
           <span className="text-2xl font-thin tracking-[-0.4px] text-[#0a0a0a] whitespace-nowrap">
-            DevoLib
+            Devolib
           </span>
         </div>
       </a>

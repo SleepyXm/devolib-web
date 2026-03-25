@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, DM_Mono, Space_Mono, Syne} from "next/font/google";
+import { Geist, Geist_Mono, DM_Mono, Space_Mono, Syne, IBM_Plex_Sans } from "next/font/google";
 import "./globals.css";
 import { UserProvider } from "./provider/UserProvider";
 import Navbar from "./components/AxonNav";
@@ -21,6 +21,12 @@ const Dm_Mono = DM_Mono({
   weight: ["300", "400", "500"],
   subsets: ["latin"],
 });
+
+const ibm_sans = IBM_Plex_Sans({
+  variable: "--font-ibm-sans",
+  weight: ["300", "400", "500", "600", "700"],
+  subsets: ["latin"],
+})
 
 const syne = Syne({
   variable: "--font-dm-mono",
@@ -50,7 +56,7 @@ export default function RootLayout(
     <html lang="en">
       <UserProvider>
       <body
-        className={`${Space_mono.className} ${syne.className} antialiased bg-white dark:bg-black`}
+        className={`${ibm_sans.className}antialiased bg-white dark:bg-black`}
       >
         <SmoothScroll />
         <div id="smooth-wrapper">
