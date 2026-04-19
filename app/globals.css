@@ -21,6 +21,9 @@
   --subtext-color: #2c2c2c;
   --dv-links-color: #000000;
   --dv-links-hover-color: #00904a;
+  --dv-text: #00000073;
+  --hover-glow: #00e0c0;
+  --hover-shadow: #00e0c073;
 }
 
 @theme inline {
@@ -49,6 +52,9 @@
   --subtext-color: #afafaf;
   --dv-links-color: #ffffff;
   --dv-links-hover-color: #f96d3a;
+  --dv-text: #ffffff73;
+  --hover-glow: #ff6219;
+  --hover-shadow: #ff8c4280;
   }
 }
 
@@ -462,6 +468,12 @@ body {
 
   display: flex;
   flex-direction: column;
+
+  border: 2px solid #000000;
+  border-radius: 0.5rem;
+
+  color: var(--dv-text);
+  background-color: var(--bg);
 }
 
 .dv-nav-item {
@@ -474,11 +486,7 @@ body {
 
   text-decoration: none;
 
-  color: rgba(0, 0, 0, 0.45);
-}
-
-.dark .dv-nav-item {
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--dv-text);
 }
 
 .dv-hover-accent {
@@ -486,19 +494,11 @@ body {
 }
 
 .dv-hover-accent:hover {
-  background-color: #00e0c0;
+  background-color: var(--hover-glow);
   color: #000000;
   box-shadow:
-    0 0 14px rgba(0, 224, 192, 0.45),
-    0 0 32px rgba(0, 224, 192, 0.45);
-}
-
-.dark .dv-hover-accent:hover {
-  background-color: #ff6219;
-  color: #000000;
-  box-shadow:
-    0 0 14px rgba(255, 140, 66, 0.5),
-    0 0 32px rgba(255, 140, 66, 0.5);
+    0 0 14px var(--hover-shadow),
+    0 0 32px var(--hover-shadow);
 }
 
 .dv-nav-item-active {
@@ -573,6 +573,54 @@ body {
 .dv-stack-card:hover {
   background-color: #F3F4F6;
 }
+
+
+.dv-folder-panel {
+  display: flex;
+  flex-direction: column; 
+  shrink: 0; 
+  width: 9rem;
+}
+
+.dv-folder-panel-color {
+  color: var(--dv-text); 
+  background-color: #26303dba; 
+}
+
+.dv-editor-zone {
+  overflow: hidden; 
+  flex: 1; 
+}
+
+
+.dv-zone-title {
+  display: flex; 
+  padding: 0.5rem; 
+  justify-content: space-between; 
+  align-items: center; 
+  backdrop-filter: blur(16px);
+  
+}
+
+.dv-panel-suite {
+  display: flex; 
+  flex-direction: column; 
+  height: 100%; 
+  font-family: Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; 
+  font-size: 0.875rem;
+  line-height: 1.25rem; 
+  color: #F3F4F6; 
+  backdrop-filter: blur(16px); 
+}
+
+
+
+
+
+
+
+
+
 
 
 

@@ -55,8 +55,8 @@ export default function BackendEditor({
   }, [monaco]);
 
   return (
-    <div className="flex flex-1 overflow-hidden">
-      <div className="w-36 bg-gray-800 text-white flex flex-col overflow-y-auto shrink-0">
+    <div className="flex flex-1">
+      <div className="dv-folder-panel dv-folder-panel-color">
         <FileTree
   items={[{
     name: "Files",

@@ -50,10 +50,10 @@ export default function TestSuite({ projectWS }: TestSuiteProps) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-900 text-gray-100 font-mono text-sm">
+    <div className="dv-panel-suite">
       {/* Toolbar */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-700">
-        <span className="text-xs text-gray-500 uppercase tracking-widest mr-1">Tests</span>
+        <span className="text-xs text-gray-500 uppercase tracking-widest mr-1 dark:text-white">Tests</span>
         <button
           onClick={generateTests}
           disabled={generating || running || !endpoints.length}

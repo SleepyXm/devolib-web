@@ -137,10 +137,10 @@ Max 4 results, max 3 sections. No markdown, no prose outside JSON.`,
   const handleAutoDetect = () => handleCodeContext();
  
   return (
-    <div className="flex flex-col h-full bg-gray-900 text-gray-100 font-mono text-sm">
+    <div className="flex flex-col h-full backdrop-blur-lg text-gray-100 font-mono text-sm dark:text-white">
       {/* Toolbar */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-700 bg-gray-850 flex-shrink-0">
-        <span className="text-xs text-gray-500 uppercase tracking-widest mr-1">Docs</span>
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-700 backdrop-blur-lg flex-shrink-0">
+        <span className="text-xs uppercase tracking-widest mr-1">Docs</span>
         {/* Mode toggle */}
         <div className="flex rounded overflow-hidden border border-gray-700 text-xs">
           {(["auto", "manual"] as const).map((m) => (

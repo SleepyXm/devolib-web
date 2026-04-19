@@ -11,8 +11,8 @@ export default function FrontendPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex gap-2 p-2 bg-[#1a1e24] relative after:absolute after:bottom-0 after:left-0 after:w-full after:h-px after:bg-gradient-to-l after:from-gray-200/80 after:to-gray-500">
-        <div className="flex rounded py-1 px-1 bg-[#36383b40] border border-[#ffffff20]">
+      <div className="flex gap-2 bg-[#1a1e2460] relative after:absolute after:bottom-0 after:left-0 after:w-full after:h-px after:bg-gradient-to-l after:from-gray-200/80 after:to-gray-500">
+        <div className="flex rounded bg-[#36383b40] border border-[#ffffff20]">
           <ServiceTab
             label="Editor"
             active={activeView === "Editor"}

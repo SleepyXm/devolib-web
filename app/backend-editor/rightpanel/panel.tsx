@@ -51,7 +51,7 @@ export default function RightPanel({ code }: RightPanelProps) {
   const { projectWS } = useContext(ProjectContext)!;
  
   return (
-    <div className="flex flex-col h-full bg-gray-900 border-l border-gray-700">
+    <div className="dv-panel-suite">
       {/* Tab bar */}
       <div className="flex border-b border-gray-700 bg-gray-850 flex-shrink-0">
         {TABS.map((tab) => (
@@ -62,11 +62,11 @@ export default function RightPanel({ code }: RightPanelProps) {
               relative flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium transition-colors
               ${activeTab === tab.id
                 ? "text-white border-b-2 border-indigo-400 bg-gray-800/50"
-                : "text-gray-500 hover:text-gray-300 border-b-2 border-transparent"
+                : "text-gray-500 hover:text-gray-300 border-b-2 border-transparent dark:text-gray-300"
               }
             `}
           >
-            <span className={activeTab === tab.id ? "text-indigo-400" : "text-gray-600"}>
+            <span className={activeTab === tab.id ? "text-indigo-400" : "text-gray-600 dark:text-gray-200"}>
               {tab.icon}
             </span>
             {tab.label}

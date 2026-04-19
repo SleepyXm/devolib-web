@@ -34,10 +34,10 @@ export default function RequestFlow() {
   ] : [];
 
   return (
-    <div className="flex flex-col h-full bg-gray-900 text-gray-100 font-mono text-sm">
+    <div className="dv-panel-suite">
       {/* Toolbar */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-700 flex-shrink-0">
-        <span className="text-xs text-gray-500 uppercase tracking-widest mr-1">Routes</span>
+        <span className="text-xs text-gray-500 uppercase tracking-widest mr-1 dark:text-white">Routes</span>
         <span className="text-xs text-gray-600">{endpoints.length} endpoints</span>
         <div className="ml-auto flex rounded overflow-hidden border border-gray-700">
           {(["overview", "flow"] as const).map((tab) => (

@@ -147,8 +147,8 @@ export default function FrontendPage() {
   }, [handleContextMenu]);
 
   return (
-    <div className="flex flex-col h-full min-h-screen">
-      <div className="p-2 bg-[#1a1e24] text-white flex justify-between items-center">
+    <div className="flex flex-col h-full h-screen">
+      <div className="dv-zone-title">
         <h2>Frontend Editor</h2>
         <div className="flex gap-2 items-center">
           {iframeMode === "srcDoc" && (
@@ -175,7 +175,7 @@ export default function FrontendPage() {
         onContextMenu={iframeMode === "srcDoc" ? handleContextMenu : undefined}
         onClick={handleClick}
       >
-        <div className="w-36 bg-gray-800 text-white flex flex-col overflow-y-auto shrink-0">
+        <div className="dv-folder-panel dv-folder-panel-color">
           <FileTree items={[{ name: "Pages", filepath: "", children: pages.map(p => ({ name: p.route, filepath: p.file })) }]}
             selected={selectedPage?.route}
             onSelect={(item) => handlePageSelect({ route: item.name, file: item.filepath })}

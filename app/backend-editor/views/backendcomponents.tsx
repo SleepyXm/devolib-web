@@ -3,7 +3,7 @@ export function BackendControls({ hasUnsavedChanges, onSave }: {
   onSave: () => void;
 }) {
   return (
-    <div className="p-2 bg-gray-900 flex justify-between items-center">
+    <div className="dv-zone-title">
       <h2>Backend Project Setup</h2>
       {hasUnsavedChanges && (
         <button
