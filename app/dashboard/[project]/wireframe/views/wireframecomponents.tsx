@@ -4,7 +4,7 @@ import { SectionPanelProps, PageRowProps, EndpointRowProps, MethodBadgeProps, Db
  
 export function SectionPanel({ title, children, onContextMenu }: SectionPanelProps) {
   return (
-    <div className="flex flex-col flex-1 min-w-0" onContextMenu={onContextMenu}>
+    <div className="dv-wireframe-container" onContextMenu={onContextMenu}>
       <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400 p-2 bg-[#111318] rounded-t-lg pl-4">
         {title}
       </p>
@@ -89,7 +89,7 @@ export function DbSection({ db_schema }: DbSectionProps) {
  
 export function CreateModal({ activeSection, inputValue, onChange, onConfirm, pages, parentPage, onParentChange, onEndpointTypeChange, endpointType, onCancel, groupRoot, onGroupRootChange, groupWorkspace, onGroupWorkspaceChange }: CreateModalProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div className="dv-modal-insert">
       <div className="bg-[#111318] border rounded-lg p-6 flex flex-col gap-4 w-80">
         <p className="text-sm font-semibold text-zinc-400">
           {activeSection === "pages" ? "New Page Name" : activeSection === "groups" ? "New Folder" : "New Endpoint Path"}

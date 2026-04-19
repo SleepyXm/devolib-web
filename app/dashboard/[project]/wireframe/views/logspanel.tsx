@@ -11,7 +11,7 @@ export default function LogsPanel() {
   };
 
   return (
-    <div className="flex flex-col flex-1 bg-white">
+    <div className="dv-wireframe-container">
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground text-zinc-400 p-2 bg-[#111318] overflow-hidden rounded-t-lg w-full">
           Logs

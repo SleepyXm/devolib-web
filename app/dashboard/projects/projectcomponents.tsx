@@ -51,7 +51,7 @@ export function CreateProjectModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="dv-modal">
       <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-10 w-full max-w-lg rounded-2xl ring-1 ring-white/10 shadow-2xl p-6" style={{ backgroundColor: "hsl(220, 13%, 9%)" }}>
 
@@ -198,7 +198,7 @@ type ProjectItemProps = {
 
 export function ProjectItem({ project, onClick, onDelete }: ProjectItemProps) {
   return (
-    <li className="border p-2 rounded hover:bg-gray-100 flex justify-between items-center">
+    <li className="dv-stack-card">
       <span className="cursor-pointer" onClick={onClick}>
         {project.name} {`(Status: ${project.status})`}
       </span>

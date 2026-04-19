@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { signup, login, loginWithGitHub, handleGitHubCallback, validateUser } from "@/app/handlers/auth";
 import { useUser } from "@/app/provider/UserProvider";
-import ErrorPopup from "@/app/components/ErrorPopup";
+import Popup from "@/app/components/ErrorPopup";
 import { AuthInput, AuthDivider, AuthFooter, GithubButton } from "./logincomponents";
 
 
@@ -17,6 +17,7 @@ export default function Auth() {
   const [password2, setPassword2] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
   const router = useRouter();
 
   useEffect(() => {
@@ -38,7 +39,7 @@ export default function Auth() {
       }
 
       const res = await signup(userName, email, password);
-      console.log("Signed up:", res.message);
+      setSuccess("Account created! Check your email to verify.");
     } else {
       const res = await login(userName, password);
       setUser(res);
@@ -61,7 +62,8 @@ async function handleGitHubLogin() {
 
   return (
   <div className="grid grid-rows-[5vh_1fr_5vh] items-center justify-items-center min-h-screen gap-[5vh]">
-    <ErrorPopup message={error} onClose={() => setError("")} />
+    <Popup message={error} onClose={() => setError("")} type="error" />
+    <Popup message={success} onClose={() => setSuccess("")} type="success" />
     <div className="flex flex-col gap-[4vh] row-start-2 items-center w-[30vw]">
       <div className="relative w-full max-w-5xl animate-in fade-in slide-in-from-bottom-8 duration-1000 mx-auto">
         <section className="group relative w-full h-full">

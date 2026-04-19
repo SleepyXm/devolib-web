@@ -11,7 +11,7 @@ interface ProjectCardProps {
 
 export function ProjectCard({ project, onOpenModal }: ProjectCardProps) {
   return (
-    <div className="border-2 border-black dark:border-white p-4 py-16 hover:bg-gray-100 dark:hover:bg-zinc-800 flex flex-col justify-between">
+    <div className="dv-glass-card dv-glass-card-tall">
       <span
         className="cursor-pointer font-medium"
         onClick={() => onOpenModal(project.project_id)}

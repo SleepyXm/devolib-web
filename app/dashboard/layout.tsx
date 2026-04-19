@@ -47,8 +47,8 @@ if (!resolved) return null;
                 <button
                   className={`w-full text-left px-2 py-1 rounded-[1px] ${
                     activeTab === tab.href.split("/").pop()
-                      ? "bg-gradient-to-l from-gray-500/80 to-gray-200 border-l border-[#474849] text-black"
-                      : "transition-all duration-300 hover:bg-[#00e0c0] hover:shadow-[0_0_14px_rgba(0,224,192,0.45),0_0_32px_rgba(0,224,192,0.45)] dark:hover:bg-[#ff6219] dark:hover:shadow-[0_0_14px_rgba(255,140,66,0.5),0_0_32px_rgba(255,140,66,0.5)] hover:text-black dark:hover:text-[#000000]"
+                      ? "dv-nav-item-active"
+                      : "dv-hover-accent"
                   }`}
                 >
                   {tab.name}

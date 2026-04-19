@@ -27,7 +27,7 @@ export default function BackendEditor({
   const monaco = useMonaco();
   const [code, setCode] = useState(initialCode);
   const backendGroups = meta?.groups.filter(g => g.context === "backend") ?? [];
-
+ 
   useEffect(() => {
     if (initialCode !== undefined && initialCode !== code) {
       setCode(initialCode);

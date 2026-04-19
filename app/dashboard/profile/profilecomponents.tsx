@@ -23,7 +23,7 @@ export function InfoRow({ label, value, action, actionLabel, actionVariant = "de
     children?: ReactNode; }) 
     {
   return (
-    <div className="flex items-center justify-between border-2 border-black dark:border-white/20 rounded-lg p-3 gap-4">
+    <div className="dv-glass-card-compact">
       <span className="font-medium text-sm shrink-0">{label}</span>
       <div className="flex items-center gap-3 ml-auto">
         {children ? (

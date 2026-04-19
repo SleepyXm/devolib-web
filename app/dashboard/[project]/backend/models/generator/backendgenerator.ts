@@ -1,3 +1,4 @@
+
 export function generateRouteSnippet(db_schema: Record<string, {column: string, type: string}[]>): string {
   const tables = Object.keys(db_schema)
   const tableOptions = tables.join(",")

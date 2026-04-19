@@ -56,9 +56,9 @@ const Navbar = () => {
                   className={
                     link.cta
                       ? // Sign in — accent pill
-                        "block px-4 py-[7px] rounded-[1px] text-xs font-medium no-underline transition-all duration-150 active:scale-[0.97] bg-[#00e0c0] dark:bg-[#ff6219] text-[#0a0a0a] shadow-[0_2px_22px_rgba(0,224,192,0.45),0_0_44px_rgba(0,224,192,0.45)] dark:shadow-[0_2px_22px_rgba(255,140,66,0.5),0_0_44px_rgba(255,140,66,0.5)] hover:brightness-110"
+                        "dv-nav-item dv-hover-accent"
                       : // Regular link — ghost pill
-                        "block px-4 py-[7px] rounded-[1px] text-xs font-medium no-underline text-black/45 dark:text-white/45 hover:bg-[#00e0c0] hover:shadow-[0_0_14px_rgba(0,224,192,0.45),0_0_32px_rgba(0,224,192,0.45)] dark:hover:bg-[#ff6219] dark:hover:shadow-[0_0_14px_rgba(255,140,66,0.5),0_0_32px_rgba(255,140,66,0.5)] hover:text-black dark:hover:text-[#000000] transition-all duration-150"
+                        "dv-nav-item dv-hover-accent"
                   }
                 >
                   {link.label}

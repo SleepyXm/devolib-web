@@ -42,7 +42,7 @@ useEffect(() => {
  
   return (
     <div className="min-h-screen flex justify-center items-start py-8 relative text-black dark:text-zinc-200">
-      <div className="w-[85vw] h-[85vh] rounded-[8px] bg-white/20 dark:bg-white/[0.055] backdrop-blur-2xl border border-white/40 dark:border-white/[0.09] p-6 shadow-2xl flex gap-6">
+      <div className="dv-glass dv-account">
  
         {/* Sidebar */}
         <div className="w-48 flex flex-col items-center border-r border-black/20 dark:border-white/10 pr-4 gap-6">
