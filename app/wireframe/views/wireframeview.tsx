@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { useContextMenu } from "@/app/components/Contextmenu";
 import { useWireframe } from "../wireframehooks";
-import { SectionPanel, PageRow, DbSection, CreateModal, EndpointSection, groupEndpointsByFile, GroupRow, GroupSection} from "./wireframecomponents";
+import { SectionPanel, PageRow, DbSection, CreateModal, EndpointSection, groupEndpointsByFile} from "./wireframecomponents";
 import LogsPanel from "./logspanel";
 import { pagesMenuItems, endpointsMenuItems, groupsMenuItems } from "@/app/components/Contextmenu/wireframemenu";
 
@@ -69,13 +69,6 @@ export default function WireframeView() {
           {Object.keys(db_schema).length === 0
             ? <p className="text-sm text-muted-foreground">No tables found.</p>
             : <DbSection db_schema={db_schema} />
-          }
-        </SectionPanel>
-
-        <SectionPanel title="Folders" onContextMenu={(e) => { setActiveSection("groups"); handleContextMenu(e); }}>
-          {groups.length === 0
-          ? <p className="text-sm text-muted-foreground">No folders found.</p>
-          : groups.map((g, i) => <GroupSection key={i} group={g} />)
           }
         </SectionPanel>
 

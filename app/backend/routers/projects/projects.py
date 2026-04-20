@@ -7,6 +7,7 @@ import secrets, json, httpx
 from helpers.limiter import limiter
 from helpers.queries.projectquery import list_projects_query, create_project_query
 from routers.auth.auth_utils import decrypt
+from helpers.structlogger import logger
 
 router = APIRouter()
 
@@ -156,6 +157,8 @@ async def create_project(
         import_url=import_url,
     )
 
+    scan = None
+
     if import_url:
         repo_name = import_url.rstrip("/").split("/")[-1].removesuffix(".git")
         scan = container_info.get("scan")
@@ -192,17 +195,18 @@ async def create_project(
         pages = []
         endpoints = []
 
-        if frontend == "React":
-            pages.append({"route": "/", "file": "src/App.jsx"})
-        elif frontend == "Next.js":
-            pages.append({"route": "/", "file": "src/app/page.tsx"})
+        if not import_url:
+            if frontend == "React":
+                pages = [{"route": "/", "file": "src/App.jsx"}]
+            elif frontend == "Next.js":
+                pages = [{"route": "/", "file": "src/app/page.tsx"}]
 
-        if backend == "Express":
-            endpoints.append({"method": "GET", "path": "/api/health", "file": "routes/main.js"})
-        elif backend == "FastAPI":
-            endpoints.append({"method": "GET", "path": "/api/health", "file": "main.py"})
+            if backend == "Express":
+                endpoints = [{"method": "GET", "path": "/api/health", "file": "routes/main.js"}]
+            elif backend == "FastAPI":
+                endpoints = [{"method": "GET", "path": "/api/health", "file": "main.py"}]
 
-    groups = container_info.get("groups", [])
+    groups = container_info.get("groups") or []
 
     # Always runs for both paths
     await database.execute(
@@ -211,6 +215,9 @@ async def create_project(
     )
 
     print(f"[DEBUG] Setting frontend_root = {frontend_root}")
+
+    if groups is None:
+        groups = []
 
     await database.execute(
         """
@@ -223,9 +230,11 @@ async def create_project(
             "db_schema": json.dumps({}),
             "pages": json.dumps(pages),
             "endpoints": json.dumps(endpoints),
-            "groups": json.dumps(groups),
+            "groups": json.dumps(groups or container_info.get("groups") or []),
         }
     )
+
+    logger.info("CONTAINER GROUPS", groups=container_info.get("groups"))
 
     return {"ok": True, "project_id": project_id, "container_id": container_info["container_id"], "name": name, "access_token": access_token}
 

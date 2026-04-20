@@ -174,28 +174,3 @@ export function GroupRow({ name, filepath }: { name: string; filepath: string })
     </div>
   )
 }
-
-export function GroupSection({ group }: { group: { name: string; filepath: string; children: { name: string; filepath: string }[] } }) {
-  return (
-    <div>
-      <p className="text-xs font-semibold uppercase tracking-widest text-[#7d7668] bg-[#f0ebe0] p-1 pl-4">
-        {group.name}
-        <span className="normal-case text-[#b0a898]"> · {group.filepath}</span>
-      </p>
-
-      <div className="divide-y text-xs">
-        {!group.children || group.children.length === 0 ? (
-        <p className="text-zinc-400 px-6 py-3 text-xs">No files yet.</p>
-        ) : (
-          group.children.map((child, i) => (
-            <GroupRow
-              key={i}
-              name={child.name}
-              filepath={child.filepath}
-            />
-          ))
-        )}
-      </div>
-    </div>
-  )
-}

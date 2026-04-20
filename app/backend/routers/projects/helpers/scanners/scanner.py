@@ -54,7 +54,7 @@ def scan_project(container, repo_path: str) -> ScanResult:
 
     elif detect_flask(container, repo_path):
         result.backend_framework = "Flask"
-        result.groups += build_tree(container, repo_path, "backend")
+        result.backend_groups = build_tree(container, repo_path, "backend")
 
     elif detect_express(container, repo_path):
         result.backend_framework = "Express"
@@ -63,6 +63,7 @@ def scan_project(container, repo_path: str) -> ScanResult:
  
     elif detect_rust_actix(container, repo_path):
         result.backend_framework = "Actix"
+        result.backend_groups = build_tree(container, repo_path, "backend")
 
  
     # ── Database
