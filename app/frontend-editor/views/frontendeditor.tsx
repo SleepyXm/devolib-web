@@ -7,7 +7,6 @@ import { editorMenuItems } from "@/app/components/Contextmenu/menuitems";
 import { EditorMenuItem } from "@/app/components/Contextmenu/menuactions";
 import { ProjectContext, ProjectMetaContext } from "@/app/dashboard/[project]/layout";
 import { useFileManager } from "@/app/file-manager/FileManager";
-import { usePageScanner } from "../../file-manager/FileScanner";
 import FileTree from "../../file-manager/FileTree";
 
 export default function FrontendPage() {
@@ -176,22 +175,16 @@ export default function FrontendPage() {
         onClick={handleClick}
       >
         <div className="dv-folder-panel dv-folder-panel-color">
-          <FileTree items={[{ name: "Pages", filepath: "", children: pages.map(p => ({ name: p.route, filepath: p.file })) }]}
+          <FileTree
+            items={[{ name: "Pages", filepath: "pages-root", children: pages.map(p => ({ name: p.route, filepath: p.file })) }]}
             selected={selectedPage?.route}
             onSelect={(item) => handlePageSelect({ route: item.name, file: item.filepath })}
           />
-          {frontendGroups.map(group => (
-            <FileTree
-              key={group.label}
-              items={[{
-                name: group.label,
-                filepath: "",
-                children: group.files.map(f => ({ name: f.name, filepath: `${group.root}/${f.filepath}` }))
-              }]}
-              selected={undefined}
-              onSelect={(item) => handleFileSelect(item.filepath)}
-            />
-          ))}
+          <FileTree
+            items={frontendGroups}
+            selected={selectedFile ?? undefined}
+            onSelect={(item) => handleFileSelect(item.filepath)}
+          />
         </div>
 
         <MonacoEditor

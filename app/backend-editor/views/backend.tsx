@@ -6,7 +6,7 @@ import { useBackendManager } from "../models/backendmanager";
 import RightPanel from "../rightpanel/panel";
 
 export default function BackendPage() {
-  const { fileContent, writeFile, hasUnsavedChanges, save, files, selectedFile, onFileSelect } = useBackendManager();
+  const { fileContent, writeFile, hasUnsavedChanges, save, selectedFile, onFileSelect } = useBackendManager();
 
   return (
     <div className="text-white flex flex-col h-full">
@@ -16,7 +16,6 @@ export default function BackendPage() {
           initialCode={fileContent}
           onChange={(value) => writeFile(value)}
           language="python"
-          files={files}
           selectedFile={selectedFile}
           onFileSelect={onFileSelect}
         />

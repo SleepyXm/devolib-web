@@ -1,19 +1,19 @@
-from routers.projects.helpers.scanners.filehandler import _file_exists, _read_file, _find_files
+from routers.projects.helpers.scanners.filehandler import file_exists, read_file, find_files
 import json
 
-def _detect_nextjs(container, repo_path: str) -> bool:
+def detect_nextjs(container, repo_path: str) -> bool:
     return (
-        _file_exists(container, f"{repo_path}/next.config.js")
-        or _file_exists(container, f"{repo_path}/next.config.ts")
-        or _file_exists(container, f"{repo_path}/next.config.mjs")
+        file_exists(container, f"{repo_path}/next.config.js")
+        or file_exists(container, f"{repo_path}/next.config.ts")
+        or file_exists(container, f"{repo_path}/next.config.mjs")
     )
  
  
-def _detect_react(container, repo_path: str) -> bool:
+def detect_react(container, repo_path: str) -> bool:
     pkg_path = f"{repo_path}/package.json"
-    if not _file_exists(container, pkg_path):
+    if not file_exists(container, pkg_path):
         return False
-    content = _read_file(container, pkg_path)
+    content = read_file(container, pkg_path)
     try:
         pkg = json.loads(content)
         deps = {**pkg.get("dependencies", {}), **pkg.get("devDependencies", {})}
@@ -22,11 +22,11 @@ def _detect_react(container, repo_path: str) -> bool:
         return False
  
  
-def _detect_vue(container, repo_path: str) -> bool:
+def detect_vue(container, repo_path: str) -> bool:
     pkg_path = f"{repo_path}/package.json"
-    if not _file_exists(container, pkg_path):
+    if not file_exists(container, pkg_path):
         return False
-    content = _read_file(container, pkg_path)
+    content = read_file(container, pkg_path)
     try:
         pkg = json.loads(content)
         deps = {**pkg.get("dependencies", {}), **pkg.get("devDependencies", {})}
@@ -35,12 +35,12 @@ def _detect_vue(container, repo_path: str) -> bool:
         return False
  
  
-def _detect_vanilla(container, repo_path: str) -> bool:
-    return _file_exists(container, f"{repo_path}/index.html")
+def detect_vanilla(container, repo_path: str) -> bool:
+    return file_exists(container, f"{repo_path}/index.html")
 
 
 
-def _scan_nextjs_pages(container, repo_path: str) -> list:
+def scan_nextjs_pages(container, repo_path: str) -> list:
     """
     Scan for Next.js pages using the App Router convention.
     Any file named page.tsx, page.jsx, page.ts, page.js is a route.
@@ -49,7 +49,7 @@ def _scan_nextjs_pages(container, repo_path: str) -> list:
     pages = []
  
     for ext in ["page.tsx", "page.jsx", "page.ts", "page.js"]:
-        files = _find_files(container, repo_path, ext)
+        files = find_files(container, repo_path, ext)
         for filepath in files:
             # Normalize path relative to repo
             rel = filepath.replace(repo_path, "").lstrip("/")
@@ -75,7 +75,7 @@ def _scan_nextjs_pages(container, repo_path: str) -> list:
     return pages
  
  
-def _scan_react_pages(container, repo_path: str) -> list:
+def scan_react_pages(container, repo_path: str) -> list:
     """
     For React, look for common router file patterns.
     We can't reliably infer routes without running the code,
@@ -90,7 +90,7 @@ def _scan_react_pages(container, repo_path: str) -> list:
     ]
  
     for candidate in router_candidates:
-        files = _find_files(container, f"{repo_path}/src", candidate)
+        files = find_files(container, f"{repo_path}/src", candidate)
         if files:
             rel = files[0].replace(repo_path, "").lstrip("/")
             pages.append({
@@ -102,8 +102,8 @@ def _scan_react_pages(container, repo_path: str) -> list:
     return pages
  
  
-def _scan_vanilla_pages(container, repo_path: str) -> list:
-    html_files = _find_files(container, repo_path, "*.html")
+def scan_vanilla_pages(container, repo_path: str) -> list:
+    html_files = find_files(container, repo_path, "*.html")
     pages = []
     for filepath in html_files:
         rel = filepath.replace(repo_path, "").lstrip("/")
@@ -112,23 +112,23 @@ def _scan_vanilla_pages(container, repo_path: str) -> list:
     return pages
 
 
-def _find_frontend_root(container, repo_path: str, framework: str) -> str | None:
+def find_frontend_root(container, repo_path: str, framework: str) -> str | None:
     if framework == "Next.js":
         candidates = ["next.config.js", "next.config.ts", "next.config.mjs"]
         for candidate in candidates:
-            if _file_exists(container, f"{repo_path}/{candidate}"):
+            if file_exists(container, f"{repo_path}/{candidate}"):
                 return repo_path  # next.config is always at the frontend root
 
     elif framework == "React":
-        if _file_exists(container, f"{repo_path}/package.json"):
+        if file_exists(container, f"{repo_path}/package.json"):
             return repo_path
         # Check common subdirs
         for subdir in ["frontend", "client", "web"]:
-            if _file_exists(container, f"{repo_path}/{subdir}/package.json"):
+            if file_exists(container, f"{repo_path}/{subdir}/package.json"):
                 return f"{repo_path}/{subdir}"
 
     elif framework == "Vue":
-        if _file_exists(container, f"{repo_path}/package.json"):
+        if file_exists(container, f"{repo_path}/package.json"):
             return repo_path
 
     return repo_path  # sensible default

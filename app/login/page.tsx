@@ -65,30 +65,9 @@ async function handleGitHubLogin() {
     <Popup message={error} onClose={() => setError("")} type="error" />
     <Popup message={success} onClose={() => setSuccess("")} type="success" />
     <div className="flex flex-col gap-[4vh] row-start-2 items-center w-[30vw]">
-      <div className="relative w-full max-w-5xl animate-in fade-in slide-in-from-bottom-8 duration-1000 mx-auto">
-        <section className="group relative w-full h-full">
+        <div className="group relative w-full h-full bg-gradient-to-b from-gray-600/70 via-gray-700/40 to-gray-800/60 backdrop-blur-lg p-4 rounded-xl border border-gray-400/50">
 
           {/* spinning blurs */}
-          <div className="absolute inset-0 rounded-2xl overflow-hidden">
-            <div className="pointer-events-none absolute -inset-10 rounded-full bg-gradient-to-r from-transparent via-gray-400/20 to-transparent blur-xl opacity-50 animate-spin [animation-duration:10s]"></div>
-            <div className="pointer-events-none absolute -inset-20 rounded-full bg-gradient-to-r from-transparent via-gray-500/15 to-transparent blur-2xl opacity-30 animate-spin [animation-duration:18s] [animation-direction:reverse]"></div>
-          </div>
-          <div className="absolute inset-0 rounded-2xl p-px bg-gradient-to-b from-gray-300/40 via-gray-600/60 to-gray-800/50"></div>
-
-          <div className="relative h-full overflow-hidden ring-1 ring-white/15 hover:-translate-y-0.5 hover:ring-gray-400/30 hover:shadow-[0_10px_40px_-10px_rgba(107,114,128,0.4)] rounded-2xl transition-all duration-300 ease-out shadow-inner"
-            style={{
-              backgroundColor: "hsl(220, 13%, 9%)",
-              backgroundImage: `
-                radial-gradient(at 88% 40%, hsl(220, 13%, 9%) 0px, transparent 85%),
-                radial-gradient(at 49% 30%, hsl(220, 13%, 9%) 0px, transparent 85%),
-                radial-gradient(at 14% 26%, hsl(220, 13%, 9%) 0px, transparent 85%),
-                radial-gradient(at 0% 64%, hsl(220, 9%, 46%) 0px, transparent 85%),
-                radial-gradient(at 41% 94%, hsl(215, 14%, 34%) 0px, transparent 85%),
-                radial-gradient(at 100% 99%, hsl(217, 19%, 27%) 0px, transparent 85%)
-              `,
-            }}
-          >
-            <div className="relative sm:p-8 lg:p-10 flex flex-col h-full p-6">
 
               {/* Header */}
               <div className="mb-8">
@@ -145,9 +124,6 @@ async function handleGitHubLogin() {
               <AuthFooter isSignUp={isSignUp} onToggle={() => setIsSignUp(!isSignUp)} />
             </div>
           </div>
-        </section>
       </div>
-    </div>
-  </div>
-)
+  )
 }

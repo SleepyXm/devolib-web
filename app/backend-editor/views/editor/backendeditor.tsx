@@ -9,7 +9,6 @@ interface EditorProps {
   initialCode?: string;
   language: string;
   onChange?: (value: string) => void;
-  files: string[];
   selectedFile: string | null;
   onFileSelect: (file: string) => void;
 }
@@ -18,7 +17,6 @@ export default function BackendEditor({
   initialCode,
   language,
   onChange,
-  files,
   selectedFile,
   onFileSelect,
 }: EditorProps) {
@@ -58,26 +56,10 @@ export default function BackendEditor({
     <div className="flex flex-1">
       <div className="dv-folder-panel dv-folder-panel-color">
         <FileTree
-  items={[{
-    name: "Files",
-    filepath: "",
-    children: files.map(f => ({ name: f, filepath: f }))
-  }]}
-  selected={selectedFile ?? undefined}
-  onSelect={(item) => onFileSelect(item.filepath)}
-/>
-{backendGroups.map(group => (
-  <FileTree
-    key={group.label}
-    items={[{
-      name: group.label,
-      filepath: "",
-      children: group.files.map(f => ({ name: f.name, filepath: `${group.root}/${f.filepath}` }))
-    }]}
-    selected={selectedFile ?? undefined}
-    onSelect={(item) => onFileSelect(item.filepath)}
-  />
-))}
+          items={backendGroups}
+          selected={selectedFile ?? undefined}
+          onSelect={(item) => onFileSelect(item.filepath)}
+        />
       </div>
 
       <Editor

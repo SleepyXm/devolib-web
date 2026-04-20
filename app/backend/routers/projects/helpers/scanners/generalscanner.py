@@ -10,59 +10,56 @@ def _infer_context(rel_path: str) -> str:
         return "frontend"
     return "frontend"  # default to frontend if ambiguous
 
-def _scan_groups(container, root_path: str, context: str) -> list:
-    """
-    Recursively walk root_path and build groups.
-    context is "frontend" or "backend" — used to infer meta.
-    """
+def build_tree(container, root_path: str, context: str) -> list:
     result = container.exec_run(
         f"find {root_path} "
         r"-not \( -path '*/node_modules/*' -o -path '*/.git/*' "
-        r"-o -path '*/.next/*' -o -path '*/dist/*' -o -path '*/__pycache__/*' \) "
-        r"-type f",
+        r"-o -path '*/.next/*' -o -path '*/dist/*' -o -path '*/__pycache__/*' \) ",
         tty=False, detach=False,
     )
 
     if not result.output:
         return []
 
-    files_by_dir: dict[str, list] = {}
-
-    for path in result.output.decode().strip().splitlines():
-        path = path.strip()
+    paths = [p.strip() for p in result.output.decode().strip().splitlines() if p.strip()]
+    
+    # Build nested dict structure
+    tree = {}
+    for path in sorted(paths):
         if not path.startswith(root_path):
             continue
         rel = path[len(root_path):].lstrip("/")
         if not rel:
             continue
+        parts = rel.split("/")
+        node = tree
+        for part in parts:
+            node = node.setdefault(part, {})
 
-        parent = "/".join(rel.split("/")[:-1]) or ""
-        filename = rel.split("/")[-1]
-        ext = filename.rsplit(".", 1)[-1] if "." in filename else ""
-        name = filename.rsplit(".", 1)[0]
+    def dict_to_nodes(d: dict, current_path: str) -> list:
+        nodes = []
+        for name, children in sorted(d.items()):
+            rel = f"{current_path}/{name}".lstrip("/")
+            if children:
+                nodes.append({
+                    "name": name,
+                    "filepath": rel,
+                    "type": "folder",
+                    "context": _infer_context(rel),
+                    "children": dict_to_nodes(children, rel)
+                })
+            else:
+                ext = name.rsplit(".", 1)[-1] if "." in name else ""
+                stem = name.rsplit(".", 1)[0]
+                nodes.append({
+                    "name": stem,
+                    "filepath": rel,
+                    "type": "file",
+                    "meta": _infer_meta(stem, ext, current_path, context)
+                })
+        return nodes
 
-        if parent not in files_by_dir:
-            files_by_dir[parent] = []
-
-        files_by_dir[parent].append({
-            "name": name,
-            "filepath": filename,
-            "meta": _infer_meta(name, ext, parent, context),
-        })
-
-    groups = []
-    for dir_rel in sorted(files_by_dir.keys()):
-        if dir_rel == "":
-            continue
-        label = dir_rel.split("/")[-1].replace("-", " ").replace("_", " ").title()
-        groups.append({
-            "label": label,
-            "root": dir_rel,
-            "context": _infer_context(dir_rel),  # ← "frontend" or "backend"
-            "files": files_by_dir.get(dir_rel, []),
-        })
-
-    return groups
+    return dict_to_nodes(tree, "")
 
 
 def _infer_meta(name: str, ext: str, folder: str, context: str) -> dict:

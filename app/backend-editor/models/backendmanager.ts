@@ -10,7 +10,6 @@ export const useBackendManager = () => {
   const { fileContent, writeFile, saveFile, readFile, hasUnsavedChanges } = useFileManager(projectWS);
 
   const [selectedFile, setSelectedFile] = useState<string>("main.py");
-  const files = ["main.py", ...new Set(endpoints.filter(ep => ep.file.startsWith("routers/")).map(ep => ep.file))];
   const scannedEndpoints = useEndpointScanner(fileContent, "fastapi", selectedFile);
 
   useEffect(() => {
@@ -32,5 +31,5 @@ export const useBackendManager = () => {
     await saveEndpoints(projectId, newEndpoints).catch(console.error);
   };
 
-  return { fileContent, writeFile, hasUnsavedChanges, save, scannedEndpoints, files, selectedFile, onFileSelect };
+  return { fileContent, writeFile, hasUnsavedChanges, save, scannedEndpoints, selectedFile, onFileSelect };
 };

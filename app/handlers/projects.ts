@@ -75,11 +75,12 @@ export interface ProjectGroupFile {
 }
 
 export interface ProjectGroup {
-  label: string;
-  root: string;
+  name: string;
+  filepath: string;
+  type: "folder" | "file";
   context: "frontend" | "backend";
-  icon?: string;
-  files: ProjectGroupFile[];
+  meta: ProjectGroupFileMeta;
+  children: ProjectGroup[];
 }
 
 export type ProjectMetaData = {

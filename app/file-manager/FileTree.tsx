@@ -80,7 +80,7 @@ export default function FileTree({ items, selected, onSelect }: FileTreeSectionP
         height={height}
         rowHeight={24}
         indent={0}
-        idAccessor="name"
+        idAccessor="filepath"
         selection={selected}
         onSelect={(nodes: NodeApi<FileTreeProp>[]) => {
           const node = nodes[0];

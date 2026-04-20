@@ -44,10 +44,10 @@ function DotGrid() {
       const h = canvas.height / dpr;
 
       const grid = 12;
-      const dotR = 0.6;
+      const dotR = 0.9;
       const cursorR = 160;
 
-      const base = parseHex("#cccccc");
+      const base = parseHex("#adadad");
       const highlight = parseHex("#000000");
 
       ctx.clearRect(0, 0, w, h);

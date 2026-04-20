@@ -1,15 +1,15 @@
-from routers.projects.helpers.scanners.filehandler import _file_exists, _read_file
+from routers.projects.helpers.scanners.filehandler import file_exists, read_file
 import json
 
-def _detect_db(container, repo_path: str) -> str | None:
+def detect_db(container, repo_path: str) -> str | None:
     # Prisma
-    if _file_exists(container, f"{repo_path}/prisma/schema.prisma"):
+    if file_exists(container, f"{repo_path}/prisma/schema.prisma"):
         return "Prisma"
  
     # Python ORMs
     req_path = f"{repo_path}/requirements.txt"
-    if _file_exists(container, req_path):
-        content = _read_file(container, req_path).lower()
+    if file_exists(container, req_path):
+        content = read_file(container, req_path).lower()
         if "sqlalchemy" in content or "psycopg" in content or "asyncpg" in content:
             return "PostgreSQL"
         if "pymongo" in content:
@@ -17,8 +17,8 @@ def _detect_db(container, repo_path: str) -> str | None:
  
     # Node ORMs / drivers
     pkg_path = f"{repo_path}/package.json"
-    if _file_exists(container, pkg_path):
-        content = _read_file(container, pkg_path)
+    if file_exists(container, pkg_path):
+        content = read_file(container, pkg_path)
         try:
             pkg = json.loads(content)
             deps = {**pkg.get("dependencies", {}), **pkg.get("devDependencies", {})}
