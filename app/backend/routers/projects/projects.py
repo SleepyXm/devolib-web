@@ -199,6 +199,7 @@ async def create_project(
             groups.append({
                 "label": "Utils",
                 "root": "src/components/handlers",
+                "context": "frontend",
                 "files": [
                     {"name": "api", "filepath": "api.js", "meta": {"type": "wrapper", "category": "http", "compatibility": "React"}},
                     {"name": "auth", "filepath": "auth.jsx", "meta": {"type": "hook", "category": "auth", "compatibility": "React"}},
@@ -209,7 +210,7 @@ async def create_project(
 
         elif frontend == "Next.js":
             pages.append({"route": "/", "file": "src/app/page.tsx"})
-            groups.append({"label": "Components", "root": "src/components", "files": []})
+            groups.append({"label": "Components", "root": "src/components", "context": "frontend", "files": []})
 
         if backend == "Express":
             endpoints.append({"method": "GET", "path": "/api/health", "file": "routes/main.js"})
