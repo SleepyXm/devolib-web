@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useUser } from "../provider/UserProvider";
+import Link from "next/link";
 import { logout } from "../handlers/auth";
 import { useRouter } from "next/navigation";
  
@@ -13,8 +14,6 @@ const Navbar = () => {
   useEffect(() => {
     setMounted(true);
   }, []);
- 
-  if (!mounted) return null;
  
   const handleLogout = async () => {
     await logout();
@@ -32,6 +31,8 @@ const Navbar = () => {
         ]
       : [{ label: "Sign in", url: "/login", cta: true }]),
   ];
+
+  if (!mounted) return null;
  
   return (
     <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-[12px] bg-white/20 dark:bg-white/[0.055] backdrop-blur-2xl border-b border-white/40 dark:border-white/[0.09]">
@@ -51,7 +52,7 @@ const Navbar = () => {
           {links.map((link) => (
             <li key={link.label}>
               {link.url ? (
-                <a
+                <Link
                   href={link.url}
                   className={
                     link.cta
@@ -62,7 +63,7 @@ const Navbar = () => {
                   }
                 >
                   {link.label}
-                </a>
+                </Link>
               ) : (
                 <button
                   onClick={link.onClick}
@@ -103,12 +104,12 @@ const Navbar = () => {
           {links.map((link) => (
             <li key={link.label}>
               {link.url ? (
-                <a
+                <Link
                   href={link.url}
                   className="block w-full px-[14px] py-[10px] rounded-[10px] text-sm font-medium no-underline text-black/45 dark:text-white/45 hover:bg-white/40 dark:hover:bg-white/[0.09] hover:text-black dark:hover:text-[#f0f0f0] transition-all duration-150"
                 >
                   {link.label}
-                </a>
+                </Link>
               ) : (
                 <button
                   onClick={link.onClick}

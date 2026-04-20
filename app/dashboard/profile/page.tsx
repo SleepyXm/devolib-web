@@ -157,7 +157,7 @@ useEffect(() => {
           {activeTab === "personalization" && (
             <TabSection title="Personalization" subtitle="Customize your editor and assistant preferences.">
               <InfoRow label="Editor Theme" value="Devolib Default" action={() => {}} actionLabel="Change" />
-              <InfoRow label="Design Assistant" value="Claude Sonnet" action={() => {}} actionLabel="Change" />
+              <InfoRow label="Design Assistant" value="DeepSeek" action={() => {}} actionLabel="Change" />
             </TabSection>
           )}
  

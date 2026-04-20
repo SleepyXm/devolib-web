@@ -55,7 +55,7 @@ export interface ProjectEndpoint {
   method: string;
   path: string;
   file: string; // relative to /app/workspace/backend/{name}/
-  handler?: string;
+  handler: string;
 }
 
 export interface ProjectGroupFileMeta {

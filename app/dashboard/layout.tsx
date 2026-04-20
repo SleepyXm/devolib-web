@@ -13,9 +13,6 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
-  const { user, resolved } = useUser();
-  const name = user?.username;
-  const router = useRouter();
 
 
   const tabs = [
@@ -26,14 +23,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   ];
 
   const activeTab = pathname.split("/").pop();
-
-  useEffect(() => {
-  if (resolved && !user) {
-    router.replace("/login");
-  }
-}, [resolved, user, router]);
-
-if (!resolved) return null;
 
 
   return (

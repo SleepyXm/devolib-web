@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { signup, login, loginWithGitHub, handleGitHubCallback, validateUser } from "@/app/handlers/auth";
+import { signup, login, loginWithGitHub } from "@/app/handlers/auth";
 import { useUser } from "@/app/provider/UserProvider";
 import Popup from "@/app/components/ErrorPopup";
 import { AuthInput, AuthDivider, AuthFooter, GithubButton } from "./logincomponents";

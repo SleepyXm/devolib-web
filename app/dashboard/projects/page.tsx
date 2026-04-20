@@ -33,6 +33,7 @@ export default function ProjectsPage() {
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [loaderStep, setLoaderStep] = useState(0);
+  const [empty, setEmpty] = useState(false);
 
   // modal
   const [modalOpen, setModalOpen] = useState(false);
@@ -71,6 +72,10 @@ export default function ProjectsPage() {
 
   const handleSubmit = async (data: ProjectFormData) => {
     if (!username) return;
+    if (data.type === "blank" && !data.name.trim()) {
+    setError("Project name is required");
+    return;
+    }
     setModalOpen(false);
     setCreating(true);
     setLoaderStep(0);
