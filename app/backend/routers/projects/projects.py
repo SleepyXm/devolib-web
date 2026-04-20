@@ -108,8 +108,14 @@ async def create_project(
     current_user: dict = Depends(get_current_user),
     import_url: str = Body(None, embed=True),
 ):
+    
+    if not name or not name.strip():
+        raise HTTPException(status_code=422, detail="Project name is required")
+    
     project_id = str(uuid.uuid4())
     access_token = secrets.token_urlsafe(32)
+
+    
 
     await database.execute(
         query=create_project_query(),
