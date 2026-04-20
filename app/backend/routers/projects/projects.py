@@ -183,7 +183,6 @@ async def create_project(
 
         pages = scan.pages if scan else []
         endpoints = scan.endpoints if scan else []
-        groups = scan.groups if scan else []
 
     else:
         frontend_root = f"/app/workspace/frontend/{name}"
@@ -192,30 +191,18 @@ async def create_project(
 
         pages = []
         endpoints = []
-        groups = []
 
         if frontend == "React":
             pages.append({"route": "/", "file": "src/App.jsx"})
-            groups.append({
-                "label": "Utils",
-                "root": "src/components/handlers",
-                "context": "frontend",
-                "files": [
-                    {"name": "api", "filepath": "api.js", "meta": {"type": "wrapper", "category": "http", "compatibility": "React"}},
-                    {"name": "auth", "filepath": "auth.jsx", "meta": {"type": "hook", "category": "auth", "compatibility": "React"}},
-                    {"name": "requests", "filepath": "requests.js", "meta": {"type": "wrapper", "category": "http", "compatibility": "React"}},
-                ]
-            })
-            groups.append({"label": "Components", "root": "src/components", "files": []})
-
         elif frontend == "Next.js":
             pages.append({"route": "/", "file": "src/app/page.tsx"})
-            groups.append({"label": "Components", "root": "src/components", "context": "frontend", "files": []})
 
         if backend == "Express":
             endpoints.append({"method": "GET", "path": "/api/health", "file": "routes/main.js"})
         elif backend == "FastAPI":
             endpoints.append({"method": "GET", "path": "/api/health", "file": "main.py"})
+
+    groups = container_info.get("groups", [])
 
     # Always runs for both paths
     await database.execute(

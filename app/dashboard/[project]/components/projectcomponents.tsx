@@ -28,7 +28,7 @@ export function ServiceTab({ label, active, hasDot = false, online = false, conn
       className={`px-4 py-2 rounded flex items-center gap-2 ${
         active
           ? "bg-[#222830] border border-[#2e3540] text-white"
-          : "bg-transparent border-transparent text-[#3a4050] transition-all hover:text-zinc-400 duration-400"
+          : "bg-transparent border-transparent text-[#3a4050] dark:text-[#6f6f6f] transition-all hover:text-zinc-400 dark:hover:text-zinc-300 duration-400"
       }`}
     >
       {hasDot && (

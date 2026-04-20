@@ -8,6 +8,7 @@ from .helpers.base_images import ensure_exists
 from .helpers.scanners.scanner import scan_project
 from .container import docker_client
 from helpers.structlogger import logger
+from routers.projects.helpers.scanners.generalscanner import _scan_groups
 
 
 router = APIRouter()
@@ -153,6 +154,13 @@ async def create_project_container( project_id: str, project_name: str, backend_
     container.exec_run("sh -c 'logd &'", tty=True, detach=True)
     logger.info("Logging service started")
 
+    groups = []
+    if not import_url:
+        if frontend_services:
+            groups += _scan_groups(container, f"/app/workspace/frontend/{project_name}", "frontend")
+        if backend_services:
+            groups += _scan_groups(container, "/app/workspace/backend", "backend")
+
     container.stop()  # Stop after scaffolding to save resources until user starts the project
 
     # Persist container ID to DB
@@ -169,7 +177,12 @@ async def create_project_container( project_id: str, project_name: str, backend_
         **result["metadata"],
         "configs_map": configs_map,
         "scan": scan_result if import_url else None,
+        "groups": scan_result.groups if import_url and scan_result else groups,
     }
+
+
+
+
 
 
 async def delete_project_container(project_id: str):
