@@ -25,7 +25,6 @@ export default function ProjectsPage() {
   const { user } = useUser();
   const username = user?.username;
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -33,6 +32,7 @@ export default function ProjectsPage() {
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [loaderStep, setLoaderStep] = useState(0);
+  const [searchParams, setSearchParams] = useState<URLSearchParams | null>(null);
   const [empty, setEmpty] = useState(false);
 
   // modal
@@ -46,6 +46,13 @@ export default function ProjectsPage() {
   const [selectedTemplate, setSelectedTemplate] = useState("");
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      setSearchParams(params);
+    }
+  }, []);
+
+  useEffect(() => {
     if (!username) return;
     setLoading(true);
     listProjects()
@@ -55,6 +62,7 @@ export default function ProjectsPage() {
   }, [username]);
 
   useEffect(() => {
+    if (!searchParams) return; // wait for searchParams to be set
     const modal = searchParams.get("modal");
     const repo = searchParams.get("repo");
     const url = searchParams.get("url");
