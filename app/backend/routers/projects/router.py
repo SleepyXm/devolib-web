@@ -1,17 +1,21 @@
-import uuid
-from fastapi import APIRouter, Depends, Body, HTTPException, Request
+import uuid,secrets, json, httpx, asyncio, docker
+from fastapi import APIRouter, Depends, Body, HTTPException, Request, WebSocket, WebSocketDisconnect, Query
 from database import database
-from routers.auth.auth_utils import get_current_user
-from .images import create_project_container, delete_project_container
-import secrets, json, httpx
+from routers.auth.auth_utils import get_current_user, decrypt
+from .container import create_project_container, delete_project_container, start_container, stop_running_container
 from helpers.limiter import limiter
 from helpers.queries.projectquery import list_projects_query, create_project_query
-from routers.auth.auth_utils import decrypt
+from helpers.servicestates import send_service_status
 from helpers.structlogger import logger
+from helpers.stopper import stop_container
+from helpers.dockerclient import docker_client
+from datetime import datetime
+from .services import process_command, tail_logd
+from .operations import get_project, get_or_create_metadata, update_project_metadata
 
-router = APIRouter()
+project_router = APIRouter()
 
-@router.get("/list")
+@project_router.get("/list")
 async def list_projects(current_user: dict = Depends(get_current_user)):
     # Aggregate query, removing N+1 query
     rows = await database.fetch_all(query=list_projects_query(), values={"user_id": current_user["id"]})
@@ -42,7 +46,9 @@ async def list_projects(current_user: dict = Depends(get_current_user)):
     return {"projects": list(projects_dict.values())}
 
 
-@router.get("/repos")
+
+
+@project_router.get("/repos")
 async def get_github_repos(current_user: dict = Depends(get_current_user)):
     user = await database.fetch_one(
         "SELECT github_access_token FROM users WHERE id = :id",
@@ -89,7 +95,7 @@ async def get_github_repos(current_user: dict = Depends(get_current_user)):
     }
 
 
-@router.post("/create")
+@project_router.post("/create")
 @limiter.limit("10/minute")
 async def create_project(
     request: Request,
@@ -148,6 +154,17 @@ async def create_project(
         await database.execute("DELETE FROM project_services WHERE project_id = :id", {"id": project_id})
         await database.execute("DELETE FROM projects WHERE project_id = :id", {"id": project_id})
         raise HTTPException(status_code=500, detail="Failed to create project container")
+    
+    if container_info.get("detected_frameworks"):
+        detected_services = await database.fetch_all(
+            "SELECT id FROM services WHERE framework = ANY(:frameworks)",
+            values={"frameworks": container_info["detected_frameworks"]}
+        )
+        for service in detected_services:
+            await database.execute(
+                "INSERT INTO project_services (id, project_id, service_id, created_at) VALUES (:id, :project_id, :service_id, NOW())",
+                values={"id": str(uuid.uuid4()), "project_id": project_id, "service_id": service["id"]},
+            )
 
     await database.execute(
         "UPDATE projects SET frontend_root = :fr, backend_root = :br, db_root = :dr WHERE project_id = :id",
@@ -180,15 +197,9 @@ async def create_project(
 
 
 
-@router.get("/{project_id}")
-async def get_project(project_id: str, current_user: dict = Depends(get_current_user)):
-    query = "SELECT project_id, name, access_token, frontend_root, backend_root, db_root FROM projects WHERE project_id = :project_id AND user_id = :user_id"
-    project = await database.fetch_one(query=query, values={"project_id": project_id, "user_id": current_user["id"]})
-    
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
-    
-    project = dict(project)
+@project_router.get("/{project_id}")
+async def get_project_info(project_id: str, current_user: dict = Depends(get_current_user)):
+    project = dict(await get_project(project_id, current_user["id"]))
     return {
         **project,
         "roots": {
@@ -199,108 +210,116 @@ async def get_project(project_id: str, current_user: dict = Depends(get_current_
     }
 
 
-
-    
-
-@router.delete("/delete")
-async def delete_project(
-    project_id: str = Body(..., embed=True),
-    current_user: dict = Depends(get_current_user)
-    ):
-
-    select_query = """
-    SELECT project_id FROM projects
-    WHERE project_id = :project_id AND user_id = :user_id
-    """
-    project = await database.fetch_one(
-        query=select_query,
-        values={"project_id": project_id, "user_id": current_user["id"]}
-    )
-
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found or not owned by user")
-
-
+@project_router.delete("/delete")
+async def delete_project(project_id: str = Body(..., embed=True), current_user: dict = Depends(get_current_user)):
+    await get_project(project_id, current_user["id"])
     await delete_project_container(project_id)
-
-
-    delete_query = "DELETE FROM projects WHERE project_id = :project_id"
-    await database.execute(query=delete_query, values={"project_id": project_id})
-
+    await database.execute("DELETE FROM projects WHERE project_id = :project_id", {"project_id": project_id})
     return {"ok": True, "project_id": project_id, "deleted": True}
 
-@router.get("/metadata/{project_id}")
-async def get_metadata(
-    project_id: str,
-    current_user: dict = Depends(get_current_user)
-):
-    # Verify ownership
-    select_query = """
-    SELECT project_id FROM projects 
-    WHERE project_id = :project_id AND user_id = :user_id
-    """
-    project = await database.fetch_one(
-        select_query,
-        {"project_id": project_id, "user_id": current_user["id"]}
-    )
-    
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found or not owned by user")
-    
-    # Get metadata
-    query = """
-    SELECT envs, db_schema, endpoints, pages, groups, updated_at
-    FROM project_metadata
-    WHERE project_id = :project_id
-    """
-    metadata = await database.fetch_one(query, {"project_id": project_id})
-    
-    if not metadata:
-        # Create default metadata
-        await database.execute(
-            """
-            INSERT INTO project_metadata (project_id, envs, db_schema, pages, endpoints, groups)
-            VALUES (:project_id, '[]'::jsonb, '{}'::jsonb, '[]'::jsonb, '[]'::jsonb, '[]'::jsonb)
-            """,
-            {"project_id": project_id}
-        )
-        return {
-            "envs": [],
-            "db_schema": {},
-            "pages": [],
-            "endpoints": [],
-            "groups": [],
-            "updated_at": None
-        }
-    
-    return {
-        "envs": json.loads(metadata["envs"]) if isinstance(metadata["envs"], str) else (metadata["envs"] or []),
-        "db_schema": json.loads(metadata["db_schema"]) if isinstance(metadata["db_schema"], str) else (metadata["db_schema"] or {}),
-        "pages": json.loads(metadata["pages"]) if isinstance(metadata["pages"], str) else (metadata["pages"] or []),
-        "endpoints": json.loads(metadata["endpoints"]) if isinstance(metadata["endpoints"], str) else (metadata["endpoints"] or []),
-        "groups": json.loads(metadata["groups"]) if isinstance(metadata["groups"], str) else (metadata["groups"] or []),
-        "updated_at": metadata["updated_at"]
-    }
 
-@router.patch("/metadata/{project_id}")
-async def update_metadata(project_id: str, body: dict, current_user: dict = Depends(get_current_user)):
 
-    project = await database.fetch_one(
-        "SELECT project_id FROM projects WHERE project_id = :project_id AND user_id = :user_id",
-        {"project_id": project_id, "user_id": current_user["id"]}
-    )
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found or not owned by user")
+@project_router.get("/metadata/{project_id}")
+async def get_metadata(project_id: str, current_user: dict = Depends(get_current_user)):
+    await get_project(project_id, current_user["id"])
+    return await get_or_create_metadata(project_id)
 
-    allowed = {"envs", "db_schema", "pages", "endpoints", "groups"}
-    updates = {k: v for k, v in body.items() if k in allowed}
-    if not updates:
-        raise HTTPException(status_code=400, detail="No valid fields to update")
 
-    set_clause = ", ".join(f"{k} = :{k}" for k in updates)
-    await database.execute(
-        f"UPDATE project_metadata SET {set_clause}, updated_at = NOW() WHERE project_id = :project_id",
-        {**{k: json.dumps(v) for k, v in updates.items()}, "project_id": project_id}
-    )
-
+@project_router.patch("/metadata/{project_id}")
+async def patch_metadata(project_id: str, body: dict, current_user: dict = Depends(get_current_user)):
+    await update_project_metadata(project_id, current_user["id"], body)
     return {"ok": True}
+
+
+
+@project_router.post("/start/{project_id}")
+async def start_project(project_id: str, current_user: dict = Depends(get_current_user)):
+    project = await get_project(project_id, current_user["id"])
+    if project["status"] == "running":
+        raise HTTPException(status_code=400, detail="Project is already running")
+
+    container = await start_container(project_id)
+    return {"ok": True, "container_id": container.id, "status": container.status}
+
+
+
+# Main WebSocket handler
+@project_router.websocket("/ws/{project_id}")
+async def websocket_terminal(websocket: WebSocket, project_id: str, access_token: str = Query(None)):
+
+    if not access_token:
+        await websocket.close(code=1008, reason="Access token required")
+        return 
+    
+    query = "SELECT * FROM projects WHERE project_id = :project_id AND access_token = :access_token"
+    project = await database.fetch_one(query=query, values={"project_id": project_id, "access_token": access_token})
+    
+    if not project:
+        await websocket.close(code=1008, reason="Invalid access token or project not found")
+        return
+
+    project_name = project["name"]
+
+    await websocket.accept()
+
+    container_name = f"devolib_project_{project_id}"
+    try:
+        container = docker_client.containers.get(container_name)
+    except docker.errors.NotFound:
+        await websocket.send_text("Container not found\n")
+        await websocket.close(code=1000)
+        return
+
+    send_queue = asyncio.Queue()
+
+    async def sender():
+        while True:
+            msg = await send_queue.get()
+            if msg is None:
+                break
+            try:
+                await websocket.send_text(msg)
+            except Exception as e:
+                logger.warning("websocket send failed", error=str(e))
+
+    sender_task = asyncio.create_task(sender())
+    logd_task = asyncio.create_task(tail_logd(container, send_queue))
+
+    await send_queue.put(f"User connected at {datetime.utcnow().isoformat()}!\n")
+    await send_service_status(send_queue, {"container": True})
+
+    current_dir = "/app/workspace"
+
+    try:
+        while True:
+            cmd = await websocket.receive_text()
+            print(f"Received command: {cmd}")
+
+            output, current_dir = await process_command(container, cmd, current_dir, send_queue, project_id, project_name)
+
+            if output:
+                await send_queue.put(output)
+
+    except WebSocketDisconnect:
+        print(f"WebSocket disconnected for project {project_id}")
+
+    except Exception as e:
+        print(f"WebSocket error for project {project_id}: {e}")
+        await send_queue.put(f"Connection error: {str(e)}\n")
+
+    finally:
+        logd_task.cancel()
+        await send_queue.put(None)  # shut down sender
+        await sender_task
+            
+
+
+
+@project_router.post("/stop/{project_id}")
+async def stop_project(project_id: str, current_user: dict = Depends(get_current_user)):
+    await get_project(project_id, current_user["id"])
+    try:
+        container = await stop_container(project_id)
+        return {"ok": True, "container_id": container.id, "status": "stopped"}
+    except docker.errors.NotFound:
+        raise HTTPException(status_code=404, detail="Container not found")

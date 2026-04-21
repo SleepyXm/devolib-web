@@ -91,6 +91,11 @@ async def scaffold_fresh(container, project_name: str, frontend_services: list, 
                 detach=False,
             ))
 
+    return {
+        "pages": [{"route": "/", "file": "src/App.jsx"}] if "React" in frontend_services else [],
+        "endpoints": [{"method": "GET", "path": "/api/health", "file": "main.py"}] if "FastAPI" in backend_services else [],
+    }
+
             
 
 

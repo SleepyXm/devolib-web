@@ -1,36 +1,150 @@
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, Query
-from database import database
-from routers.auth.auth_utils import get_current_user
-from datetime import datetime
-from .services import process_command, tail_logd
-from helpers.servicestates import send_service_status, send_error
-import asyncio
-from helpers.stopper import stop_container
-from helpers.dockerclient import docker_client
 import docker
+from database import database
+from .helpers.containerhelper import create_and_start_container, scaffold_template
+from helpers.dockerclient import docker_client
 from helpers.structlogger import logger
+from .containers.config import project_services_config
+from .containers.scaffold import scaffold_import, scaffold_fresh, build_project_groups
+from fastapi import HTTPException
 
-router = APIRouter()
+async def create_project_container(
+    project_id: str,
+    project_name: str,
+    backend_services=None,
+    frontend_services=None,
+    db=None,
+    import_url=None,
+):
+    """
+    Orchestrates container creation and project scaffolding.
+    """
+    backend_services = backend_services or []
+    frontend_services = frontend_services or []
+    db = db or []
+
+    # Fetch service configs
+    config = await project_services_config(project_name, backend_services, frontend_services, db)
+    configs_map = config["configs_map"]
+
+    # Create and start container
+    result = create_and_start_container(
+        project_id=project_id,
+        project_name=project_name,
+        base_tag=config["base_tag"],
+        base_type=config["base_type"],
+        clean_name=config["clean_name"],
+        frontend_port=config["frontend_port"],
+        backend_services=backend_services,
+        frontend_services=frontend_services,
+        db=db,
+    )
+
+    container = result["container"]
+    scan_result = None
+
+    if import_url:
+        scan_result = await scaffold_import(container, import_url)
+    else:
+        fresh_result= await scaffold_fresh(container, project_name, frontend_services, backend_services, db, configs_map)
+
+    scaffold_template(container, "LoggingService", "/")
+    container.exec_run("sh -c 'logd &'", tty=True, detach=True)
+
+    if import_url:
+        repo_name = import_url.rstrip("/").split("/")[-1].removesuffix(".git")
+        frontend_root = scan_result.frontend_root if scan_result and scan_result.frontend_root else f"/app/workspace/{repo_name}"
+        backend_root = scan_result.backend_root if scan_result else None
+        db_root = None
+        pages = scan_result.pages if scan_result else []
+        endpoints = scan_result.endpoints if scan_result else []
+    else:
+        frontend_root = f"/app/workspace/frontend/{project_name}"
+        backend_root = "/app/workspace/backend"
+        db_root = "/app/workspace/database"
+        pages = fresh_result["pages"]
+        endpoints = fresh_result["endpoints"]
+
+    detected_frameworks = [f for f in [
+        scan_result.frontend_framework,
+        scan_result.backend_framework,
+        scan_result.db_framework,
+    ] if f] if scan_result else []
+
+    groups = build_project_groups(container, project_name, frontend_services, backend_services, scan_result)
+
+    container.stop()
+
+    await database.execute(
+        """
+        UPDATE projects
+        SET container_id = :container_id
+        WHERE project_id = :project_id
+        """,
+        {"container_id": container.id, "project_id": project_id},
+    )
+
+    return {
+        **result["metadata"],
+        "configs_map": configs_map,
+        "scan": scan_result,
+        "groups": groups,
+        "frontend_root": frontend_root,
+        "backend_root": backend_root,
+        "db_root": db_root,
+        "pages": pages,
+        "endpoints": endpoints,
+        "detected_frameworks": detected_frameworks,
+    }
 
 
-@router.post("/start/{project_id}")
-async def start_project_container(project_id: str, current_user: dict = Depends(get_current_user)):
 
-    select_query = "SELECT * FROM projects WHERE project_id = :project_id AND user_id = :user_id"
-    project = await database.fetch_one(query=select_query, values={"project_id": project_id, "user_id": current_user["id"]})
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found or not owned by user")
 
-    if project["status"] == "running":
-        raise HTTPException(status_code=400, detail="Project is already running")
-    
+async def delete_project_container(project_id: str):
+    """
+    Stop and remove container + volume.
+    Base images stay cached - no deletion needed.
+    """
     container_name = f"devolib_project_{project_id}"
+    volume_name = f"devolib_project_{project_id}"
+
+    # Remove container
+    try:
+        container = docker_client.containers.get(container_name)
+        logger.info("Stopping container", project_id=project_id)
+        container.stop(timeout=2)
+        container.remove()
+        logger.info("Container removed", project_id=project_id)
+    except docker.errors.NotFound:
+        logger.warning("Container not found", container_name=container_name)
+    except Exception as e:
+        logger.error("Error removing container", project_id=project_id, error=str(e))
+        raise
+
+    # Remove volume
+    try:
+        volume = docker_client.volumes.get(volume_name)
+        volume.remove()
+        logger.info("Volume removed", volume_name=volume_name)
+    except docker.errors.NotFound:
+        logger.warning("Volume not found", volume_name=volume_name)
+    except Exception as e:
+        logger.warning("Error removing volume", project_id=project_id, error=str(e))
+
+
+async def start_container(project_id: str) -> docker.models.containers.Container:
+    """
+    Ensures the container is running, starting from image if needed.
+    Also ensures logd is running inside the container.
+    Returns the container object.
+    """
+    container_name = f"devolib_project_{project_id}"
+    image_tag = f"devolib_project_{project_id}"
+
     try:
         container = docker_client.containers.get(container_name)
         if container.status != "running":
             container.start()
     except docker.errors.NotFound:
-        image_tag = f"devolib_project_{project_id}"
         try:
             container = docker_client.containers.run(
                 image_tag,
@@ -43,104 +157,38 @@ async def start_project_container(project_id: str, current_user: dict = Depends(
             )
         except docker.errors.ImageNotFound:
             raise HTTPException(status_code=404, detail="Docker image not found")
-        
-    # Start logd if not already running
+
+    # Ensure logd is running
     check = container.exec_run("pgrep logd", tty=False, detach=False)
     if check.exit_code != 0:
         container.exec_run("sh -c 'logd > /var/log/logd.log 2>&1 &'", tty=False, detach=True)
         logger.info("Started logd", project_id=project_id)
     else:
         logger.info("logd already running", project_id=project_id)
-    
+
     await database.execute(
         "UPDATE projects SET last_online = NOW(), status = 'running' WHERE project_id = :project_id",
         {"project_id": project_id}
     )
-    
-    return {"ok": True, "container_id": container.id, "status": container.status}
+
+    return container
 
 
 
-# Main WebSocket handler
-@router.websocket("/ws/{project_id}")
-async def websocket_terminal(websocket: WebSocket, project_id: str, access_token: str = Query(None)):
 
-    if not access_token:
-        await websocket.close(code=1008, reason="Access token required")
-        return 
-    
-    query = "SELECT * FROM projects WHERE project_id = :project_id AND access_token = :access_token"
-    project = await database.fetch_one(query=query, values={"project_id": project_id, "access_token": access_token})
-    
-    if not project:
-        await websocket.close(code=1008, reason="Invalid access token or project not found")
-        return
-
-    project_name = project["name"]
-
-    await websocket.accept()
-
+async def stop_running_container(project_id: str) -> docker.models.containers.Container:
+    """
+    Stops a running container and updates DB status.
+    Returns the container object.
+    Raises docker.errors.NotFound if the container doesn't exist.
+    """
     container_name = f"devolib_project_{project_id}"
-    try:
-        container = docker_client.containers.get(container_name)
-    except docker.errors.NotFound:
-        await websocket.send_text("Container not found\n")
-        await websocket.close(code=1000)
-        return
+    container = docker_client.containers.get(container_name)  # raises NotFound if absent
+    container.stop(timeout=2)
 
-    send_queue = asyncio.Queue()
+    await database.execute(
+        "UPDATE projects SET status = 'stopped' WHERE project_id = :project_id",
+        {"project_id": project_id}
+    )
 
-    async def sender():
-        while True:
-            msg = await send_queue.get()
-            if msg is None:
-                break
-            try:
-                await websocket.send_text(msg)
-            except Exception as e:
-                logger.warning("websocket send failed", error=str(e))
-
-    sender_task = asyncio.create_task(sender())
-    logd_task = asyncio.create_task(tail_logd(container, send_queue))
-
-    await send_queue.put(f"User connected at {datetime.utcnow().isoformat()}!\n")
-    await send_service_status(send_queue, {"container": True})
-
-    current_dir = "/app/workspace"
-
-    try:
-        while True:
-            cmd = await websocket.receive_text()
-            print(f"Received command: {cmd}")
-
-            output, current_dir = await process_command(container, cmd, current_dir, send_queue, project_id, project_name)
-
-            if output:
-                await send_queue.put(output)
-
-    except WebSocketDisconnect:
-        print(f"WebSocket disconnected for project {project_id}")
-
-    except Exception as e:
-        print(f"WebSocket error for project {project_id}: {e}")
-        await send_queue.put(f"Connection error: {str(e)}\n")
-
-    finally:
-        logd_task.cancel()
-        await send_queue.put(None)  # shut down sender
-        await sender_task
-            
-
-
-
-@router.post("/stop/{project_id}")
-async def stop_project_container(project_id: str, current_user: dict = Depends(get_current_user)):
-    select_query = "SELECT * FROM projects WHERE project_id = :project_id AND user_id = :user_id"
-    project = await database.fetch_one(query=select_query, values={"project_id": project_id, "user_id": current_user["id"]})
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found or not owned by user")
-    try:
-        container = await stop_container(project_id)
-        return {"ok": True, "container_id": container.id, "status": "stopped"}
-    except docker.errors.NotFound:
-        raise HTTPException(status_code=404, detail="Container not found")
+    return container
