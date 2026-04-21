@@ -1,28 +1,16 @@
 import docker, os, json, structlog
 from fastapi import APIRouter
 from database import database
-from routers.auth.auth_utils import get_current_user
 from datetime import datetime
-from .helpers.containerhelper import create_and_start_container, scaffold_template, _clean_name
-from .helpers.base_images import ensure_exists
-from .helpers.scanners.scanner import scan_project
+from .helpers.containerhelper import create_and_start_container, scaffold_template
 from .container import docker_client
 from helpers.structlogger import logger
-from routers.projects.helpers.scanners.generalscanner import build_tree
+from .containers.config import project_services_config
+from .containers.scaffold import scaffold_import, scaffold_fresh, build_project_groups
 
 
 router = APIRouter()
 
-def pick_base_image(backend_services: list, frontend_services: list, db: list) -> str:
-
-    has_be = bool(backend_services)
-    has_fe = bool(frontend_services)
-    has_db = bool(db)
-
-    if has_be and has_fe and has_db:
-        return "fullstacktest"
-    else:
-        return "fullstacktest"
 
 async def create_project_container(
     project_id: str,
@@ -40,40 +28,17 @@ async def create_project_container(
     db = db or []
 
     # Fetch service configs
-    all_services = backend_services + frontend_services + db
-    service_configs = await database.fetch_all(
-        """
-        SELECT framework, default_port, scaffold_command, start_flags, default_packages
-        FROM services
-        WHERE framework = ANY(:frameworks)
-        """,
-        {"frameworks": all_services},
-    )
-    configs_map = { config["framework"]: dict(config) for config in service_configs }
-
-    # Resolve frontend port
-    frontend_port = next(
-        (
-            configs_map[fw]["default_port"]
-            for fw in frontend_services
-            if fw in configs_map and configs_map[fw]["default_port"]
-        ),
-        3000,
-    )
-
-    # Resolve base image and clean name
-    base_type = pick_base_image(backend_services, frontend_services, db)
-    base_tag = ensure_exists(base_type)
-    clean_name = _clean_name(project_name)
+    config = await project_services_config(project_name, backend_services, frontend_services, db)
+    configs_map = config["configs_map"]
 
     # Create and start container
     result = create_and_start_container(
         project_id=project_id,
         project_name=project_name,
-        base_tag=base_tag,
-        base_type=base_type,
-        clean_name=clean_name,
-        frontend_port=frontend_port,
+        base_tag=config["base_tag"],
+        base_type=config["base_type"],
+        clean_name=config["clean_name"],
+        frontend_port=config["frontend_port"],
         backend_services=backend_services,
         frontend_services=frontend_services,
         db=db,
@@ -83,151 +48,28 @@ async def create_project_container(
     scan_result = None
 
     if import_url:
-        repo_name = import_url.rstrip("/").split("/")[-1].removesuffix(".git")
-        workspace = "/app/workspace"
-        repo_path = f"{workspace}/{repo_name}"
-
-        logger.info("Cloning repo", url=import_url)
-        container.exec_run(
-            f"sh -c 'cd {workspace} && git clone --depth=1 {import_url}'",
-            tty=True,
-            detach=False,
-        )
-
-        logger.info("Scanning project structure", url=import_url)
-        scan_result = scan_project(container, repo_path)
-
-        logger.info("Installing frontend dependencies", url=import_url)
-        container.exec_run(
-            f"sh -c 'if [ -f {repo_path}/package.json ]; then cd {repo_path} && npm install; fi'",
-            tty=True,
-            detach=False,
-        )
-
-        logger.info("Installing backend dependencies", url=import_url)
-        container.exec_run(
-            f"sh -c 'if [ -f {repo_path}/requirements.txt ]; then pip install -r {repo_path}/requirements.txt; fi'",
-            tty=True,
-            detach=False,
-        )
-
+        scan_result = await scaffold_import(container, import_url)
     else:
-        # Frontend scaffolding
-        for framework in frontend_services:
-            cfg = configs_map.get(framework)
-
-            if cfg and cfg.get("scaffold_command"):
-                cmd = cfg["scaffold_command"].replace("{name}", project_name)
-                logger.info("Scaffolding frontend", framework=framework, cmd=cmd)
-                container.exec_run(
-                    f"sh -c 'cd /app/workspace/frontend && {cmd}'",
-                    tty=True,
-                    detach=False,
-                )
-
-            if cfg and cfg.get("default_packages"):
-                packages = " ".join(json.loads(cfg["default_packages"]))
-                container.exec_run(
-                    f"sh -c 'cd /app/workspace/frontend/{project_name} && npm install {packages}'",
-                    tty=True,
-                    detach=False,
-                )
-
-            if framework == "React":
-                scaffold_template(
-                    container,
-                    "React",
-                    f"/app/workspace/frontend/{project_name}",
-                )
-
-        # Backend scaffolding
-        for framework in backend_services:
-            cfg = configs_map.get(framework)
-
-            if framework == "FastAPI":
-                scaffold_template(container, "FastAPI", "/app/workspace/backend")
-                container.exec_run(
-                    "sh -c 'mkdir -p /app/workspace/backend/routers'",
-                    tty=True,
-                    detach=False,
-                )
-
-            if cfg and cfg.get("scaffold_command"):
-                cmd = cfg["scaffold_command"].replace("{name}", project_name)
-                logger.info("Scaffolding backend", framework=framework, cmd=cmd)
-                container.exec_run(f"sh -c '{cmd}'", tty=True, detach=False)
-
-        # DB scaffolding
-        for framework in db:
-            cfg = configs_map.get(framework)
-            if cfg and cfg.get("scaffold_command"):
-                cmd = cfg["scaffold_command"].replace("{name}", project_name)
-                logger.info("Scaffolding database", framework=framework, cmd=cmd)
-                container.exec_run(
-                    f"sh -c 'cd /app/workspace/database && {cmd}'",
-                    tty=True,
-                    detach=False,
-                )
+        await scaffold_fresh(container, project_name, frontend_services, backend_services, db, configs_map)
 
     scaffold_template(container, "LoggingService", "/")
     container.exec_run("sh -c 'logd &'", tty=True, detach=True)
 
-    groups = []
-
-    if import_url and scan_result:
-        if scan_result.frontend_groups:
-            groups.append(
-                {
-                    "name": "frontend",
-                    "type": "folder",
-                    "context": "frontend",
-                    "filepath": (scan_result.frontend_root or "").replace(
-                        "/app/workspace/", ""
-                    ).strip("/")
-                    or "frontend",
-                    "children": scan_result.frontend_groups,
-                }
-            )
-
-        if scan_result.backend_groups:
-            groups.append(
-                {
-                    "name": "backend",
-                    "type": "folder",
-                    "context": "backend",
-                    "filepath": (scan_result.backend_root or "").replace(
-                        "/app/workspace/", ""
-                    ).strip("/")
-                    or "backend",
-                    "children": scan_result.backend_groups,
-                }
-            )
+    if import_url:
+        repo_name = import_url.rstrip("/").split("/")[-1].removesuffix(".git")
+        frontend_root = scan_result.frontend_root if scan_result and scan_result.frontend_root else f"/app/workspace/{repo_name}"
+        backend_root = scan_result.backend_root if scan_result else None
+        db_root = None
+        pages = scan_result.pages if scan_result else []
+        endpoints = scan_result.endpoints if scan_result else []
     else:
-        if frontend_services:
-            groups.append({
-                "name": "frontend",
-                "type": "folder",
-                "context": "frontend",
-                "filepath": f"frontend",
-                "children": build_tree(
-                    container,
-                    f"/app/workspace/frontend/{project_name}",
-                    "frontend",
-                ),
-            })
+        frontend_root = f"/app/workspace/frontend/{project_name}"
+        backend_root = "/app/workspace/backend"
+        db_root = "/app/workspace/database"
+        pages = []
+        endpoints = []
 
-        if backend_services:
-            groups.append({
-                "name": "backend",
-                "type": "folder",
-                "context": "backend",
-                "filepath": "backend",
-                "children": build_tree(
-                    container,
-                    "/app/workspace/backend",
-                    "backend",
-                ),
-            })
+    groups = build_project_groups(container, project_name, frontend_services, backend_services, scan_result)
 
     container.stop()
 
@@ -245,6 +87,11 @@ async def create_project_container(
         "configs_map": configs_map,
         "scan": scan_result,
         "groups": groups,
+        "frontend_root": frontend_root,
+        "backend_root": backend_root,
+        "db_root": db_root,
+        "pages": pages,
+        "endpoints": endpoints,
     }
 
 

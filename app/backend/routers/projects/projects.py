@@ -89,17 +89,8 @@ async def get_github_repos(current_user: dict = Depends(get_current_user)):
     }
 
 
-
-
-
-
-
-
-
-
-
 @router.post("/create")
-@limiter.limit("3/minute")
+@limiter.limit("10/minute")
 async def create_project(
     request: Request,
     name: str = Body(..., embed=True),
@@ -109,14 +100,11 @@ async def create_project(
     current_user: dict = Depends(get_current_user),
     import_url: str = Body(None, embed=True),
 ):
-    
     if not name or not name.strip():
         raise HTTPException(status_code=422, detail="Project name is required")
-    
+
     project_id = str(uuid.uuid4())
     access_token = secrets.token_urlsafe(32)
-
-    
 
     await database.execute(
         query=create_project_query(),
@@ -128,7 +116,6 @@ async def create_project(
         },
     )
 
-    # Insert into project_services junction table
     service_frameworks = [s for s in [backend, frontend, db] if s]
     if service_frameworks:
         services = await database.fetch_all(
@@ -147,77 +134,29 @@ async def create_project(
         {"key": "DATABASE_URL", "value": "postgresql://postgres@localhost:5432/myapp", "is_secret": True},
     ]
 
-    # Run container first for imports so we can scan
-    container_info = await create_project_container(
-        project_id,
-        name,
-        backend_services=[backend] if backend else [],
-        frontend_services=[frontend] if frontend else [],
-        db=[db] if db else [],
-        import_url=import_url,
-    )
+    try:
+        container_info = await create_project_container(
+            project_id,
+            name,
+            backend_services=[backend] if backend else [],
+            frontend_services=[frontend] if frontend else [],
+            db=[db] if db else [],
+            import_url=import_url,
+        )
+    except Exception as e:
+        logger.error("Container creation failed, rolling back project", project_id=project_id, error=str(e))
+        await database.execute("DELETE FROM project_services WHERE project_id = :id", {"id": project_id})
+        await database.execute("DELETE FROM projects WHERE project_id = :id", {"id": project_id})
+        raise HTTPException(status_code=500, detail="Failed to create project container")
 
-    scan = None
-
-    if import_url:
-        repo_name = import_url.rstrip("/").split("/")[-1].removesuffix(".git")
-        scan = container_info.get("scan")
-
-        frontend_root = (scan.frontend_root if scan and scan.frontend_root else f"/app/workspace/{repo_name}")
-        backend_root = scan.backend_root if scan and scan.backend_root else None
-        db_root = None
-
-        detected_frameworks = [f for f in [
-            scan.frontend_framework,
-            scan.backend_framework,
-            scan.db_framework,
-        ] if f] if scan else []
-
-        if detected_frameworks:
-            detected_services = await database.fetch_all(
-                "SELECT id FROM services WHERE framework = ANY(:frameworks)",
-                values={"frameworks": detected_frameworks}
-            )
-            for service in detected_services:
-                await database.execute(
-                    "INSERT INTO project_services (id, project_id, service_id, created_at) VALUES (:id, :project_id, :service_id, NOW())",
-                    values={"id": str(uuid.uuid4()), "project_id": project_id, "service_id": service["id"]},
-                )
-
-        pages = scan.pages if scan else []
-        endpoints = scan.endpoints if scan else []
-
-    else:
-        frontend_root = f"/app/workspace/frontend/{name}"
-        backend_root = "/app/workspace/backend"
-        db_root = "/app/workspace/database"
-
-        pages = []
-        endpoints = []
-
-        if not import_url:
-            if frontend == "React":
-                pages = [{"route": "/", "file": "src/App.jsx"}]
-            elif frontend == "Next.js":
-                pages = [{"route": "/", "file": "src/app/page.tsx"}]
-
-            if backend == "Express":
-                endpoints = [{"method": "GET", "path": "/api/health", "file": "routes/main.js"}]
-            elif backend == "FastAPI":
-                endpoints = [{"method": "GET", "path": "/api/health", "file": "main.py"}]
-
-    groups = container_info.get("groups") or []
-
-    # Always runs for both paths
     await database.execute(
         "UPDATE projects SET frontend_root = :fr, backend_root = :br, db_root = :dr WHERE project_id = :id",
-        values={"fr": frontend_root, "br": backend_root, "dr": db_root, "id": project_id}
+        values={"fr": container_info["frontend_root"], "br": container_info["backend_root"], "dr": container_info["db_root"], "id": project_id}
     )
+    print(f"[DEBUG] Setting frontend_root = {container_info['frontend_root']}")
+    print(f"[DEBUG] Setting backend_root = {container_info['backend_root']}")
+    print(f"[DEBUG] Setting db_root = {container_info['db_root']}")
 
-    print(f"[DEBUG] Setting frontend_root = {frontend_root}")
-
-    if groups is None:
-        groups = []
 
     await database.execute(
         """
@@ -228,22 +167,15 @@ async def create_project(
             "project_id": project_id,
             "envs": json.dumps(default_envs),
             "db_schema": json.dumps({}),
-            "pages": json.dumps(pages),
-            "endpoints": json.dumps(endpoints),
-            "groups": json.dumps(groups or container_info.get("groups") or []),
+            "pages": json.dumps(container_info["pages"]),
+            "endpoints": json.dumps(container_info["endpoints"]),
+            "groups": json.dumps(container_info["groups"]),
         }
     )
 
-    logger.info("CONTAINER GROUPS", groups=container_info.get("groups"))
+    logger.info("CONTAINER GROUPS", groups=container_info["groups"])
 
     return {"ok": True, "project_id": project_id, "container_id": container_info["container_id"], "name": name, "access_token": access_token}
-
-
-
-
-
-
-
 
 
 

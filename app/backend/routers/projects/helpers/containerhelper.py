@@ -6,6 +6,7 @@ import docker, re, tarfile, io, os, boto3
 from helpers.dockerclient import docker_client
 from helpers.structlogger import logger
 import asyncio
+from routers.projects.containers.labels import traefik_labels, devolib_labels
 
 s3 = boto3.client(
     "s3",
@@ -13,6 +14,32 @@ s3 = boto3.client(
     aws_access_key_id=os.environ["R2_ACCESS_KEY"],
     aws_secret_access_key=os.environ["R2_SECRET_KEY"],
 )
+
+FRAMEWORK_TEMPLATES = {
+    "React": [
+        ("vite.config.js", "vite.config.js"),
+        ("main.jsx", "src/main.jsx"),
+        ("index.css", "src/index.css"),
+        ("Routes.jsx", "src/Routes.jsx"),
+        ("components/handlers/auth.jsx", "src/components/handlers/auth.jsx"),
+        ("components/handlers/requests.js", "src/components/handlers/requests.js"),
+        ("components/handlers/api.js", "src/components/handlers/api.js"),
+    ],
+    
+    "FastAPI": [
+        ("main.py", "main.py"),
+    ],
+    "LoggingService": [
+        ("logd", "usr/local/bin/logd"),
+    ],
+}
+
+BINARY_FRAMEWORKS = { "LoggingService": 
+    [
+        ("logd", "usr/local/bin/logd"),
+    ],
+}
+
 
 
 def create_and_start_container(
@@ -30,6 +57,9 @@ def create_and_start_container(
     Creates and starts a Docker container with Traefik labels, volumes,
     network, and resource limits. Returns the container object and metadata.
     """
+
+    container_labels = traefik_labels(project_id, clean_name, frontend_port) | devolib_labels(project_id, project_name, base_type, backend_services, frontend_services, db)
+
     try:
         logger.info(
             "Creating container",
@@ -43,23 +73,8 @@ def create_and_start_container(
             image=base_tag,
             name=f"devolib_project_{project_id}",
             detach=True,
-            labels={
-                "traefik.enable": "true",
-                f"traefik.http.routers.{project_id}.rule": f"Host(`{clean_name}.localhost`)",
-                f"traefik.http.services.{project_id}.loadbalancer.server.port": str(frontend_port),
-                f"traefik.http.routers.{project_id}.middlewares": f"{project_id}-headers",
+            labels=container_labels,
 
-                f"traefik.http.middlewares.{project_id}-headers.headers.customResponseHeaders.Access-Control-Allow-Origin": "*",
-                f"traefik.http.middlewares.{project_id}-headers.headers.customResponseHeaders.X-Frame-Options": "ALLOWALL",
-                f"traefik.http.middlewares.{project_id}-headers.headers.customResponseHeaders.Content-Security-Policy": "frame-ancestors *",
-
-                "devolib.project_id": project_id,
-                "devolib.project_name": project_name,
-                "devolib.base": base_type,
-                "devolib.backend_services": ",".join(backend_services),
-                "devolib.frontend_services": ",".join(frontend_services),
-                "devolib.db_services": ",".join(db),
-            },
             volumes={
                 f"devolib_project_{project_id}": {
                     "bind": "/app/workspace",
@@ -103,7 +118,7 @@ def create_and_start_container(
         ) from e
     
 
-def _clean_name(name: str) -> str:
+def clean_name(name: str) -> str:
     """Make project name DNS-safe for Traefik routing."""
     # Only allow alphanumeric and hyphens
     clean = re.sub(r"[^a-z0-9-]", "-", name.lower())
@@ -120,29 +135,11 @@ def scaffold_template(container, framework: str, destination: str):
     Fetches template files for the given framework from the bucket,
     builds a tar archive, and puts it into the container at destination.
     """
-    FRAMEWORK_TEMPLATES = {
-        "React": [
-            ("vite.config.js", "vite.config.js"),
-            ("main.jsx", "src/main.jsx"),
-            ("index.css", "src/index.css"),
-            ("Routes.jsx", "src/Routes.jsx"),
-            ("components/handlers/auth.jsx", "src/components/handlers/auth.jsx"),
-            ("components/handlers/requests.js", "src/components/handlers/requests.js"),
-            ("components/handlers/api.js", "src/components/handlers/api.js"),
-        ],
-        "FastAPI": [
-            ("main.py", "main.py"),
-        ],
-        "LoggingService": [
-            ("logd", "usr/local/bin/logd"),
-        ],
-    }
-
     if framework not in FRAMEWORK_TEMPLATES:
         logger.warning("No templates found for framework", framework=framework)
         return
 
-    is_binary = framework == "LoggingService"
+    is_binary = framework in BINARY_FRAMEWORKS
 
     tar_stream = io.BytesIO()
     with tarfile.open(fileobj=tar_stream, mode="w") as tar:
@@ -161,10 +158,16 @@ def scaffold_template(container, framework: str, destination: str):
     container.put_archive(destination, tar_stream)
     logger.info("Scaffolded templates", framework=framework, destination=destination)
 
-def get_template(key: str, binary: bool = False) -> str | bytes:
-    response = s3.get_object(Bucket=os.environ["R2_BUCKET_NAME"], Key=key)
-    content = response["Body"].read()
-    return content if binary else content.decode("utf-8")
+def get_template(key: str, binary: bool = False, retries: int = 3) -> str | bytes:
+    for attempt in range(retries):
+        try:
+            response = s3.get_object(Bucket=os.environ["R2_BUCKET_NAME"], Key=key)
+            content = response["Body"].read()
+            return content if binary else content.decode("utf-8")
+        except Exception as e:
+            if attempt == retries - 1:
+                raise
+            logger.warning("Retrying template fetch", key=key, attempt=attempt + 1, error=str(e))
 
 
 
