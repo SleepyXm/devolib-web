@@ -8,19 +8,21 @@ scheduler = AsyncIOScheduler(executors={"default": AsyncIOExecutor()})
 
 
 async def reap_inactive_containers():
-    print("reaper running")
-    running = await database.fetch_one("SELECT project_id FROM projects WHERE status = 'running' LIMIT 1")
-    if not running:
-        return
+    print("Reaper running...")
+    
+    # Fetch inactive containers that are running and last online > 2 minutes ago
     inactive = await database.fetch_all("""
         SELECT project_id FROM projects 
         WHERE last_online < NOW() - INTERVAL '2 minutes'
         AND status = 'running'
     """)
-    print(f"found {len(inactive)} inactive containers")
+    
+    print(f"Found {len(inactive)} inactive containers.")
+    
     for row in inactive:
-        await stop_container(row["project_id"])
-        logger.info("Initiated self bomboclat for:", project_id=row["project_id"])
+        project_id = row["project_id"]
+        await stop_container(project_id)
+        logger.info(f"Taking project {project_id} offline.")
 
 
 scheduler.add_job(reap_inactive_containers, 'interval', minutes=2)

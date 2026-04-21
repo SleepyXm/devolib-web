@@ -27,6 +27,8 @@
   --modal-bg: rgb(235, 235, 235);
   --dv-text-contrast: #424252;
   --dv-glass-border: #5b5b5b4e;
+  --hover-text-glow: #5eead4;
+  --navbar-logo: 0 0 14px rgba(0, 224, 192, 0.45), 0 0 32px rgba(0, 224, 192, 0.45);
 
 }
 
@@ -62,6 +64,7 @@
     --modal-bg: rgb(39, 39, 39);
     --dv-text-contrast: #424252;
     --dv-glass-border: #e1e1e129;
+    --navbar-logo: 0 0 14px rgba(255, 140, 66, 0.5), 0 0 32px rgba(255, 140, 66, 0.5);
   }
 }
 
@@ -619,11 +622,226 @@ body {
 }
 
 
+ 
+/* Card column */
+.login-column {
+  display: flex;
+  flex-direction: column;
+  gap: 4vh;
+  width: 30vw;
+  grid-row-start: 2;
+}
+ 
+/* Card */
+.login-card {
+  position: relative;
+  width: 100%;
+  background: linear-gradient(to bottom, rgba(75, 85, 99, 0.7), rgba(55, 65, 81, 0.4), rgba(31, 41, 55, 0.6));
+  backdrop-filter: blur(16px);
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(156, 163, 175, 0.5);
+}
+ 
+/* Submit button */
+.login-submit {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: white;
+  background: linear-gradient(to right, #374151, #4b5563);
+  border-radius: 0.5rem;
+  box-shadow: inset 0 -2px 25px -4px rgba(255, 255, 255, 0.2);
+  outline: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s;
+}
+ 
+.login-submit:hover {
+  outline-color: rgba(209, 213, 219, 0.4);
+  background: linear-gradient(to right, #4b5563, #6b7280);
+  box-shadow: inset 0 -2px 25px -4px rgba(255, 255, 255, 0.2), 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+ 
+/* Shared link style — forgot password, trouble signing in */
+.login-link {
+  font-size: 0.75rem;
+  color: var(--dv-text);
+  transition: color 0.2s ease-in-out;
+}
+ 
+.login-link:hover {
+  color: var(--hover-text-glow);
+}
+
+.login-checkbox:checked + .login-checkbox-box {
+  background: #e5e7eb;
+}
+
+.login-checkbox:checked + .login-checkbox-box > svg {
+  opacity: 1;
+}
 
 
 
 
+/* navbar.css */
 
+/* Navbar Header */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 0.228);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.51);
+}
+
+/* Logo */
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.navbar-logo span {
+  padding: 3px 15px;
+  border-radius: 1px;
+  background-color: var(--hover-glow);
+  box-shadow: var(--navbar-logo);
+  font-size: 20px;
+  font-weight: 100;
+  color: #0a0a0a;
+  white-space: nowrap;
+}
+
+.navbar-logo.dark-mode span {
+  background-color: #ff6219;
+  box-shadow: 0 0 14px rgba(255, 140, 66, 0.5), 0 0 32px rgba(255, 140, 66, 0.5);
+}
+
+/* Desktop Links */
+.navbar-nav {
+  display: none;
+}
+
+.navbar-nav.md-block {
+  display: block;
+}
+
+.navbar-nav ul {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  list-style-type: none;
+  margin: 0;
+}
+
+.navbar-nav li {
+  display: inline;
+}
+
+.navbar-nav a,
+.navbar-nav button {
+  padding: 7px 16px;
+  border-radius: 1px;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.45);
+  text-decoration: none;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.navbar-nav a:hover,
+.navbar-nav button:hover {
+  background-color: #00e0c0;
+  color: black;
+  box-shadow: 0 0 14px rgba(0, 224, 192, 0.45), 0 0 32px rgba(0, 224, 192, 0.45);
+}
+
+.navbar-nav button:hover {
+  color: #000;
+}
+
+/* Mobile Toggle */
+.navbar-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  color: black;
+  transition: all 0.15s ease;
+}
+
+.navbar-toggle.dark-mode {
+  background-color: rgba(255, 255, 255, 0.055);
+  color: #f0f0f0;
+}
+
+.navbar-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+.navbar-toggle.dark-mode:hover {
+  background-color: rgba(255, 255, 255, 0.09);
+}
+
+/* Mobile Menu */
+.navbar-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 16px;
+  list-style-type: none;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.navbar-menu a,
+.navbar-menu button {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.45);
+  text-align: left;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.navbar-menu a:hover,
+.navbar-menu button:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+  color: black;
+}
+
+.navbar-menu a.dark-mode:hover,
+.navbar-menu button.dark-mode:hover {
+  background-color: rgba(255, 255, 255, 0.09);
+  color: #f0f0f0;
+}
 
 
 

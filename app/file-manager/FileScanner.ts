@@ -1,11 +1,7 @@
 import { useMemo } from "react";
+import { ProjectEndpoint } from "@/app/handlers/projects";
 
-export type Endpoint = {
-  method: string;
-  path: string;
-  file: string;
-  handler?: string;
-};
+export type Endpoint = ProjectEndpoint
 
 export type Page = {
     route: string;
