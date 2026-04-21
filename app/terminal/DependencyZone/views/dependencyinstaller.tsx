@@ -24,7 +24,7 @@ export default function DependencyInstallerPage() {
   if (installing) return <InstallingIndicator installingPm={installingPm} />;
 
   return (
-    <div className="flex flex-col h-full gap-3 font-mono overflow-hidden backdrop-blur-lg">
+    <div className="flex flex-col h-full gap-3 font-mono">
       <PackageManagerTabs pm={pm} onChange={setPm} />
       <PackageInput
         value={input}
