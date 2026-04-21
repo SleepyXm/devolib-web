@@ -8,7 +8,7 @@ interface ProjectSettingsProps {
   onClose: () => void;
 }
 
-export default function ProjectSettings({ project, isOpen, onClose }: ProjectSettingsProps) {
+export default function ProjectSettings({ project, isOpen, onClose }: ProjectSettingsProps) {/*
   const [selectedTab, setSelectedTab] = useState("Overview");
 
   return (
@@ -69,4 +69,4 @@ export default function ProjectSettings({ project, isOpen, onClose }: ProjectSet
       </div>
     </Modal>
   );
-}
+*/}
