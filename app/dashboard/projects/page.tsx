@@ -65,7 +65,7 @@ export default function ProjectsPage() {
       if (repo) setName(repo.split("/")[1]); // use repo name as project name when user imports
       setModalOpen(true);
     }
-  }, []);
+  }, [searchParams]);
 
   const refreshProjects = () =>
     listProjects().then(setProjects).catch(() => setError("Failed to refresh projects"));
