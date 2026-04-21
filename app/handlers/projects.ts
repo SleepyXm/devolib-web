@@ -3,7 +3,6 @@ import { ServiceStatus } from "../dashboard/[project]/layout";
 import { WSAPI_BASE } from "../handlers/auth";
 
 const project_endpoint = `/projects`;
-const container_endpoint = `/container`;
 
 export type Project = {
     project_id: string;
@@ -171,14 +170,14 @@ export async function handleImportProject(repoUrl: string) {
 
 
 export async function startProject(project_id: string): Promise<{ ok: boolean; container_id: string; status: string }> {
-  const res = await request(`${container_endpoint}/start/${project_id}`, {
+  const res = await request(`${project_endpoint}/start/${project_id}`, {
     method: "POST",
   });
   return res;
 }
 
 export async function stopProject(project_id: string): Promise<{ ok: boolean; container_id: string; status: string }> {
-  const res = await request(`${container_endpoint}/stop/${project_id}`, {
+  const res = await request(`${project_endpoint}/stop/${project_id}`, {
     method: "POST",
   });
   return res;
@@ -203,7 +202,7 @@ export type ProjectWS = {
 
 
 export function connectToProject(project_id: string, access_token: string): ProjectWS {
-  const ws = new WebSocket(`${WSAPI_BASE}${container_endpoint}/ws/${project_id}?access_token=${access_token}`);
+  const ws = new WebSocket(`${WSAPI_BASE}${project_endpoint}/ws/${project_id}?access_token=${access_token}`);
 
   let outputCallbacks: ((data: string) => void)[] = [];
   let statusCallback: ((data: ServiceStatus) => void) | null = null;
