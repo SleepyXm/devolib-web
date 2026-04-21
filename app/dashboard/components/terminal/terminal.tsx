@@ -20,9 +20,9 @@ export default function TerminalPage() {
   }, [projectId, setProjectId]);
 
   return (
-  <div className="flex h-full p-4 gap-3 font-mono backdrop-blur-lg">
+  <div className="flex h-full p-4 gap-3 font-mono">
     {/* left: terminal */}
-    <div className="flex flex-col flex-1 gap-3 min-w-0 bg backdrop-blur-lg">
+    <div className="flex flex-col flex-1 gap-3 min-w-0">
       <TerminalControls start={start} connect={connect} stop={stop} isRunning={isRunning} isConnected={isConnected} />
       <Terminal
         logs={logs}

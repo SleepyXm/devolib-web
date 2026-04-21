@@ -32,7 +32,7 @@ export default function ProjectPage() {
       </div>
     </div>
 
-    <div className="flex-1 overflow-hidden">
+    <div className="dv-editor-zone backdrop-blur-lg">
       {activeView === "frontend"  && <FrontendPage />}
       {activeView === "backend"   && <BackendPage />}
       {activeView === "database"  && <DatabasePage />}
