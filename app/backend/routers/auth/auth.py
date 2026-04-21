@@ -2,8 +2,11 @@ from fastapi import APIRouter, HTTPException, Depends, Cookie, Request
 from fastapi import Response
 from fastapi.responses import JSONResponse, RedirectResponse
 from database import database
-from routers.auth.auth_utils import create_access_token, get_current_user, hash_password, verify_password, GITHUB_CLIENT_ID, DEV_SERVER, DUMMY_PASSWORD_HASH, set_auth_cookie
+from routers.auth.auth_utils import get_current_user, DUMMY_PASSWORD_HASH
 from routers.auth.auth_helpers import exchange_github_code, find_or_link_github_user, auth_redirect, send_verification_email, generate_pkce_pair
+from utils.config import GITHUB_CLIENT_ID, DEV_SERVER
+from utils.crypto import hash_password, verify_password
+from utils.auth import set_auth_cookie, create_access_token
 import uuid, httpx, secrets
 from schemas import UserCreate, UserLogin
 from helpers.limiter import limiter

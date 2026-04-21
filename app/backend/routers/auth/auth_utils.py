@@ -1,47 +1,18 @@
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
-from fastapi import Request, HTTPException, status
+from fastapi import Request, HTTPException
 from database import database
 from fastapi.responses import JSONResponse
 import os, resend
-from passlib.context import CryptContext
 from cryptography.fernet import Fernet
-
 from dotenv import load_dotenv
-
-load_dotenv()
-
-fernet = Fernet(os.getenv("ENCRYPTION_KEY"))
-
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 240))
+from utils.auth import set_auth_cookie, create_access_token, verify_token
 
 
-GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
-GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
-
-
-DEV_SERVER = os.getenv("DEV_SERVER")
-DEV_SERVER_BACKEND = os.getenv("DEV_SERVER_BACKEND")
-RESEND_API_KEY = resend.api_key = os.getenv("RESEND_API_KEY")
 DUMMY_PASSWORD_HASH = (
     "$2b$12$C6UzMDM.H6dfI/f/IKcEeO9u9wZK0s8AjtKoa6HgMHqmpYyqn1cG."
 )
 
-def create_access_token(username: str):
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode = {"sub": username, "exp": expire}
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
-
-
-def verify_token(token: str):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return payload.get("sub")
-    except JWTError:
-        return None
 
 
 async def get_current_user(request: Request):
@@ -62,31 +33,3 @@ async def get_current_user(request: Request):
         raise HTTPException(status_code=404, detail="User not found")
 
     return user
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-def hash_password(password: str):
-    return pwd_context.hash(password)
-
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
-
-def encrypt(value: str) -> str:
-    return fernet.encrypt(value.encode()).decode()
-
-def decrypt(value: str) -> str:
-    return fernet.decrypt(value.encode()).decode()
-
-
-def set_auth_cookie(resp: JSONResponse, token: str) -> JSONResponse:
-    resp.set_cookie(
-        key="access_token",
-        value=f"Bearer {token}",
-        httponly=True,
-        max_age=60 * 60 * 24 * 7,
-        expires=60 * 60 * 24 * 7,
-        path="/",
-        secure=True,
-        samesite="lax",
-    )
-    return resp

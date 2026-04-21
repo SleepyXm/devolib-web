@@ -2,7 +2,9 @@ from database import database
 import httpx, uuid, resend, os, hashlib, base64
 from fastapi import Response
 from fastapi.responses import RedirectResponse
-from routers.auth.auth_utils import create_access_token, set_auth_cookie, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, DEV_SERVER, DEV_SERVER_BACKEND, encrypt, decrypt
+from utils.config import GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, DEV_SERVER, DEV_SERVER_BACKEND
+from utils.auth import create_access_token, set_auth_cookie
+from utils.crypto import encrypt
 
 
 async def exchange_github_code(client: httpx.AsyncClient, code: str, code_verifier: str) -> tuple[str | None, dict, str | None]:

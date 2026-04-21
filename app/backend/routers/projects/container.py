@@ -97,30 +97,27 @@ async def create_project_container(
     }
 
 
+def get_container(project_id: str) -> docker.models.containers.Container:
+    container_name = f"devolib_project_{project_id}"
+    return docker_client.containers.get(container_name)
+
 
 
 async def delete_project_container(project_id: str):
-    """
-    Stop and remove container + volume.
-    Base images stay cached - no deletion needed.
-    """
-    container_name = f"devolib_project_{project_id}"
     volume_name = f"devolib_project_{project_id}"
 
-    # Remove container
     try:
-        container = docker_client.containers.get(container_name)
+        container = get_container(project_id)
         logger.info("Stopping container", project_id=project_id)
         container.stop(timeout=2)
         container.remove()
         logger.info("Container removed", project_id=project_id)
     except docker.errors.NotFound:
-        logger.warning("Container not found", container_name=container_name)
+        logger.warning("Container not found", project_id=project_id)
     except Exception as e:
         logger.error("Error removing container", project_id=project_id, error=str(e))
         raise
 
-    # Remove volume
     try:
         volume = docker_client.volumes.get(volume_name)
         volume.remove()
@@ -131,24 +128,18 @@ async def delete_project_container(project_id: str):
         logger.warning("Error removing volume", project_id=project_id, error=str(e))
 
 
-async def start_container(project_id: str) -> docker.models.containers.Container:
-    """
-    Ensures the container is running, starting from image if needed.
-    Also ensures logd is running inside the container.
-    Returns the container object.
-    """
-    container_name = f"devolib_project_{project_id}"
-    image_tag = f"devolib_project_{project_id}"
 
+
+async def start_container(project_id: str) -> docker.models.containers.Container:
     try:
-        container = docker_client.containers.get(container_name)
+        container = get_container(project_id)
         if container.status != "running":
             container.start()
     except docker.errors.NotFound:
         try:
             container = docker_client.containers.run(
-                image_tag,
-                name=container_name,
+                f"devolib_project_{project_id}",
+                name=f"devolib_project_{project_id}",
                 network="web",
                 detach=True,
                 tty=True,
@@ -158,7 +149,6 @@ async def start_container(project_id: str) -> docker.models.containers.Container
         except docker.errors.ImageNotFound:
             raise HTTPException(status_code=404, detail="Docker image not found")
 
-    # Ensure logd is running
     check = container.exec_run("pgrep logd", tty=False, detach=False)
     if check.exit_code != 0:
         container.exec_run("sh -c 'logd > /var/log/logd.log 2>&1 &'", tty=False, detach=True)
@@ -177,18 +167,10 @@ async def start_container(project_id: str) -> docker.models.containers.Container
 
 
 async def stop_running_container(project_id: str) -> docker.models.containers.Container:
-    """
-    Stops a running container and updates DB status.
-    Returns the container object.
-    Raises docker.errors.NotFound if the container doesn't exist.
-    """
-    container_name = f"devolib_project_{project_id}"
-    container = docker_client.containers.get(container_name)  # raises NotFound if absent
+    container = get_container(project_id)
     container.stop(timeout=2)
-
     await database.execute(
         "UPDATE projects SET status = 'stopped' WHERE project_id = :project_id",
         {"project_id": project_id}
     )
-
     return container
