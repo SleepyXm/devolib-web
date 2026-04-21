@@ -142,19 +142,7 @@ export function useWireframe() {
       backend: `/app/workspace/backend`,
       database: `/app/workspace/database`,
       workspace: `/app/workspace`,
-    };
-
-    const newGroup: ProjectGroup = {
-      label: groupRoot.split("/").pop() || groupRoot,
-      root: `${bases[groupWorkspace]}/${groupRoot}`,
-      context: groupWorkspace === "backend" ? "backend" : "frontend",
-      files: []
-    };
-
-    const newGroups = [...groups, newGroup];
-    setGroups(newGroups);
-    await patchProjectMetadata(projectId, { groups: newGroups });
-    closeInput();
+    }
   };
 
 
