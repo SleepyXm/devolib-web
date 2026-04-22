@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { startProject, Project } from "@/app/handlers/projects";
+import { startProject } from "@/app/handlers/projects";
+import { Project } from "@/app/types/projects";
 
 interface ProjectSettingsProps {
   project: Project;
