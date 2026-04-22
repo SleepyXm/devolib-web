@@ -64,7 +64,7 @@ export default function FrontendPage() {
   // Check if container is running
   useEffect(() => {
     if (!projectName) return;
-    fetch(`http://${projectName}.localhost`)
+    fetch(`http://${projectName}.devolib.com`)
       .then((res) => {
         if (res.ok) setIframeMode("live");
         else setIframeMode("srcDoc");
@@ -196,7 +196,7 @@ export default function FrontendPage() {
           {iframeMode === "live" ? (
             <iframe
               className="w-full h-full"
-              src={`http://${projectName}.localhost/#${selectedPage ? selectedPage.route : ""}`}
+              src={`http://${projectName}.devolib.com/#${selectedPage ? selectedPage.route : ""}`}
               title="preview"
             />
           ) : (
