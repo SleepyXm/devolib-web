@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { ProjectEndpoint } from "@/app/handlers/projects";
+import { ProjectEndpoint } from "../types/projects";
 
 export type Endpoint = ProjectEndpoint
 
