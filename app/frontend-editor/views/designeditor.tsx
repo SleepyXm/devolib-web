@@ -151,9 +151,9 @@ export default function DesignEditor() {
   }, [handleContextMenu, code]);
 
   return (
-    <div className="flex flex-col h-screen w-full border rounded-lg">
+    <div className="flex flex-col h-screen w-full">
       {/* Header */}
-      <div className="p-2 bg-gray-900 text-white flex justify-between items-center">
+      <div className="dv-zone-title">
         <h2>Design Editor</h2>
       </div>
 
@@ -174,7 +174,7 @@ export default function DesignEditor() {
           </div>
           <div className="flex w-1/2">
             {/* Slim toolbar */}
-            <div className="w-12 bg-gray-900 border-r border-gray-700 flex flex-col items-center py-4 gap-4">
+            <div className="w-12 bg-gray-900 backdrop-blur-lg border-r border-gray-700 flex flex-col items-center py-4 gap-4">
               <div className="relative">
                 <button
                   onClick={() => setShowDropdown(!showDropdown)}
@@ -203,7 +203,7 @@ export default function DesignEditor() {
             {/* Iframe */}
             <div className="flex-1 relative">
               <iframe
-                className="w-full max-h-screen"
+                className="w-full h-full"
                 srcDoc={srcDoc}
                 sandbox="allow-scripts allow-same-origin"
                 title="preview"
