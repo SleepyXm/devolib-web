@@ -2,7 +2,7 @@
 
 import { useRef, useState, ReactNode, createContext, useEffect } from "react";
 import { ProjectWS, connectToProject, startProject, stopProject, fetchProjectDetails, getProjectMetadata, } from "@/app/handlers/projects";
-import { ProjectEnv, ProjectDbColumn, ProjectPage, ProjectEndpoint, ProjectGroup, ProjectRoots } from "@/app/handlers/projects";
+import { ProjectEnv, ProjectDbColumn, ProjectPage, ProjectEndpoint, ProjectGroup, ProjectRoots } from "@/app/types/projects";
 
 interface ProjectContextType {
   projectWS: ProjectWS | null;

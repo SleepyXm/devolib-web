@@ -1,7 +1,8 @@
 import { useContext, useEffect, useState } from "react";
 import { ProjectMetaContext, ProjectContext } from "../dashboard/[project]/layout";
 import { patchRoutes, patchRoutesNested, generateRouter, patchMainPy } from "./wireframehelpers";
-import { patchProjectMetadata, ProjectGroup } from "@/app/handlers/projects"
+import { patchProjectMetadata } from "@/app/handlers/projects"
+import { ProjectGroup } from "../types/projects";
 import { saveEndpoints } from "../backend-editor/models/backendoperations";
 
 export function useWireframe() {
