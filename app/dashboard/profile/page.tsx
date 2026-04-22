@@ -5,7 +5,7 @@ import { useUser } from "@/app/provider/UserProvider";
 import { InfoRow, SidebarTab, TabSection, UserAvatar, SidebarActions, SectionDivider, ConnectionCard, ProjectCard, EmptyState, AuthorisationsCard } from "./profilecomponents";
 import { GithubIcon, RailwayIcon, VercelIcon } from "@/app/components/assets/icons";
 import { listProjects, listGithubRepos } from "@/app/handlers/projects";
-import { GithubRepo } from "@/app/handlers/projects";
+import { GithubRepo } from "@/app/types/projects";
 
 export default function Profile() {
   const [activeTab, setActiveTab] = useState("account");
