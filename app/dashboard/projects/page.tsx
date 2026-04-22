@@ -7,16 +7,16 @@ import Popup from "@/app/components/ErrorPopup";
 import { CreatingOverlay, CreateProjectModal, ProjectList, ProjectFormData } from "./projectcomponents";
 import { useSearchParams } from "next/navigation";
 
-const BACKEND_OPTIONS = ["FastAPI", "Node.js", "Rust"];
-const FRONTEND_OPTIONS = ["React", "HTML/CSS", "Next.js", "Angular.js"];
-const DATABASE_OPTIONS = ["PostgreSQL", "MySQL", "SQLite"];
+const BACKEND_OPTIONS = ["FastAPI", "Node.js"];
+const FRONTEND_OPTIONS = ["React", "Next.js"];
+const DATABASE_OPTIONS = ["PostgreSQL"];
 
 const LOADER_MESSAGES = [
-  "Downloading Node.js...",
-  "Downloading Python...",
-  "Downloading PostgreSQL...",
-  "Initializing container...",
-  "Setting up frontend...",
+  "Building Container...",
+  "Scaffolding Services...",
+  "Finding resources...",
+  "Downloading dependencies...",
+  "Initialising Proxy...",
   "Setting up backend...",
   "Finalizing project...",
 ];
