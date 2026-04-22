@@ -12,7 +12,7 @@ interface ProjectContextType {
   serviceStatus: ServiceStatus;
   startService: (service: "frontend" | "backend" | "database") => void;
   start: () => Promise<void>;
-  connect: () => void;
+  connect: (id?: string) => void;
   stop: () => Promise<void>;
   setProjectId: (id: string) => void;
   projectId: string | null;
@@ -123,21 +123,23 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
     setIsRunning(true);
   };
 
-  const connect = () => {
-    if (!projectId || !projectName || !accessToken) return;
-    projectWS.current = connectToProject(projectId, accessToken);
-    projectWS.current.onOutput((data) => {
-      if (data.startsWith("FILE_CONTENT:")) return;
-      setLogs((prev) => prev + data);
-    });
-    projectWS.current.onStatus((status) => setServiceStatus(status));
-    projectWS.current.onSchema((data) => setDbSchema(data.tables));
-    projectWS.current.onLog((event: LogEvent) =>
-      setLogEvents((prev) => [...prev, event]),
-    );
-    setWsInstance(projectWS.current);
-    setIsConnected(true);
-  };
+  const connect = (id?: string) => {
+  const resolvedId = id ?? projectId;
+  if (!resolvedId || !accessToken) return;
+
+  projectWS.current = connectToProject(resolvedId, accessToken);
+  projectWS.current.onOutput((data) => {
+    if (data.startsWith("FILE_CONTENT:")) return;
+    setLogs((prev) => prev + data);
+  });
+  projectWS.current.onStatus((status) => setServiceStatus(status));
+  projectWS.current.onSchema((data) => setDbSchema(data.tables));
+  projectWS.current.onLog((event: LogEvent) =>
+    setLogEvents((prev) => [...prev, event]),
+  );
+  setWsInstance(projectWS.current);
+  setIsConnected(true);
+};
 
   const stop = async () => {
     if (!projectId) return;
