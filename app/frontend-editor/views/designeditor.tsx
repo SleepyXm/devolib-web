@@ -159,7 +159,7 @@ export default function DesignEditor() {
 
       {/* Code editor + preview */}
       <div
-        className="flex flex-1 overflow-hidden bg-white dark:bg-black"
+        className="flex flex-1 overflow-hidden backdrop-blur-lg bg-black-20"
         onContextMenu={handleContextMenu}
         onClick={handleClick}
       >
