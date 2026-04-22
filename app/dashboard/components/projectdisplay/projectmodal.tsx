@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { getProjectMetadata, ProjectMetaData, deleteProject } from "@/app/handlers/projects";
+import { getProjectMetadata,  deleteProject } from "@/app/handlers/projects";
+import { ProjectMetaData } from "@/app/types/projects";
 import { DangerZone, ModalHeader, PagesSection, EnvsSection, EndpointsSection, DatabaseSection } from "./projectdisplaycomponents";
 import { useRouter } from "next/navigation";
 
