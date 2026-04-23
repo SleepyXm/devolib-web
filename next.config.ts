@@ -13,6 +13,16 @@ module.exports = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        destination: "https://www.devolib.com/:path*",
+        permanent: true,
+        has: [{ type: "host", value: "devolib.com" }],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
