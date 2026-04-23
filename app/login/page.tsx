@@ -46,12 +46,8 @@ export default function Auth() {
       router.push(`/dashboard`);
     }
   } catch (err) {
-    if (isSignUp) {
-       setError(err.message || "Failed to create account. Please try again.");
-    }
-    else {
-    setError("Username or Password was inccorect. Try again");
-    }
+      const error = err instanceof Error ? err.message : "Something went wrong.";
+      setError(error);
   }
 }
 
