@@ -111,6 +111,7 @@ async def insert_project_metadata(project_id: str, name: str, envs: list[dict] |
         }
     )
 
+
 async def update_project_metadata(project_id: str, user_id: str, body: dict) -> None:
     await get_project(project_id, user_id)  # ownership + existence check
 
@@ -130,8 +131,9 @@ def get_default_envs(name: str) -> list[dict]:
     return [
         {"key": "FRONTEND_URL", "value": f"{name}.localhost", "is_secret": False},
         {"key": "BACKEND_URL", "value": "http://localhost:8000", "is_secret": False},
-        {"key": "DATABASE_URL", "value": "postgresql://postgres@localhost:5432/myapp", "is_secret": True},
+        {"key": "DATABASE_URL", "value": "postgresql+asyncpg://postgres@localhost:5432/myapp", "is_secret": True},
     ]
+
 
 
 async def update_project_roots(project_id: str, container_info: dict):
