@@ -8,7 +8,7 @@ from helpers.limiter import limiter
 from helpers.queries.projectquery import list_projects_query
 from helpers.structlogger import logger
 from helpers.stopper import stop_container
-from .operations import get_project, get_or_create_metadata, update_project_metadata, project_list, insert_project_services, update_project_roots, insert_project_metadata, rollback_project, create_project_record
+from .operations import get_project, get_or_create_metadata, update_project_metadata, project_list, insert_project_services, update_project_roots, insert_project_metadata, rollback_project, create_project_record, get_default_envs
 from .containers.terminal import run_terminal_session
 from utils.crypto import hash_token
 
@@ -90,7 +90,11 @@ async def create_project(
     await create_project_record(project_id, current_user["id"], name, access_token)
     await insert_project_services(project_id, [s for s in [backend, frontend, db] if s])
 
-    env_container = {e["key"]: e["value"] for e in envs} if envs else {}
+    if envs:
+        env_container = {e["key"]: e["value"] for e in envs}
+    else:
+        default_envs = get_default_envs(name)
+        env_container = {e["key"]: e["value"] for e in default_envs}
 
     try:
         container_info = await create_project_container(
