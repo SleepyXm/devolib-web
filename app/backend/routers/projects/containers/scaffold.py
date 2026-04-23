@@ -70,7 +70,7 @@ async def scaffold_fresh(container, project_name: str, frontend_services: list, 
         if framework == "FastAPI":
             scaffold_template(container, "FastAPI", "/app/workspace/backend")
             await loop.run_in_executor(None, lambda:container.exec_run(
-                "sh -c 'mkdir -p /app/workspace/backend/routers'",
+                "sh -c 'mkdir -p /app/workspace/backend/routers && touch /app/workspace/backend/routers/__init__.py'",
                 tty=True,
                 detach=False,
             ))
