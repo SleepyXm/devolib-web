@@ -66,6 +66,7 @@ export async function deleteProject(id: string): Promise<{ success: boolean }> {
 
 export const handleCreateProject = async (name: string, projectname: string, frontend?: string, backend?: string, db?: string,  envs?: { key: string; value: string; is_secret: boolean }[] ) => {
   const res = await createProject(name, projectname, frontend, backend, db, envs);
+  return res;
 }
 
 export async function handleImportProject(repoUrl: string) {
