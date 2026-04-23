@@ -59,7 +59,8 @@ async function handleGitHubLogin() {
   try {
     loginWithGitHub(); // triggers the redirect
   } catch (err) {
-    setError("GitHub login failed. Try again.");
+    const error = err instanceof Error ? err.message : "Something went wrong.";
+    setError(error);
   }
 }
 
