@@ -45,6 +45,7 @@ export default function ProjectsPage() {
   const [db, setDb] = useState(DATABASE_OPTIONS[0]);
   const [repoUrl, setRepoUrl] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState("");
+  const [envs, setEnvs] = useState<{ key: string; value: string; is_secret: boolean }[]>([]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -92,7 +93,7 @@ export default function ProjectsPage() {
       setLoaderStep((p) => (p < LOADER_MESSAGES.length - 1 ? p + 1 : p)), 4000);
     try {
       if (data.type === "blank") {
-        await handleCreateProject(username, data.name, data.frontend, data.backend, data.db);
+        await handleCreateProject(username, data.name, data.frontend, data.backend, data.db, data.envs);
       } else if (data.type === "import") {
         await handleImportProject(data.repoUrl);
       }
@@ -134,6 +135,7 @@ export default function ProjectsPage() {
         frontend={frontend} onFrontendChange={setFrontend}
         backend={backend} onBackendChange={setBackend}
         db={db} onDbChange={setDb}
+        envs={envs} onEnvsChange={setEnvs}
         repoUrl={repoUrl} onRepoUrlChange={setRepoUrl}
         selectedTemplate={selectedTemplate} onTemplateSelect={setSelectedTemplate}
       />

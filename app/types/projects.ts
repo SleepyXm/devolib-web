@@ -4,12 +4,14 @@ export type Project = {
     frontend: string;
     backend: string;
     db: string;
+    env: { key: string; value: string; is_secret: boolean }[];
     user_id: string;
     container_id: string;
     status: string;
     last_online: string;
     roots: ProjectRoots;
 }
+
 
 export type ProjectRoots = {
     frontend_root: string | null;

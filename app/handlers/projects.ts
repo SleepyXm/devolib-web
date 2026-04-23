@@ -5,10 +5,10 @@ import { Project, GithubRepo, ProjectMetaData } from "../types/projects";
 
 const project_endpoint = `/projects`;
 
-export async function createProject(user_id: string, name: string, frontend?: string, backend?: string, db?: string): Promise<Project> {
+export async function createProject(user_id: string, name: string, frontend?: string, backend?: string, db?: string, envs?: { key: string; value: string, is_secret: boolean}[]): Promise<Project> {
   const res = await request(`${project_endpoint}/create`, {
     method: "POST",
-    body: JSON.stringify({ user_id, name, frontend, backend, db }),
+    body: JSON.stringify({ user_id, name, frontend, backend, db, envs }),
   });
   return res;
 }
@@ -64,13 +64,8 @@ export async function deleteProject(id: string): Promise<{ success: boolean }> {
 }
 
 
-export const handleCreateProject = async (name: string, projectname: string, frontend?: string, backend?: string, db?: string ) => {
-    try {
-      const res = await createProject(name, projectname, frontend, backend, db);
-      console.log("Project created:", res);
-    } catch (err) {
-      console.error("Error creating project:", err);
-    }
+export const handleCreateProject = async (name: string, projectname: string, frontend?: string, backend?: string, db?: string,  envs?: { key: string; value: string; is_secret: boolean }[] ) => {
+  const res = await createProject(name, projectname, frontend, backend, db, envs);
 }
 
 export async function handleImportProject(repoUrl: string) {

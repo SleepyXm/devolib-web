@@ -95,7 +95,7 @@ async def get_or_create_metadata(project_id: str) -> dict:
 
 
 
-async def insert_project_metadata(project_id: str, name: str, container_info: dict):
+async def insert_project_metadata(project_id: str, name: str, envs: list[dict] | None, container_info: dict):
     await database.execute(
         """
         INSERT INTO project_metadata (project_id, envs, db_schema, pages, endpoints, groups)
@@ -103,7 +103,7 @@ async def insert_project_metadata(project_id: str, name: str, container_info: di
         """,
         {
             "project_id": project_id,
-            "envs": json.dumps(get_default_envs(name)),
+            "envs": json.dumps(envs if envs else get_default_envs(name)),
             "db_schema": json.dumps({}),
             "pages": json.dumps(container_info["pages"]),
             "endpoints": json.dumps(container_info["endpoints"]),

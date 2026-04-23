@@ -77,6 +77,7 @@ async def create_project(
     backend: str = Body(None, embed=True),
     frontend: str = Body(None, embed=True),
     db: str = Body(None, embed=True),
+    envs: list[dict] = Body(None, embed=True),
     current_user: dict = Depends(get_current_user),
     import_url: str = Body(None, embed=True),
 ):
@@ -106,7 +107,7 @@ async def create_project(
         await insert_project_services(project_id, container_info["detected_frameworks"])
 
     await update_project_roots(project_id, container_info)
-    await insert_project_metadata(project_id, name, container_info)
+    await insert_project_metadata(project_id, name, envs, container_info)
 
     return {"ok": True, "project_id": project_id, "container_id": container_info["container_id"], "name": name, "access_token": access_token}
 

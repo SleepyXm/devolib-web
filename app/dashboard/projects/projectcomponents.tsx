@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 
 export type ProjectFormData =
-  | { type: "blank"; name: string; frontend: string; backend: string; db: string }
+  | { type: "blank"; name: string; frontend: string; backend: string; db: string; envs: { key: string; value: string; is_secret: boolean }[] }
   | { type: "import"; repoUrl: string }
   | { type: "template"; templateId: string }
 
@@ -28,6 +28,8 @@ export type CreateProjectModalProps = {
   onBackendChange: (val: string) => void;
   db: string;
   onDbChange: (val: string) => void;
+  envs: { key: string; value: string; is_secret: boolean }[];
+  onEnvsChange: (envs: { key: string; value: string; is_secret: boolean }[]) => void;
   // import
   repoUrl: string;
   onRepoUrlChange: (val: string) => void;
@@ -47,6 +49,7 @@ export function CreateProjectModal({
   db, onDbChange,
   repoUrl, onRepoUrlChange,
   selectedTemplate, onTemplateSelect,
+  envs, onEnvsChange,
 }: CreateProjectModalProps) {
   if (!open) return null;
 
@@ -85,7 +88,55 @@ export function CreateProjectModal({
                 </div>
               ))}
             </div>
-            <button disabled={loading || !name} onClick={() => onSubmit({ type: "blank", name, frontend, backend, db })} className="w-full py-2 rounded-lg text-sm font-medium text-white bg-gray-700 ring-1 ring-white/10 hover:bg-gray-600 transition disabled:opacity-50 disabled:cursor-not-allowed">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs text-gray-400">Environment Variables</label>
+                <button type="button" onClick={() => onEnvsChange([...envs, { key: "", value: "", is_secret: false }])}
+                 className="text-xs text-gray-400 hover:text-white transition"
+                >
+                  + Add
+                </button>
+              </div>
+                {envs.map((env, i) => (
+                  <div key={i} className="flex gap-2 items-center">
+                    <input placeholder="KEY" value={env.key} onChange={(e) => { const updated = [...envs]; updated[i] = { ...updated[i], key: e.target.value }; onEnvsChange(updated); }}
+                      className="flex-1 bg-gray-800/60 ring-1 ring-gray-600/30 rounded-lg px-2 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none"
+                    />
+      <input
+        placeholder="VALUE"
+        value={env.value}
+        onChange={(e) => {
+          const updated = [...envs];
+          updated[i] = { ...updated[i], value: e.target.value };
+          onEnvsChange(updated);
+        }}
+        className="flex-1 bg-gray-800/60 ring-1 ring-gray-600/30 rounded-lg px-2 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none"
+      />
+      <button
+        type="button"
+        onClick={() => {
+          const updated = [...envs];
+          updated[i] = { ...updated[i], is_secret: !updated[i].is_secret };
+          onEnvsChange(updated);
+        }}
+        className={`text-xs px-2 py-1.5 rounded-lg ring-1 transition ${env.is_secret ? "ring-yellow-500/50 text-yellow-400" : "ring-gray-600/30 text-gray-400 hover:text-white"}`}
+      >
+        {env.is_secret ? "secret" : "plain"}
+      </button>
+      <button
+        type="button"
+        onClick={() => onEnvsChange(envs.filter((_, j) => j !== i))}
+        className="text-gray-500 hover:text-red-400 transition text-xs"
+      >
+        ✕
+      </button>
+    </div>
+  ))}
+</div>
+
+
+
+            <button disabled={loading || !name} onClick={() => onSubmit({ type: "blank", name, frontend, backend, db, envs })} className="w-full py-2 rounded-lg text-sm font-medium text-white bg-gray-700 ring-1 ring-white/10 hover:bg-gray-600 transition disabled:opacity-50 disabled:cursor-not-allowed">
               {loading ? "Creating..." : "Create Project"}
             </button>
           </div>
@@ -129,62 +180,6 @@ export function CreatingOverlay({ step, messages }: { step: number; messages: st
           />
         </div>
       </div>
-    </div>
-  );
-}
-
-// Project Creation Bar
-type CreateBarProps = {
-  projectName: string;
-  onNameChange: (val: string) => void;
-  backend: string;
-  onBackendChange: (val: string) => void;
-  frontend: string;
-  onFrontendChange: (val: string) => void;
-  db: string;
-  onDbChange: (val: string) => void;
-  loading: boolean;
-  onCreate: () => void;
-  backendOptions: string[];
-  frontendOptions: string[];
-  dbOptions: string[];
-}
-
-export function CreateProjectBar({
-  projectName, onNameChange,
-  backend, onBackendChange,
-  frontend, onFrontendChange,
-  db, onDbChange,
-  loading, onCreate,
-  backendOptions, frontendOptions, dbOptions
-}: CreateBarProps) {
-  return (
-    <div className="mb-4 flex items-center space-x-2">
-      <input
-        type="text"
-        value={projectName}
-        onChange={(e) => onNameChange(e.target.value)}
-        placeholder="Enter project name"
-        className="border px-2 py-1 rounded flex-1"
-      />
-      <select value={backend} onChange={(e) => onBackendChange(e.target.value)}>
-        {backendOptions.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
-      </select>
-      <select value={frontend} onChange={(e) => onFrontendChange(e.target.value)}>
-        {frontendOptions.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
-      </select>
-      <select value={db} onChange={(e) => onDbChange(e.target.value)}>
-        {dbOptions.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
-      </select>
-      <button
-        className={`px-4 py-2 rounded text-white transition-all duration-700 ${
-          loading ? "bg-gray-400 cursor-not-allowed" : "bg-yellow-400 hover:bg-gradient-to-r from-yellow-300 to-red-300 active:bg-yellow-800 z-50"
-        }`}
-        disabled={loading}
-        onClick={onCreate}
-      >
-        {loading ? "Creating..." : "Create Project"}
-      </button>
     </div>
   );
 }
