@@ -49,7 +49,7 @@ export default function Popup({ message, onClose, type = "error" }: PopupProps) 
           )}
           <div className="error-popup">
             <span>{message}</span>
-            <button onClick={onClose}>✕</button>
+            <button className="ml-2" onClick={onClose}>✕</button>
           </div>
         </motion.div>
       )}
