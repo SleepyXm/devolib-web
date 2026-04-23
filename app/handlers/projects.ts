@@ -69,11 +69,11 @@ export const handleCreateProject = async (name: string, projectname: string, fro
   return res;
 }
 
-export async function handleImportProject(repoUrl: string) {
+export async function handleImportProject(repoUrl: string ,  envs?: { key: string; value: string; is_secret: boolean }[]) {
   const name = repoUrl.split("/").pop() ?? "imported-project";
   return await request(`${project_endpoint}/create`, {
     method: "POST",
-    body: JSON.stringify({ name, import_url: repoUrl }),
+    body: JSON.stringify({ name, import_url: repoUrl, envs }),
   });
 }
 

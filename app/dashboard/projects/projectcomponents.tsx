@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export type ProjectFormData =
   | { type: "blank"; name: string; frontend: string; backend: string; db: string; envs: { key: string; value: string; is_secret: boolean }[] }
-  | { type: "import"; repoUrl: string }
+  | { type: "import"; repoUrl: string, envs: { key: string; value: string; is_secret: boolean }[] }
   | { type: "template"; templateId: string }
 
 export type CreateProjectModalProps = {
@@ -146,7 +146,52 @@ export function CreateProjectModal({
           <div className="space-y-4">
             <p className="text-sm text-gray-400">Import a repository from your connected GitHub account.</p>
             <input type="text" placeholder="https://github.com/you/repo" value={repoUrl} onChange={(e) => onRepoUrlChange(e.target.value)} className="w-full bg-gray-800/60 ring-1 ring-gray-600/30 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none" />
-            <button disabled={loading || !repoUrl} onClick={() => onSubmit({ type: "import", repoUrl })} className="w-full py-2 rounded-lg text-sm font-medium text-white bg-gray-700 ring-1 ring-white/10 hover:bg-gray-600 transition disabled:opacity-50 disabled:cursor-not-allowed">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs text-gray-400">Environment Variables</label>
+                <button type="button" onClick={() => onEnvsChange([...envs, { key: "", value: "", is_secret: false }])}
+                 className="text-xs text-gray-400 hover:text-white transition"
+                >
+                  + Add
+                </button>
+              </div>
+                {envs.map((env, i) => (
+                  <div key={i} className="flex gap-2 items-center">
+                    <input placeholder="KEY" value={env.key} onChange={(e) => { const updated = [...envs]; updated[i] = { ...updated[i], key: e.target.value }; onEnvsChange(updated); }}
+                      className="flex-1 bg-gray-800/60 ring-1 ring-gray-600/30 rounded-lg px-2 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none"
+                    />
+      <input
+        placeholder="VALUE"
+        value={env.value}
+        onChange={(e) => {
+          const updated = [...envs];
+          updated[i] = { ...updated[i], value: e.target.value };
+          onEnvsChange(updated);
+        }}
+        className="flex-1 bg-gray-800/60 ring-1 ring-gray-600/30 rounded-lg px-2 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none"
+      />
+      <button
+        type="button"
+        onClick={() => {
+          const updated = [...envs];
+          updated[i] = { ...updated[i], is_secret: !updated[i].is_secret };
+          onEnvsChange(updated);
+        }}
+        className={`text-xs px-2 py-1.5 rounded-lg ring-1 transition ${env.is_secret ? "ring-yellow-500/50 text-yellow-400" : "ring-gray-600/30 text-gray-400 hover:text-white"}`}
+      >
+        {env.is_secret ? "secret" : "plain"}
+      </button>
+      <button
+        type="button"
+        onClick={() => onEnvsChange(envs.filter((_, j) => j !== i))}
+        className="text-gray-500 hover:text-red-400 transition text-xs"
+      >
+        ✕
+      </button>
+    </div>
+  ))}
+</div>
+            <button disabled={loading || !repoUrl} onClick={() => onSubmit({ type: "import", repoUrl, envs })} className="w-full py-2 rounded-lg text-sm font-medium text-white bg-gray-700 ring-1 ring-white/10 hover:bg-gray-600 transition disabled:opacity-50 disabled:cursor-not-allowed">
               {loading ? "Importing..." : "Import Repository"}
             </button>
           </div>

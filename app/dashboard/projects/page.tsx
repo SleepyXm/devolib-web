@@ -95,7 +95,7 @@ export default function ProjectsPage() {
       if (data.type === "blank") {
         await handleCreateProject(username, data.name, data.frontend, data.backend, data.db, data.envs);
       } else if (data.type === "import") {
-        await handleImportProject(data.repoUrl);
+        await handleImportProject(data.repoUrl, data.envs);
       }
       await refreshProjects();
       setSuccess("Project created!");
