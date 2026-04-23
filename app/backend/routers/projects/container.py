@@ -14,6 +14,7 @@ async def create_project_container(
     frontend_services=None,
     db=None,
     import_url=None,
+    env: dict | None = None,
 ):
     """
     Orchestrates container creation and project scaffolding.
@@ -37,6 +38,7 @@ async def create_project_container(
         backend_services=backend_services,
         frontend_services=frontend_services,
         db=db,
+        env=env,
     )
 
     container = result["container"]

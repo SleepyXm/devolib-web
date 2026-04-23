@@ -52,6 +52,7 @@ def create_and_start_container(
     backend_services: list,
     frontend_services: list,
     db: list,
+    env: dict | None = None,
 ) -> dict:
     """
     Creates and starts a Docker container with Traefik labels, volumes,
@@ -74,6 +75,7 @@ def create_and_start_container(
             name=f"devolib_project_{project_id}",
             detach=True,
             labels=container_labels,
+            environment=env or {},
 
             volumes={
                 f"devolib_project_{project_id}": {

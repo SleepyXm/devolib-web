@@ -90,6 +90,8 @@ async def create_project(
     await create_project_record(project_id, current_user["id"], name, access_token)
     await insert_project_services(project_id, [s for s in [backend, frontend, db] if s])
 
+    env_container = {e["key"]: e["value"] for e in envs} if envs else {}
+
     try:
         container_info = await create_project_container(
             project_id, name,
@@ -97,6 +99,7 @@ async def create_project(
             frontend_services=[frontend] if frontend else [],
             db=[db] if db else [],
             import_url=import_url,
+            env=env_container,
         )
     except Exception as e:
         logger.error("Container creation failed, rolling back", project_id=project_id, error=str(e))
