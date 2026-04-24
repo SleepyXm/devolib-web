@@ -1,11 +1,12 @@
 "use client";
-import { logout } from "@/app/handlers/auth";
+import { logout, deleteAccount } from "@/app/handlers/auth";
 import { useState, useEffect } from "react";
 import { useUser } from "@/app/provider/UserProvider";
 import { InfoRow, SidebarTab, TabSection, UserAvatar, SidebarActions, SectionDivider, ConnectionCard, ProjectCard, EmptyState, AuthorisationsCard } from "./profilecomponents";
 import { GithubIcon, RailwayIcon, VercelIcon } from "@/app/components/assets/icons";
 import { listProjects, listGithubRepos } from "@/app/handlers/projects";
 import { GithubRepo } from "@/app/types/projects";
+import { useRouter } from "next/navigation";
 
 export default function Profile() {
   const [activeTab, setActiveTab] = useState("account");
@@ -13,6 +14,7 @@ export default function Profile() {
   const [hydrated, setHydrated] = useState(false);
   const [projects, setProjects] = useState<any[]>([]);
   const [authorisations, setAuthorisations] = useState<GithubRepo[]>([]);
+  const router = useRouter();
   
  
   useEffect(() => {
@@ -91,7 +93,7 @@ useEffect(() => {
               <InfoRow label="Email" value={user.email ?? "No email on file"} action={() => {}} actionLabel="Change" />
               <InfoRow label="Password" value="••••••••" action={() => {}} actionLabel="Change" />
               <SectionDivider label="Danger Zone" />
-              <InfoRow label="Delete Account" value="Permanently remove your account and all data." action={() => {}} actionLabel="Delete" actionVariant="danger" />
+              <InfoRow label="Delete Account" value="Permanently remove your account and all data." action={async () => { await deleteAccount(); router.push("/");}} actionLabel="Delete" actionVariant="danger" />
             </TabSection>
           )}
  

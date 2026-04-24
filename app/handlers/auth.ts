@@ -68,3 +68,7 @@ export async function handleGitHubCallback() {
 export async function logout() {
   await request("/auth/logout", { method: "POST" });
 }
+
+export async function deleteAccount() {
+  await request("/auth/delete", { method: "DELETE" });
+}
