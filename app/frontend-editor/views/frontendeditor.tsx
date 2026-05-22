@@ -8,12 +8,15 @@ import { EditorMenuItem } from "@/app/components/Contextmenu/menuactions";
 import { ProjectContext, ProjectMetaContext } from "@/app/dashboard/[project]/layout";
 import { useFileManager } from "@/app/file-manager/FileManager";
 import FileTree from "../../file-manager/FileTree";
+import { LoadingState } from "@/app/components/loader";
+import { withRetry } from "@/app/hooks/timer";
 
 export default function FrontendPage() {
   const { projectWS, projectName, roots } = useContext(ProjectContext)!;
   const { pages, groups } = useContext(ProjectMetaContext)!;
   const [srcDoc, setSrcDoc] = useState("");
   const [iframeMode, setIframeMode] = useState<"srcDoc" | "live">("srcDoc");
+  const [previewReady, setPreviewReady] = useState(false);
 
   const { contextMenu, handleContextMenu, handleClick } = useContextMenu();
   const { fileContent, writeFile, saveFile, readFile, loadFileContent, hasUnsavedChanges,} = useFileManager(projectWS);
@@ -61,16 +64,54 @@ export default function FrontendPage() {
     handleClick();
   };
 
-  // Check if container is running
   useEffect(() => {
+    // 1. Nothing to fetch without a project name
     if (!projectName) return;
-    fetch(`http://${projectName}.devolib.com`)
-      .then((res) => {
-        if (res.ok) setIframeMode("live");
-        else setIframeMode("srcDoc");
-      })
-      .catch(() => setIframeMode("srcDoc"));
-  }, []);
+
+    // 2. Track timers so they can both be cancelled on unmount
+    let retryTimer: ReturnType<typeof setTimeout>;
+    let liveTimer: ReturnType<typeof setTimeout>;
+
+    const attemptFetch = (isRetry = false) => {
+      fetch(`http://${projectName}.localhost`)
+        .then((res) => {
+          if (res.ok) {
+            // 3. Container is up — brief pause then switch to live iframe
+            liveTimer = setTimeout(() => {
+              setIframeMode("live");
+              setPreviewReady(true);
+            }, 200);
+          } else if (!isRetry) {
+            // 4. Bad response on first attempt — wait 1.5s then try once more
+            retryTimer = withRetry(() => attemptFetch(true), 1500);
+          } else {
+            // 5. Bad response on retry — container isn't coming up, fall back to srcDoc
+            setIframeMode("srcDoc");
+            setPreviewReady(true);
+          }
+        })
+        .catch(() => {
+          if (!isRetry) {
+            // 4. Fetch threw on first attempt — wait 1.5s then try once more
+            retryTimer = withRetry(() => attemptFetch(true), 1500);
+          } else {
+            // 5. Fetch threw on retry — give up and fall back to srcDoc
+            setIframeMode("srcDoc");
+            setPreviewReady(true);
+          }
+        });
+    };
+
+    // 6. Kick off the first fetch immediately
+    attemptFetch();
+
+    // 7. Clean up any pending timers if projectName changes or component unmounts
+    return () => {
+      clearTimeout(retryTimer);
+      clearTimeout(liveTimer);
+    };
+  }, [projectName]);
+
 
   // Fetch file content from container
   useEffect(() => {
@@ -193,15 +234,15 @@ export default function FrontendPage() {
           onChange={(value) => writeFile(value)}
         />
         <div className="relative w-1/2">
-          {iframeMode === "live" ? (
-            <iframe
-              className="w-full h-full"
-              src={`http://${projectName}.devolib.com/#${selectedPage ? selectedPage.route : ""}`}
+          {!previewReady ? (
+            <LoadingState message="Starting preview..." className="h-full" />
+          ) : iframeMode === "live" ? (
+            <iframe className="w-full h-full"
+              src={`http://${projectName}.localhost/#${selectedPage ? selectedPage.route : ""}`}
               title="preview"
             />
           ) : (
-            <iframe
-              className="w-full h-full"
+            <iframe className="w-full h-full"
               srcDoc={srcDoc}
               sandbox="allow-scripts allow-same-origin"
               title="preview"
