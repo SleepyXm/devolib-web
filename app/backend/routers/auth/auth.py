@@ -10,6 +10,8 @@ from utils.auth import set_auth_cookie, create_access_token
 import uuid, httpx, secrets
 from schemas import UserCreate, UserLogin
 from helpers.limiter import limiter
+from routers.projects.container import delete_project_container
+from helpers.structlogger import logger
 
 
 
@@ -153,6 +155,44 @@ async def logout(response: Response):
     )
     return {"message": "Logged out successfully"}
 
+
+
+
+@router.delete("/delete")
+async def delete_account(current_user: dict = Depends(get_current_user)):
+    user_id = current_user["id"]
+
+    try:
+        projects = await database.fetch_all(
+            "SELECT project_id FROM projects WHERE user_id = :user_id",
+            values={"user_id": user_id}
+        )
+    except Exception as e:
+        logger.error("Failed to fetch projects for account deletion", user_id=user_id, error=str(e))
+        raise HTTPException(500, "Failed to retrieve projects")
+
+    for project in projects:
+        try:
+            await delete_project_container(project["project_id"])
+        except Exception as e:
+            logger.error("Failed to delete project container", project_id=project["project_id"], error=str(e))
+            raise HTTPException(500, f"Failed to delete project {project['project_id']}")
+
+    try:
+        await database.execute("DELETE FROM users WHERE id = :id", values={"id": user_id})
+    except Exception as e:
+        logger.error("Failed to delete user record", user_id=user_id, error=str(e))
+        raise HTTPException(500, "Failed to delete account")
+
+    response = JSONResponse(content={"message": "Account deleted successfully"})
+    response.delete_cookie(
+        key="access_token",
+        path="/",
+        secure=True,
+        httponly=True,
+        samesite="lax",
+    )
+    return response
 
 
 @router.get("/hi")

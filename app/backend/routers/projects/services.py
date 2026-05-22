@@ -154,7 +154,7 @@ async def tail_logd(container, send_queue: asyncio.Queue):
             detach=False,
             socket=False
         )
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         read_queue = asyncio.Queue()
 
         def read_stream():

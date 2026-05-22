@@ -176,15 +176,16 @@ async def websocket_terminal(websocket: WebSocket, project_id: str, access_token
     if not project:
         await websocket.close(code=1008, reason="Invalid access token or project not found")
         return
+    
+    await websocket.accept()
 
     try:
-        container = get_container(project_id)
+        container = await asyncio.to_thread(get_container, project_id)
     except docker.errors.NotFound:
         await websocket.send_text("Container not found\n")
         await websocket.close(code=1000)
         return
 
-    await websocket.accept()
     await run_terminal_session(websocket, container, project_id, project["name"])
             
 

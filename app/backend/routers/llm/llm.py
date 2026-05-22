@@ -18,7 +18,11 @@ client = OpenAI(
 
 def extract_html_from_response(response: str) -> str | None:
     match = re.search(r'```html\n([\s\S]*?)```', response)
-    return match.group(1).strip() if match else None
+    if match:
+        return match.group(1).strip()
+    else:
+        return None
+
 
 @router.post("/chat")
 @limiter.limit("10/minute")

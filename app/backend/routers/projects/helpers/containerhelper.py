@@ -42,7 +42,7 @@ BINARY_FRAMEWORKS = { "LoggingService":
 
 
 
-def create_and_start_container(
+async def create_and_start_container(
     project_id: str,
     project_name: str,
     base_tag: str,
@@ -86,10 +86,9 @@ def create_and_start_container(
             network=NETWORK_NAME,
             mem_limit="1024m",
             cpu_quota=50000,
-            command=["tail", "-f", "/dev/null"],
         )
 
-        container.start()
+        await asyncio.to_thread(container.start)
 
         logger.info(
             "Container started",

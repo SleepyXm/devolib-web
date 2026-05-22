@@ -6,6 +6,7 @@ from helpers.structlogger import logger
 from .containers.config import project_services_config
 from .containers.scaffold import scaffold_import, scaffold_fresh, build_project_groups
 from fastapi import HTTPException
+import asyncio
 
 async def create_project_container(
     project_id: str,
@@ -28,7 +29,7 @@ async def create_project_container(
     configs_map = config["configs_map"]
 
     # Create and start container
-    result = create_and_start_container(
+    result = await create_and_start_container(
         project_id=project_id,
         project_name=project_name,
         base_tag=config["base_tag"],
@@ -74,7 +75,7 @@ async def create_project_container(
 
     groups = build_project_groups(container, project_name, frontend_services, backend_services, scan_result)
 
-    container.stop()
+    await asyncio.to_thread(container.stop, timeout=2)
 
     await database.execute(
         """
@@ -109,10 +110,10 @@ async def delete_project_container(project_id: str):
     volume_name = f"devolib_project_{project_id}"
 
     try:
-        container = get_container(project_id)
+        container = await asyncio.to_thread(get_container, project_id)
         logger.info("Stopping container", project_id=project_id)
-        container.stop(timeout=2)
-        container.remove()
+        await asyncio.to_thread(container.stop, timeout=2)
+        await asyncio.to_thread(container.remove)
         logger.info("Container removed", project_id=project_id)
     except docker.errors.NotFound:
         logger.warning("Container not found", project_id=project_id)
@@ -121,8 +122,8 @@ async def delete_project_container(project_id: str):
         raise
 
     try:
-        volume = docker_client.volumes.get(volume_name)
-        volume.remove()
+        volume = await asyncio.to_thread(docker_client.volumes.get, volume_name)
+        await asyncio.to_thread(volume.remove)
         logger.info("Volume removed", volume_name=volume_name)
     except docker.errors.NotFound:
         logger.warning("Volume not found", volume_name=volume_name)
@@ -134,12 +135,16 @@ async def delete_project_container(project_id: str):
 
 async def start_container(project_id: str) -> docker.models.containers.Container:
     try:
-        container = get_container(project_id)
+        container = await asyncio.to_thread(get_container, project_id)
+
+        await asyncio.to_thread(container.reload)
+
         if container.status != "running":
-            container.start()
+            await asyncio.to_thread(container.start)
     except docker.errors.NotFound:
         try:
-            container = docker_client.containers.run(
+            container = await asyncio.to_thread( 
+                docker_client.containers.run,
                 f"devolib_project_{project_id}",
                 name=f"devolib_project_{project_id}",
                 network="web",
@@ -151,9 +156,9 @@ async def start_container(project_id: str) -> docker.models.containers.Container
         except docker.errors.ImageNotFound:
             raise HTTPException(status_code=404, detail="Docker image not found")
 
-    check = container.exec_run("pgrep logd", tty=False, detach=False)
+    check = await asyncio.to_thread(container.exec_run, "pgrep logd", tty=False, detach=False)
     if check.exit_code != 0:
-        container.exec_run("sh -c 'logd > /var/log/logd.log 2>&1 &'", tty=False, detach=True)
+        await asyncio.to_thread(container.exec_run, "sh -c 'logd > /var/log/logd.log 2>&1 &'", tty=False, detach=True)
         logger.info("Started logd", project_id=project_id)
     else:
         logger.info("logd already running", project_id=project_id)
@@ -169,7 +174,7 @@ async def start_container(project_id: str) -> docker.models.containers.Container
 
 
 async def stop_running_container(project_id: str) -> docker.models.containers.Container:
-    container = get_container(project_id)
+    container = await asyncio.to_thread(get_container, project_id)
     container.stop(timeout=2)
     await database.execute(
         "UPDATE projects SET status = 'stopped' WHERE project_id = :project_id",
