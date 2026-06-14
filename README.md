@@ -46,10 +46,10 @@ UI preview, schema management, and component generation consolidated into one in
 ┌──────────────────────────────────────────────┐
 │                  Container                   │
 │                                              │
-│   ┌─────────────┐     ┌──────────────────┐  │
-│   │   Backend   │────▶│    PostgreSQL     │  │
-│   │  (FastAPI)  │     │                  │  │
-│   └──────┬──────┘     └──────────────────┘  │
+│   ┌─────────────┐     ┌──────────────────┐   │
+│   │   Backend   │────▶│    PostgreSQL   │   │
+│   │  (FastAPI)  │     │                  │   │
+│   └──────┬──────┘     └──────────────────┘   │
 │          │                                   │
 │   ┌──────▼──────┐                            │
 │   │  Reverse    │                            │
