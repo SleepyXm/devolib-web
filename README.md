@@ -82,27 +82,7 @@ The backend and database never leave the container. The frontend is the only sur
 
 ## Setup
 
-```bash
-git clone https://github.com/SleepyXm/LIDE.git
-cd LIDE
-npm install
-cp .env.example .env
-```
-
-Configure your environment:
-
-```env
-PORT=3000
-DATABASE_URL=postgres://...
-```
-
-Start the environment:
-
-```bash
-npm run dev
-```
-
-Runs at `http://localhost:3000`.
+Create an account, get to development.
 
 ---
 
