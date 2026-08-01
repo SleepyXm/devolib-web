@@ -1,40 +1,32 @@
-type ServiceView = "frontend" | "backend" | "database" | "wireframe" | "terminal"
+import { Status, cx } from "@/app/UI";
 
-interface ServiceTabProps {
-  label: string
-  active: boolean
-  hasDot?: boolean
-  online?: boolean
-  connected?: boolean
-  onClick: () => void
-}
-
-export function ServiceTab({ label, active, hasDot = false, online = false, connected = false, onClick }: ServiceTabProps) {
-  const dotColor = !online
-    ? "bg-[#c85050]"
-    : connected
-    ? "bg-[#5080c8]"
-    : "bg-[#50c878]";
-
-  const dotGlow = !online
-    ? "shadow-[0_0_4px_rgba(200,80,80,0.6)]"
-    : connected
-    ? "shadow-[0_0_4px_rgba(80,120,200,0.6)]"
-    : "shadow-[0_0_4px_rgba(80,200,120,0.6)]";
-
+export function ServiceTab({
+  label,
+  active,
+  hasDot = false,
+  online = false,
+  connected = false,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  hasDot?: boolean;
+  online?: boolean;
+  connected?: boolean;
+  onClick: () => void;
+}) {
   return (
     <button
       onClick={onClick}
-      className={`px-4 py-2 rounded flex items-center gap-2 ${
+      className={cx(
+        "flex min-h-9 items-center gap-2 border px-3 font-mono text-[10px] uppercase tracking-[.06em] transition",
         active
-          ? "bg-[#222830] border border-[#2e3540] text-white"
-          : "bg-transparent border-transparent text-[#3a4050] dark:text-[#6f6f6f] transition-all hover:text-zinc-400 dark:hover:text-zinc-300 duration-400"
-      }`}
-    >
-      {hasDot && (
-        <span className={`w-2 h-2 rounded-full ${dotColor} ${active ? dotGlow : ""}`} />
+          ? "border-white/15 bg-[var(--dv-surface-raised)] text-white"
+          : "border-transparent text-white/35 hover:text-white/65",
       )}
-      {label}
+    >
+      {hasDot && <Status state={online ? (connected ? "idle" : "live") : "offline"}>{label}</Status>}
+      {!hasDot && label}
     </button>
   );
 }

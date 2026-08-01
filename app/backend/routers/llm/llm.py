@@ -10,10 +10,15 @@ load_dotenv()
 
 router = APIRouter()
 
-client = OpenAI(
-    api_key=os.getenv("DEEPSEEK_API_KEY"),
-    base_url="https://api.deepseek.com"
-)
+
+def get_deepseek_client() -> OpenAI:
+    api_key = os.getenv("DEEPSEEK_API_KEY")
+    if not api_key:
+        raise HTTPException(
+            status_code=503,
+            detail="DEEPSEEK_API_KEY is not configured",
+        )
+    return OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
 
 
 def extract_html_from_response(response: str) -> str | None:
@@ -34,9 +39,9 @@ def get_ai_response(request: Request, data: MessageInput):
 You are a UI design assistant for Devolib, a design editor.
 
 When generating components, always wrap your HTML in markdown code blocks:
-\`\`\`html
+```html
 <!-- your component here -->
-\`\`\`
+```
 
 Always include data-ref on the root element following: {component}-{variant}-{source}
 - component: the type of component e.g. button, input, form, card
@@ -55,6 +60,7 @@ You can talk naturally outside of code blocks.
         }
     ]
 
+    client = get_deepseek_client()
     try:
         response = client.chat.completions.create(
             model="deepseek-chat",
@@ -88,6 +94,7 @@ def extract_sql_from_response(response: str) -> str:
 @router.post("/generate-test-data")
 @limiter.limit("10/minute")
 async def generate_test_data(request: Request, data: SchemaInput):
+    client = get_deepseek_client()
     try:
         response = client.chat.completions.create(
             model="deepseek-chat",
@@ -118,6 +125,7 @@ async def generate_tests(request: Request, data: TestInput):
         f"{ep['method'].upper()} {ep['path']}" for ep in data.endpoints
     )
 
+    client = get_deepseek_client()
     try:
         response = client.chat.completions.create(
             model="deepseek-chat",

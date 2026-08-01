@@ -1,73 +1,50 @@
-import LandingPage from "@/app/components/units/gsaptest";
+import { ArrowRight, Container, ScanSearch, TerminalSquare } from "lucide-react";
+import { Action, content, Eyebrow, ProductPreview, ui } from "./UI";
+
+const icons = [ScanSearch, Container, TerminalSquare];
 
 export default function Home() {
+  const { landing } = content;
   return (
-    <>
-    <div className="scroll-smooth">
-    <div className="flex min-h-screen items-center justify-center">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 transparent sm:items-start lg:max-w-7xl">
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <div className="dv-accent">
-          <h1 className="dv-headline">
-            DevoLib
-          </h1>
+    <main className={ui.page}>
+      <section className="min-h-screen py-[clamp(5rem,9vw,8rem)]">
+        <div className={ui.container}>
+          <div className="grid max-w-4xl gap-6">
+            <Eyebrow>{landing.eyebrow}</Eyebrow>
+            <h1 className="m-0 text-[clamp(3rem,7vw,6.4rem)] font-medium leading-[.94] tracking-[-.055em]">
+              {landing.title.map((line) => <span className="block" key={line}>{line}</span>)}
+            </h1>
+            <p className="m-0 max-w-2xl text-lg leading-8 text-white/55">{landing.description}</p>
+            <div className="flex flex-wrap gap-3">
+              <Action href="/login">Launch workspace <ArrowRight size={13} /></Action>
+              <Action href="/architecture" tone="quiet">How it works</Action>
+            </div>
+            <div className="flex flex-wrap font-mono text-[10px] uppercase text-white/35">
+              {landing.facts.map((fact) => (
+                <span className="border-l border-white/10 px-4 first:border-0 first:pl-0" key={fact}>{fact}</span>
+              ))}
+            </div>
           </div>
-          <p className="dv-subtext">
-            Looking for a starting point or more instructions? Hit{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="dv-links"
-            >
-              Let's get started
-            </a>{" "}
-            or check out the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="dv-links"
-            >
-              Previews
-            </a>{" "}
-          </p>
-        </div>
-        <div className="inline-block">to learn more about Next.js.
-              
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full
-              bg-gradient-to-b from-orange-200 to-red-300
-              px-5 text-black transition-colors duration-700
-              hover:from-orange-300 hover:to-red-300
-              md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
 
-            Let's get started
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full
-              bg-gradient-to-r from-green-100 to-blue-300
-              px-5 text-black transition-colors duration-700
-              hover:from-green-200 hover:to-blue-400
-              md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Previews
-          </a>
+          <div className="mt-[clamp(4rem,9vw,7rem)]">
+            <ProductPreview />
+            <div className="grid grid-cols-3 gap-px border border-t-0 border-white/10 bg-white/10 max-md:grid-cols-1">
+              {landing.capabilities.map(([title, copy], index) => {
+                const Icon = icons[index];
+                return (
+                  <article className="grid min-h-36 content-between gap-5 bg-[var(--dv-surface)] p-5" key={title}>
+                    <Icon size={16} className="text-[var(--dv-accent)]" />
+                    <div>
+                      <h2 className="mb-2 text-sm font-medium">{title}</h2>
+                      <p className="m-0 text-xs leading-5 text-white/45">{copy}</p>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
         </div>
-      </main>
-    </div>
-    <div className="w-full bg-black dark:bg-gradient-to-r from-yellow-100 to-red-300 text-zinc-300 dark:text-zinc-600">
-        <h1 className="text-7xl p-4 flex flex-col justify-items-center">
-          Stuff to be added: Extra Space for the landing page
-        </h1>
-      </div>
-      <LandingPage />
-      </div>
-    </>
+      </section>
+    </main>
   );
 }

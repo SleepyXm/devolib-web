@@ -51,7 +51,7 @@ export default function RightPanel({ code }: RightPanelProps) {
   const { projectWS } = useContext(ProjectContext)!;
  
   return (
-    <div className="dv-panel-suite">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-[var(--dv-surface-inset)]">
       {/* Tab bar */}
       <div className="flex border-b border-gray-700 bg-gray-850 flex-shrink-0">
         {TABS.map((tab) => (
@@ -61,17 +61,17 @@ export default function RightPanel({ code }: RightPanelProps) {
             className={`
               relative flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium transition-colors
               ${activeTab === tab.id
-                ? "text-white border-b-2 border-indigo-400 bg-gray-800/50"
+                ? "border-b-2 border-white/50 bg-white/[.06] text-white"
                 : "text-gray-500 hover:text-gray-300 border-b-2 border-transparent dark:text-gray-300"
               }
             `}
           >
-            <span className={activeTab === tab.id ? "text-indigo-400" : "text-gray-600 dark:text-gray-200"}>
+            <span className={activeTab === tab.id ? "text-white/80" : "text-gray-600 dark:text-gray-200"}>
               {tab.icon}
             </span>
             {tab.label}
             {tab.badge && (
-              <span className="inline-flex items-center px-1 py-px rounded bg-purple-900/60 border border-purple-700/50 text-purple-400 text-[9px] leading-none font-bold uppercase tracking-wide">
+              <span className="inline-flex items-center rounded border border-white/15 bg-white/[.06] px-1 py-px text-[9px] font-bold uppercase leading-none tracking-wide text-white/55">
                 {tab.badge}
               </span>
             )}

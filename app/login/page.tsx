@@ -1,131 +1,98 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Boxes, GitBranch, ScanSearch } from "lucide-react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signup, login, loginWithGitHub } from "@/app/handlers/auth";
-import { useUser } from "@/app/provider/UserProvider";
 import Popup from "@/app/components/ErrorPopup";
-import { AuthInput, AuthDivider, AuthFooter, GithubButton } from "./logincomponents";
+import { login, loginWithGitHub, signup } from "@/app/handlers/auth";
+import { Action, content, Eyebrow, Panel, Status, ui } from "@/app/UI";
+import { useUser } from "@/app/provider/UserProvider";
+import { AuthDivider, AuthInput, GithubButton } from "./logincomponents";
 
+const signals = [
+  [GitBranch, "Import from a connected GitHub account"],
+  [ScanSearch, "Discover routes, endpoints, roots, and schema"],
+  [Boxes, "Control isolated project services"],
+] as const;
 
 export default function Auth() {
   const { setUser } = useUser();
-  const [userName, setUserName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
-  const [mounted, setMounted] = useState(false);
   const [password, setPassword] = useState("");
-  const [password2, setPassword2] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [error, setError] = useState("")
-  const [success, setSuccess] = useState("")
+  const [confirmation, setConfirmation] = useState("");
+  const [signUp, setSignUp] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const router = useRouter();
 
-  useEffect(() => {
-    setMounted(true); 
-  }, []);
-
-  if (!mounted) return null;
-
-  async function handleSubmit() {
-  try {
-    if (isSignUp) {
-      if (password !== password2) {
-        setError("Passwords do not match!");
-        return; // stop execution
+  async function submit() {
+    try {
+      if (signUp) {
+        if (password !== confirmation) return setError("Passwords do not match.");
+        if (!email.includes("@")) return setError("Enter a valid email address.");
+        await signup(username, email, password);
+        return setSuccess("Account created. Check your email to verify it.");
       }
-      if (!email.includes("@")) {
-        setError("Please enter a valid email address.");
-        return; // stop execution
-      }
-
-      const res = await signup(userName, email, password);
-      setSuccess("Account created! Check your email to verify.");
-    } else {
-      const res = await login(userName, password);
-      setUser(res);
-      router.push(`/dashboard`);
+      const result = await login(username, password);
+      setUser(result);
+      router.push("/dashboard");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Something went wrong.");
     }
-  } catch (err) {
-      const error = err instanceof Error ? err.message : "Something went wrong.";
-      setError(error);
   }
-}
-
-async function handleGitHubLogin() {
-  try {
-    loginWithGitHub(); // triggers the redirect
-  } catch (err) {
-    const error = err instanceof Error ? err.message : "Something went wrong.";
-    setError(error);
-  }
-}
-
-
 
   return (
-  <div className="grid grid-rows-[5vh_1fr_5vh] items-center justify-items-center min-h-screen gap-[5vh]">
-    <Popup message={error} onClose={() => setError("")} type="error" />
-    <Popup message={success} onClose={() => setSuccess("")} type="success" />
-    <div className="flex flex-col gap-[4vh] row-start-2 items-center w-[30vw]">
-        <div className="group relative w-full h-full bg-gradient-to-b from-gray-600/70 via-gray-700/40 to-gray-800/60 backdrop-blur-lg p-4 rounded-xl border border-gray-400/50">
+    <main className={`${ui.page} grid grid-cols-[1.05fr_.95fr] max-lg:grid-cols-1`}>
+      <Popup message={error} onClose={() => setError("")} type="error" />
+      <Popup message={success} onClose={() => setSuccess("")} type="success" />
 
-          {/* spinning blurs */}
-
-              {/* Header */}
-              <div className="mb-8">
-                <div className="flex items-center gap-2 text-xs text-gray-400 mb-3">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/80"></span>
-                  <span>Secure area</span>
-                </div>
-                <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white">
-                  {isSignUp ? "Create your account" : "Sign in"}
-                </h2>
-                <p className="text-sm text-gray-400 mt-1.5">
-                  {isSignUp ? "Enter your username and password to create an account." : "Use your username and password to sign in."}
-                </p>
-              </div>
-
-              <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); handleSubmit() }}>
-                <AuthInput label="Username" type="text" placeholder="Enter your username" value={userName} onChange={(e) => setUserName(e.target.value)} />
-                <AuthInput
-                  label="Password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  extra={<a href="#" className="text-xs text-gray-400 hover:text-teal-300 transition-all ease-in-out duration-200">Forgot your Password?</a>}
-                />
-
-                {isSignUp && (
-                  <>
-                    <AuthInput label="Email" type="text" placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} />
-                    <AuthInput label="Re-enter Password" type="password" placeholder="Re-enter your password" value={password2} onChange={(e) => setPassword2(e.target.value)} />
-                  </>
-                )}
-
-                {/* Remember me */}
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-2 cursor-pointer select-none">
-                    <input type="checkbox" className="sr-only peer" />
-                    <span className="h-4 w-4 rounded-md ring-1 ring-gray-600/40 bg-gray-900/50 flex items-center justify-center peer-checked:bg-gray-200 transition">
-                      <svg className="h-3 w-3 text-gray-900 opacity-0 peer-checked:opacity-100 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path d="m9 12 2 2 4-4"></path></svg>
-                    </span>
-                    <span className="text-xs text-gray-300">Remember me</span>
-                  </label>
-                  <a href="#" className="text-xs text-gray-400 hover:text-teal-300">Trouble signing in?</a>
-                </div>
-
-                <button type="submit" className="w-full inline-flex gap-2 shadow-[inset_0_-2px_25px_-4px_rgba(255,255,255,0.2)] ring-1 ring-white/10 hover:ring-gray-300/40 hover:from-gray-600 hover:to-gray-500 hover:shadow-lg transition-all duration-300 text-sm font-medium text-white bg-gradient-to-r from-gray-700 to-gray-600 rounded-lg py-2.5 px-4 items-center justify-center">
-                  Sign {isSignUp ? "Up" : "In"}
-                </button>
-
-                <AuthDivider />
-                <GithubButton onClick={handleGitHubLogin} />
-              </form>
-
-              <AuthFooter isSignUp={isSignUp} onToggle={() => setIsSignUp(!isSignUp)} />
+      <section className="grid content-center gap-8 border-r border-white/10 p-[clamp(2rem,8vw,8rem)] max-lg:hidden">
+        <div className="grid max-w-xl gap-5">
+          <Eyebrow>{content.auth.eyebrow}</Eyebrow>
+          <h1 className="text-5xl font-medium tracking-[-.05em]">{content.auth.title}</h1>
+          <p className="text-lg text-white/50">{content.auth.description}</p>
+        </div>
+        <div className="grid max-w-xl gap-px border border-white/10 bg-white/10">
+          {signals.map(([Icon, text]) => (
+            <div className="flex min-h-14 items-center gap-3 bg-[var(--dv-surface)] px-4 text-xs text-white/55" key={text}>
+              <Icon size={14} className="text-[var(--dv-accent)]" /> {text}
             </div>
-          </div>
-      </div>
-  )
+          ))}
+        </div>
+      </section>
+
+      <section className="grid min-h-[calc(100vh-4rem)] place-items-center bg-[#0e1117]/70 p-6">
+        <Panel className="w-full max-w-md border-white/20 p-8">
+          <header className="mb-7 grid gap-3">
+            <Status>{signUp ? "new identity" : "secure area"}</Status>
+            <h2 className="text-2xl font-medium tracking-[-.035em]">
+              {signUp ? "Create your account" : "Sign in to Devolib"}
+            </h2>
+            <p className="m-0 text-sm text-white/45">
+              {signUp ? "Create an identity for your project runtimes." : content.auth.description}
+            </p>
+          </header>
+          <form
+            className="grid gap-4"
+            onSubmit={(event) => { event.preventDefault(); void submit(); }}
+          >
+            <AuthInput label="Username" type="text" placeholder="your-handle" value={username} onChange={(event) => setUsername(event.target.value)} />
+            {signUp && <AuthInput label="Email" type="email" placeholder="you@example.com" value={email} onChange={(event) => setEmail(event.target.value)} />}
+            <AuthInput label="Password" type="password" placeholder="••••••••" value={password} onChange={(event) => setPassword(event.target.value)} />
+            {signUp && <AuthInput label="Confirm password" type="password" placeholder="••••••••" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} />}
+            <Action type="submit" className="w-full">{signUp ? "Create account" : "Enter workspace"}</Action>
+            <AuthDivider />
+            <GithubButton onClick={loginWithGitHub} />
+          </form>
+          <p className="mb-0 mt-6 text-xs text-white/40">
+            {signUp ? "Already have an account?" : "New to Devolib?"}{" "}
+            <button className="text-[var(--dv-accent)]" onClick={() => setSignUp((value) => !value)}>
+              {signUp ? "Sign in" : "Create account"}
+            </button>
+          </p>
+        </Panel>
+      </section>
+    </main>
+  );
 }

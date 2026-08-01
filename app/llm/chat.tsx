@@ -66,7 +66,7 @@ export default function Chat({ setCode }: ChatProps) {
             key={i}
             className={`px-4 py-2.5 rounded-xl text-sm leading-relaxed ${
               msg.role === "user"
-                ? "self-end bg-blue-600 text-white rounded-br-none"
+                ? "self-end bg-white/12 text-white rounded-br-none"
                 : "self-start bg-white/5 text-slate-200 rounded-bl-none border border-white/10"
             }`}
           >
@@ -90,12 +90,12 @@ export default function Chat({ setCode }: ChatProps) {
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
           placeholder="Describe a component..."
           disabled={loading}
-          className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3.5 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:opacity-50 transition"
+          className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-slate-100 transition placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-white/15 disabled:opacity-50"
         />
         <button
           onClick={handleSend}
           disabled={loading}
-          className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:pointer-events-none text-white text-sm font-medium rounded-lg transition"
+          className="rounded-lg bg-zinc-300 px-4 py-2.5 text-sm font-medium text-black transition hover:bg-white disabled:pointer-events-none disabled:opacity-50"
         >
           Send
         </button>

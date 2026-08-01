@@ -1,11 +1,5 @@
-import Section1 from "./sections";
-import Section2 from "./sections2";
+import { redirect } from "next/navigation";
 
-export default function tests() {
-    return(
-        <>
-            <Section1 />
-            <Section2 />
-        </>
-    );
+export default function TestsPage() {
+  redirect("/architecture");
 }

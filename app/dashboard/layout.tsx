@@ -1,60 +1,48 @@
 "use client";
-import type { ReactNode } from "react";
 
-import { useEffect } from "react";
+import type { ReactNode } from "react";
+import { FolderKanban, LayoutDashboard, Palette, UserRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useUser } from "@/app/provider/UserProvider";
-import { useRouter } from "next/navigation";
+import { content, cx, ui } from "../UI";
 
-interface DashboardLayoutProps {
-  children: ReactNode;
-}
+const icons = [LayoutDashboard, FolderKanban, Palette, UserRound];
 
-export default function DashboardLayout({ children }: DashboardLayoutProps) {
+export default function DashboardLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const segment = pathname.split("/").filter(Boolean)[1];
+  const workspace = Boolean(segment) && !["projects", "profile", "designs"].includes(segment);
 
-
-  const tabs = [
-    { name: "Dashboard", href: `/dashboard` },
-    { name: "Projects", href: `/dashboard/projects` },
-    { name: "Designs", href: `/dashboard/designs` },
-    { name: "Profile", href: `/dashboard/profile` },
-  ];
-
-  const activeTab = pathname.split("/").pop();
-
+  if (workspace) return <div className="min-h-screen bg-[#090d12] pt-16">{children}</div>;
 
   return (
-    <div className="flex min-h-screen pt-13">
-      <aside className="w-[9.5vw] bg-white/20 dark:bg-white/[0.055] backdrop-blur-2xl border border-white/40 dark:border-white/[0.09] p-2 z-0">
-        <h2 className="font-bold mb-4 text-black dark:text-white">Dashboard Sidebar</h2>
-        <ul className="space-y-2">
-          {tabs.map((tab) => (
-            <li key={tab.name}>
-              <Link href={tab.href} replace>
-                <button
-                  className={`w-full text-left px-2 py-1 rounded-[1px] ${
-                    activeTab === tab.href.split("/").pop()
-                      ? "dv-nav-item-active"
-                      : "dv-hover-accent"
-                  }`}
-                >
-                  {tab.name}
-                </button>
+    <div className="grid min-h-screen grid-cols-[220px_1fr] pt-16 max-md:grid-cols-1">
+      <aside className="sticky top-16 flex h-[calc(100vh-4rem)] flex-col border-r border-white/10 bg-[#0e1117]/95 p-4 max-md:top-16 max-md:z-20 max-md:h-auto max-md:overflow-x-auto max-md:border-b max-md:border-r-0 max-md:p-2">
+        <div className="border-b border-white/10 px-3 pb-5 max-md:hidden">
+          <span className={ui.micro}>Control plane</span>
+          <strong className="mt-2 block text-sm font-medium">Project operations</strong>
+        </div>
+        <nav className="grid gap-1 pt-4 max-md:flex max-md:w-max max-md:pt-0">
+          {content.dashboard.nav.map(([label, href], index) => {
+            const Icon = icons[index];
+            const active = href === "/dashboard" ? pathname === href : pathname.startsWith(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={cx(
+                  ui.nav,
+                  "justify-start gap-3",
+                  active && "border-white/20 bg-white/[.06] text-[var(--dv-accent)]",
+                )}
+              >
+                <Icon size={13} /> {label}
               </Link>
-            </li>
-          ))}
-        </ul>
+            );
+          })}
+        </nav>
       </aside>
-
-
-      <div className="flex-1 flex flex-col">
-
-        <main className="flex-1 z-50">
-          {children}
-        </main>
-      </div>
+      <main className="min-w-0 p-[clamp(1.25rem,4vw,3.5rem)] max-md:p-4">{children}</main>
     </div>
   );
 }

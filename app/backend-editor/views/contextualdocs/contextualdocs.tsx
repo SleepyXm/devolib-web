@@ -19,8 +19,8 @@ interface DocsProps {
 }
  
 const RELEVANCE_COLORS = {
-  high: "bg-emerald-900/30 border-emerald-700/50 text-emerald-400",
-  medium: "bg-blue-900/30 border-blue-700/50 text-blue-400",
+  high: "border-[var(--dv-success)]/30 bg-[var(--dv-success)]/10 text-[#afc3b5]",
+  medium: "border-white/15 bg-white/[.06] text-white/60",
   low: "bg-gray-800/60 border-gray-700 text-gray-500",
 };
  
@@ -159,7 +159,7 @@ Max 4 results, max 3 sections. No markdown, no prose outside JSON.`,
           <button
             onClick={handleAutoDetect}
             disabled={autoLoading || !code.trim()}
-            className="flex items-center gap-1.5 px-3 py-1 rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-xs transition-colors"
+            className="flex items-center gap-1.5 rounded bg-zinc-300 px-3 py-1 text-xs text-black transition-colors hover:bg-white disabled:opacity-40"
           >
             {autoLoading ? <span className="animate-spin inline-block w-3 h-3 border border-white border-t-transparent rounded-full" /> : null}
             {autoLoading ? "Detecting…" : "Auto-detect"}
@@ -171,12 +171,12 @@ Max 4 results, max 3 sections. No markdown, no prose outside JSON.`,
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && fetchDocs(query)}
               placeholder="Search docs…"
-              className="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-indigo-500"
+              className="flex-1 rounded border border-white/10 bg-white/[.04] px-2 py-1 text-xs text-gray-200 placeholder-gray-600 focus:border-white/30 focus:outline-none"
             />
             <button
               onClick={() => fetchDocs(query)}
               disabled={loading || !query.trim()}
-              className="px-3 py-1 rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-xs transition-colors"
+              className="rounded bg-zinc-300 px-3 py-1 text-xs text-black transition-colors hover:bg-white disabled:opacity-40"
             >
               {loading ? <LoadingDots /> : "Search"}
             </button>
@@ -188,7 +188,7 @@ Max 4 results, max 3 sections. No markdown, no prose outside JSON.`,
       {mode === "auto" && autoQuery && (
         <div className="px-3 py-1.5 border-b border-gray-800 bg-gray-850 flex items-center gap-2">
           <span className="text-gray-600 text-[10px] uppercase tracking-widest">Context:</span>
-          <span className="text-indigo-400 text-xs">{autoQuery}</span>
+          <span className="text-xs text-white/65">{autoQuery}</span>
           {autoLoading && <LoadingDots />}
         </div>
       )}
@@ -208,7 +208,7 @@ Max 4 results, max 3 sections. No markdown, no prose outside JSON.`,
  
         {(loading || autoLoading) && results.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full gap-2 text-gray-500">
-            <span className="animate-spin inline-block w-5 h-5 border-2 border-indigo-400 border-t-transparent rounded-full" />
+            <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-white/50 border-t-transparent" />
             <span className="text-xs">Retrieving docs…</span>
           </div>
         )}

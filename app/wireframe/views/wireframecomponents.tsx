@@ -4,7 +4,7 @@ import { SectionPanelProps, PageRowProps, EndpointRowProps, MethodBadgeProps, Db
  
 export function SectionPanel({ title, children, onContextMenu }: SectionPanelProps) {
   return (
-    <div className="dv-wireframe-container" onContextMenu={onContextMenu}>
+    <div className="min-h-56 overflow-hidden border border-white/10 bg-[var(--dv-surface-inset)]" onContextMenu={onContextMenu}>
       <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400 p-2 bg-[#111318] rounded-t-lg pl-4">
         {title}
       </p>
@@ -53,7 +53,7 @@ export function EndpointRow({ method, path }: EndpointRowProps) {
  
 function MethodBadge({ method }: MethodBadgeProps) {
   const colors: Record<string, string> = {
-    POST:   "bg-blue-500/10 text-blue-400",
+    POST:   "bg-white/[.06] text-white/60",
     PUT:    "bg-yellow-500/10 text-yellow-400",
     PATCH:  "bg-yellow-500/10 text-yellow-400",
     DELETE: "bg-red-500/10 text-red-400",
@@ -89,8 +89,8 @@ export function DbSection({ db_schema }: DbSectionProps) {
  
 export function CreateModal({ activeSection, inputValue, onChange, onConfirm, pages, parentPage, onParentChange, onEndpointTypeChange, endpointType, onCancel, groupRoot, onGroupRootChange, groupWorkspace, onGroupWorkspaceChange }: CreateModalProps) {
   return (
-    <div className="dv-modal-insert">
-      <div className="bg-[#111318] border rounded-lg p-6 flex flex-col gap-4 w-80">
+    <div className="fixed inset-0 z-[100] grid place-items-center bg-black/70 backdrop-blur-lg">
+      <div className="flex w-80 flex-col gap-4 border border-white/20 bg-[#111318] p-6">
         <p className="text-sm font-semibold text-zinc-400">
           {activeSection === "pages" ? "New Page Name" : activeSection === "groups" ? "New Folder" : "New Endpoint Path"}
         </p>

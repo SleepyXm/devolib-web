@@ -2,109 +2,87 @@
 
 import { useEffect, useRef } from "react";
 
-function DotGrid() {
+export default function DotGrid() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current!;
-    const ctx = canvas.getContext("2d")!;
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext("2d");
+    if (!canvas || !context) return;
 
-    let mouse = { x: -9999, y: -9999 };
-    let dpr = window.devicePixelRatio || 1;
-
-    const resize = () => {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-
-      canvas.width = w * dpr;
-      canvas.height = h * dpr;
-      canvas.style.width = w + "px";
-      canvas.style.height = h + "px";
-
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      draw();
-    };
-
-    const parseHex = (hex: string) => [
-      parseInt(hex.slice(1, 3), 16),
-      parseInt(hex.slice(3, 5), 16),
-      parseInt(hex.slice(5, 7), 16),
-    ];
-
-    const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-
-    const lerpColor = (a: number[], b: number[], t: number) => [
-      lerp(a[0], b[0], t),
-      lerp(a[1], b[1], t),
-      lerp(a[2], b[2], t),
-    ];
+    let pointer = { x: -1000, y: -1000 };
+    let frame = 0;
+    let pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
 
     const draw = () => {
-      const w = canvas.width / dpr;
-      const h = canvas.height / dpr;
+      frame = 0;
+      const width = canvas.width / pixelRatio;
+      const height = canvas.height / pixelRatio;
+      const gap = 18;
+      const radius = 0.75;
+      const influence = 175;
 
-      const grid = 12;
-      const dotR = 0.9;
-      const cursorR = 160;
+      context.clearRect(0, 0, width, height);
 
-      const base = parseHex("#adadad");
-      const highlight = parseHex("#000000");
+      for (let y = gap / 2; y < height; y += gap) {
+        for (let x = gap / 2; x < width; x += gap) {
+          const distance = Math.hypot(x - pointer.x, y - pointer.y);
+          const proximity = Math.max(0, 1 - distance / influence);
+          const eased = proximity * proximity * (3 - 2 * proximity);
+          const alpha = 0.055 + eased * 0.82;
 
-      ctx.clearRect(0, 0, w, h);
-
-      const half = grid / 2;
-      const cols = Math.ceil(w / grid);
-      const rows = Math.ceil(h / grid);
-
-      for (let row = 0; row < rows; row++) {
-        for (let col = 0; col < cols; col++) {
-          const x = col * grid + half;
-          const y = row * grid + half;
-
-          const dx = x - mouse.x;
-          const dy = y - mouse.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-
-          const t =
-            dist < cursorR
-              ? 0.5 + 0.5 * Math.cos((Math.PI * dist) / cursorR)
-              : 0;
-
-          const [r, g, b] = lerpColor(base, highlight, t);
-
-          ctx.fillStyle = `rgb(${r},${g},${b})`;
-          ctx.beginPath();
-          ctx.arc(x, y, dotR, 0, Math.PI * 2);
-          ctx.fill();
+          context.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+          context.beginPath();
+          context.arc(x, y, radius + eased * 0.45, 0, Math.PI * 2);
+          context.fill();
         }
       }
     };
 
-    const handleMove = (e: MouseEvent) => {
-      mouse.x = e.clientX;
-      mouse.y = e.clientY;
-      draw();
+    const requestDraw = () => {
+      if (!frame) frame = window.requestAnimationFrame(draw);
     };
 
-    const handleLeave = () => {
-      mouse = { x: -9999, y: -9999 };
-      draw();
+    const resize = () => {
+      pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      canvas.width = Math.floor(width * pixelRatio);
+      canvas.height = Math.floor(height * pixelRatio);
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+      requestDraw();
     };
 
-    window.addEventListener("mousemove", handleMove);
-    window.addEventListener("mouseleave", handleLeave);
+    const handlePointerMove = (event: PointerEvent) => {
+      pointer = { x: event.clientX, y: event.clientY };
+      requestDraw();
+    };
+
+    const handlePointerLeave = () => {
+      pointer = { x: -1000, y: -1000 };
+      requestDraw();
+    };
+
+    window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    document.addEventListener("mouseleave", handlePointerLeave);
     window.addEventListener("resize", resize);
-
     resize();
 
     return () => {
-      window.removeEventListener("mousemove", handleMove);
-      window.removeEventListener("mouseleave", handleLeave);
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("pointermove", handlePointerMove);
+      document.removeEventListener("mouseleave", handlePointerLeave);
       window.removeEventListener("resize", resize);
     };
   }, []);
 
-  return <canvas className="dv-dot-grid-canvas" ref={canvasRef} />;
+  return (
+    <canvas
+      ref={canvasRef}
+      className="pointer-events-none fixed inset-0 z-0 h-full w-full"
+      aria-hidden="true"
+    />
+  );
 }
-
-export default DotGrid;

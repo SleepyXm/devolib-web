@@ -6,7 +6,13 @@ from fastapi.responses import JSONResponse
 import os, resend
 from cryptography.fernet import Fernet
 from dotenv import load_dotenv
-from utils.auth import set_auth_cookie, create_access_token, verify_token
+from utils.auth import (
+    ALGORITHM,
+    SECRET_KEY,
+    create_access_token,
+    set_auth_cookie,
+    verify_token,
+)
 
 
 DUMMY_PASSWORD_HASH = (

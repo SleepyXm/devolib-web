@@ -1,129 +1,96 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useUser } from "../provider/UserProvider";
+
+import { LogOut, Menu, X } from "lucide-react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { logout } from "../handlers/auth";
-import { useRouter } from "next/navigation";
- 
-const Navbar = () => {
+import { content, cx, ui } from "../UI";
+import { useUser } from "../provider/UserProvider";
+
+export default function Navbar() {
   const { user, setUser } = useUser();
-  const [mounted, setMounted] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
   const router = useRouter();
- 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
- 
-  const handleLogout = async () => {
+
+  useEffect(() => setReady(true), []);
+  useEffect(() => setOpen(false), [pathname]);
+
+  const links = [
+    ...content.nav,
+    ...(ready && user
+      ? [
+          { label: "Workspace", href: "/dashboard" },
+          { label: user.username, href: "/dashboard/profile" },
+        ]
+      : [{ label: "Launch LIDE", href: "/login" }]),
+  ];
+
+  async function signOut() {
     await logout();
     setUser(null);
     router.push("/");
-  };
- 
-  const links = [
-    { label: "Home", url: "/" },
-    ...(user
-      ? [
-          { label: user.username, url: "/dashboard/profile" },
-          { label: "Dashboard", url: "/dashboard" },
-          { label: "Sign out", onClick: handleLogout },
-        ]
-      : [{ label: "Sign in", url: "/login", cta: true }]),
-  ];
+  }
 
-  if (!mounted) return null;
- 
-  return (
-    <header className="navbar">
- 
-      {/* Logo */}
-      <a href="/" className="flex items-center no-underline">
-        <div className="navbar-logo">
-          <span className="text-2xl font-thin tracking-[-0.4px] text-[#0a0a0a] whitespace-nowrap">
-            Devolib
-          </span>
-        </div>
-      </a>
- 
-      {/* Desktop links */}
-      <nav className="hidden md:block">
-        <ul className="flex items-center gap-0.5 list-none">
-          {links.map((link) => (
-            <li key={link.label}>
-              {link.url ? (
-                <Link
-                  href={link.url}
-                  className={
-                    link.cta
-                      ? // Sign in — accent pill
-                        "dv-nav-item dv-hover-accent"
-                      : // Regular link — ghost pill
-                        "dv-nav-item dv-hover-accent"
-                  }
-                >
-                  {link.label}
-                </Link>
-              ) : (
-                <button
-                  onClick={link.onClick}
-                  className="block px-4 py-[7px] rounded-[1px] text-xs font-medium bg-transparent border-none cursor-pointer text-black/45 dark:text-white/45 hover:bg-[#00e0c0] hover:shadow-[0_0_14px_rgba(0,224,192,0.45),0_0_32px_rgba(0,224,192,0.45)] dark:hover:bg-[#ff6219] dark:hover:shadow-[0_0_14px_rgba(255,140,66,0.5),0_0_32px_rgba(255,140,66,0.5)] hover:text-black dark:hover:text-[#000000] transition-all duration-150"
-                >
-                  {link.label}
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
-      </nav>
- 
-      {/* Mobile toggle */}
-      <button
-        className="md:hidden flex items-center justify-center w-[38px] h-[38px] rounded-[10px] border-none cursor-pointer bg-white/20 dark:bg-white/[0.055] backdrop-blur-md text-black dark:text-[#f0f0f0] hover:bg-white/40 dark:hover:bg-white/[0.09] transition-all duration-150"
-        onClick={() => setMobileOpen((prev) => !prev)}
-        aria-label="Toggle menu"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
- 
-      {/* Mobile menu */}
-      {mobileOpen && (
-        <ul className="absolute top-full left-0 right-0 flex flex-col gap-0.5 list-none bg-white/20 dark:bg-white/[0.055] backdrop-blur-2xl border-b border-white/40 dark:border-white/[0.09] px-4 pb-3 pt-2 md:hidden">
-          {links.map((link) => (
-            <li key={link.label}>
-              {link.url ? (
-                <Link
-                  href={link.url}
-                  className="block w-full px-[14px] py-[10px] rounded-[10px] text-sm font-medium no-underline text-black/45 dark:text-white/45 hover:bg-white/40 dark:hover:bg-white/[0.09] hover:text-black dark:hover:text-[#f0f0f0] transition-all duration-150"
-                >
-                  {link.label}
-                </Link>
-              ) : (
-                <button
-                  onClick={link.onClick}
-                  className="block w-full text-left px-[14px] py-[10px] rounded-[10px] text-sm font-medium bg-transparent border-none cursor-pointer text-black/45 dark:text-white/45 hover:bg-white/40 dark:hover:bg-white/[0.09] hover:text-black dark:hover:text-[#f0f0f0] transition-all duration-150"
-                >
-                  {link.label}
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
+  const items = (
+    <>
+      {links.map((link) => {
+        const active =
+          link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
+        const cta = link.href === "/login";
+        return (
+          <Link
+            key={link.href}
+            href={link.href}
+            className={cx(
+              ui.nav,
+              active && "border-white/10 bg-white/[.04] text-white",
+              cta && "ml-2 border-[var(--dv-accent)] bg-[var(--dv-accent)] text-black hover:bg-white max-md:ml-0",
+            )}
+          >
+            {link.label}
+          </Link>
+        );
+      })}
+      {ready && user && (
+        <button className={ui.nav} onClick={signOut}>
+          <LogOut size={12} /> Sign out
+        </button>
       )}
+    </>
+  );
+
+  return (
+    <header className="fixed inset-x-0 top-0 z-50 h-16 border-b border-white/10 bg-black/90 backdrop-blur-xl">
+      <div className="mx-auto flex h-full w-[min(calc(100%-2rem),1180px)] items-center justify-between max-sm:w-[calc(100%-1.25rem)]">
+        <Link href="/" className="flex items-center gap-3">
+          <span className="grid h-7 w-7 grid-cols-2 gap-[3px] border border-white/20 p-1">
+            <i className="bg-[var(--dv-accent)]" /><i className="bg-white/20" />
+            <i className="bg-white/20" /><i className="bg-[var(--dv-accent)]" />
+          </span>
+          <strong className="text-sm font-semibold">{content.brand.name}</strong>
+          <small className="font-mono text-[9px] uppercase tracking-[.12em] text-white/35">
+            {content.brand.product}
+          </small>
+        </Link>
+
+        <nav className="flex items-center max-md:hidden">{items}</nav>
+        <button
+          className="hidden h-9 w-9 place-items-center border border-white/10 bg-white/[.03] max-md:grid"
+          onClick={() => setOpen((value) => !value)}
+          aria-label="Toggle navigation"
+        >
+          {open ? <X size={16} /> : <Menu size={16} />}
+        </button>
+
+        {open && (
+          <nav className="absolute inset-x-3 top-full grid border border-white/15 bg-[var(--dv-surface)] p-2 shadow-2xl md:hidden">
+            {items}
+          </nav>
+        )}
+      </div>
     </header>
   );
-};
- 
-export default Navbar;
+}

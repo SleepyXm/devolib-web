@@ -15,7 +15,7 @@ export function ViewToggle({
           onClick={() => onChange(view)}
           className={`px-4 py-2 rounded ${
             active === view
-              ? "bg-blue-600 text-white"
+              ? "bg-zinc-300 text-black"
               : "bg-gray-700 text-gray-300 hover:bg-gray-600"
           }`}
         >

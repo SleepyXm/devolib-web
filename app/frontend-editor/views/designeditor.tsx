@@ -153,7 +153,7 @@ export default function DesignEditor() {
   return (
     <div className="flex flex-col h-screen w-full">
       {/* Header */}
-      <div className="dv-zone-title">
+      <div className="flex min-h-11 items-center justify-between border-b border-white/10 bg-[var(--dv-surface-inset)] px-4">
         <h2>Design Editor</h2>
       </div>
 

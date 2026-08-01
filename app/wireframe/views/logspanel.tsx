@@ -11,7 +11,7 @@ export default function LogsPanel() {
   };
 
   return (
-    <div className="dv-wireframe-container">
+    <div className="min-h-56 overflow-hidden border border-white/10 bg-[var(--dv-surface-inset)]">
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground text-zinc-400 p-2 bg-[#111318] overflow-hidden rounded-t-lg w-full">
           Logs
@@ -40,7 +40,7 @@ export default function LogsPanel() {
                     ? "bg-red-500/10 text-red-400"
                     : log.direction === "inbound"
                       ? "bg-yellow-500/10 text-yellow-400"
-                      : "bg-blue-500/10 text-blue-400"
+                      : "bg-white/[.06] text-white/55"
                 }`}
               >
                 {directionSymbol[log.direction]} {log.direction}
@@ -48,7 +48,7 @@ export default function LogsPanel() {
               <span
                 className={`shrink-0 font-mono px-1.5 py-0.5 rounded ${
                   log.source === "frontend"
-                    ? "bg-purple-500/10 text-purple-400"
+                    ? "bg-[#9d8fa4]/10 text-[#b5a4bb]"
                     : log.source === "backend"
                       ? "bg-green-500/10 text-green-400"
                       : "bg-orange-500/10 text-orange-400"

@@ -21,7 +21,7 @@ export default function TerminalPage() {
   }, [projectId, setProjectId]);
 
   return (
-  <div className="flex h-full p-4 gap-3 font-mono">
+  <div className="flex h-full gap-3 p-4 font-mono">
     {/* left: terminal */}
     <div className="flex flex-col flex-1 gap-3 min-w-0">
         <TerminalControls start={start} connect={handleConnect} stop={stop} isRunning={isRunning} isConnected={isConnected} />
@@ -36,7 +36,7 @@ export default function TerminalPage() {
     <div className="w-px bg-[#1e2228] self-stretch" />
 
     {/* right: dependency installer */}
-    <div className="flex flex-col w-80 shrink-0 gap-3">
+    <div className="flex w-80 shrink-0 flex-col gap-3 max-lg:hidden">
       <DependencyInstallerPage />
     </div>
   </div>

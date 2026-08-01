@@ -54,7 +54,7 @@ export default function BackendEditor({
 
   return (
     <div className="flex flex-1">
-      <div className="dv-folder-panel dv-folder-panel-color">
+      <div className="w-56 shrink-0 overflow-y-auto border-r border-white/10 bg-[var(--dv-surface-inset)]">
         <FileTree
           items={backendGroups}
           selected={selectedFile ?? undefined}

@@ -3,12 +3,12 @@ export function BackendControls({ hasUnsavedChanges, onSave }: {
   onSave: () => void;
 }) {
   return (
-    <div className="dv-zone-title">
+    <div className="flex min-h-11 items-center justify-between border-b border-white/10 bg-[var(--dv-surface-inset)] px-4">
       <h2>Backend Project Setup</h2>
       {hasUnsavedChanges && (
         <button
           onClick={onSave}
-          className="px-4 py-2 rounded bg-blue-500 hover:bg-blue-600"
+          className="rounded bg-zinc-300 px-4 py-2 text-black transition hover:bg-white"
         >
           Save Changes
         </button>

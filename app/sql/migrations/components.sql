@@ -1,27 +1,11 @@
-ALTER TABLE project_metadata
-ADD COLUMN components jsonb DEFAULT '[]'::jsonb;
-
-ALTER TABLE project_metadata
-ADD COLUMN utils jsonb DEFAULT '[]'::jsonb;
-
-21/03/2026
-
-ALTER TABLE users ADD COLUMN github_id TEXT UNIQUE;
-
-ALTER TABLE users ALTER COLUMN password DROP NOT NULL;
-
-ALTER TABLE users ADD COLUMN verified BOOLEAN DEFAULT FALSE;
-ALTER TABLE users ADD COLUMN verification_token TEXT;
-
-ALTER TABLE users ADD COLUMN github_access_token TEXT;
-
-
-
-22/03/2026
-ALTER TABLE project_metadata 
-  DROP COLUMN components,
-  DROP COLUMN utils,
-  ADD COLUMN groups JSONB NOT NULL DEFAULT '[]'::jsonb;
-
-
-ALTER TABLE users ADD COLUMN github_username VARCHAR(255);
+-- Historical migration notes only; do not execute this file.
+--
+-- The original file mixed raw date headings with ALTER TABLE statements and
+-- could not be run as SQL. Its final intended state has been incorporated into
+-- app/backend/migrations/versions/20260730_0001_initial_schema.py.
+--
+-- Use Alembic for normal setup:
+--   cd app/backend
+--   .\.venv\Scripts\python.exe -m alembic upgrade head
+--
+-- Use app/sql/bootstrap.sql only when a standalone SQL bootstrap is required.

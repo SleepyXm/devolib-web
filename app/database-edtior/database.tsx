@@ -62,10 +62,8 @@ export default function DatabasePage() {
 }, [projectWS]);
 
   return (
-  <div className="p-6 space-y-4 max-h-full overflow-y-auto">
-    <h2 className="text-4xl ">
-      Alter Schema
-    </h2>
+  <div className="max-h-full space-y-4 overflow-y-auto p-5">
+    <div><span className="font-mono text-[10px] uppercase tracking-[.12em] text-white/35">PostgreSQL</span><h2 className="mt-2 text-2xl font-medium">Alter schema</h2></div>
     <DBControls
       tableName={tableName}
       onChange={(e) => setTableName(e.target.value)}
@@ -73,7 +71,7 @@ export default function DatabasePage() {
       onInsertTestData={() => insertTestData(projectWS)}
       inserting={inserting}
     />
-    <div className="p-6 space-y-4 w-[60vw]">
+    <div className="w-full space-y-4 py-4">
     {tables.map((table) => (
       <TableCard
         key={table.id}

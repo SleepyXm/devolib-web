@@ -1,282 +1,127 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Eye, EyeOff, Trash2, X } from "lucide-react";
+import { Action, Empty, Panel, Status, ui } from "@/app/UI";
 
-
+type Env = { key: string; value: string; is_secret: boolean };
 export type ProjectFormData =
-  | { type: "blank"; name: string; frontend: string; backend: string; db: string; envs: { key: string; value: string; is_secret: boolean }[] }
-  | { type: "import"; repoUrl: string, envs: { key: string; value: string; is_secret: boolean }[] }
-  | { type: "template"; templateId: string }
+  | { type: "blank"; name: string; frontend: string; backend: string; db: string; envs: Env[] }
+  | { type: "import"; repoUrl: string; envs: Env[] }
+  | { type: "template"; templateId: string };
 
-export type CreateProjectModalProps = {
-  open: boolean;
-  onClose: () => void;
-  onSubmit: (data: ProjectFormData) => void;
-  loading: boolean;
-  // stack options
-  backendOptions: string[];
-  frontendOptions: string[];
-  dbOptions: string[];
-  // tab
-  tab: "blank" | "import" | "templates";
-  onTabChange: (tab: "blank" | "import" | "templates") => void;
-  // blank
-  name: string;
-  onNameChange: (val: string) => void;
-  frontend: string;
-  onFrontendChange: (val: string) => void;
-  backend: string;
-  onBackendChange: (val: string) => void;
-  db: string;
-  onDbChange: (val: string) => void;
-  envs: { key: string; value: string; is_secret: boolean }[];
-  onEnvsChange: (envs: { key: string; value: string; is_secret: boolean }[]) => void;
-  // import
-  repoUrl: string;
-  onRepoUrlChange: (val: string) => void;
-  // templates
-  selectedTemplate: string;
-  onTemplateSelect: (id: string) => void;
+type ModalProps = {
+  open: boolean; onClose: () => void; onSubmit: (data: ProjectFormData) => void; loading: boolean;
+  backendOptions: string[]; frontendOptions: string[]; dbOptions: string[];
+  tab: "blank" | "import" | "templates"; onTabChange: (tab: "blank" | "import" | "templates") => void;
+  name: string; onNameChange: (value: string) => void;
+  frontend: string; onFrontendChange: (value: string) => void;
+  backend: string; onBackendChange: (value: string) => void;
+  db: string; onDbChange: (value: string) => void;
+  envs: Env[]; onEnvsChange: (envs: Env[]) => void;
+  repoUrl: string; onRepoUrlChange: (value: string) => void;
+  selectedTemplate: string; onTemplateSelect: (id: string) => void;
+};
+
+function EnvEditor({ envs, onChange }: { envs: Env[]; onChange: (envs: Env[]) => void }) {
+  const patch = (index: number, update: Partial<Env>) =>
+    onChange(envs.map((env, position) => position === index ? { ...env, ...update } : env));
+  return (
+    <div className="grid gap-2">
+      <div className="flex justify-between"><span className={ui.micro}>Environment</span><button className={ui.micro} onClick={() => onChange([...envs, { key: "", value: "", is_secret: false }])}>+ Add</button></div>
+      {envs.map((env, index) => (
+        <div className="grid grid-cols-[1fr_1fr_auto_auto] gap-2 max-sm:grid-cols-2" key={index}>
+          <input className={ui.field} placeholder="KEY" value={env.key} onChange={(event) => patch(index, { key: event.target.value })} />
+          <input className={ui.field} placeholder="VALUE" value={env.value} onChange={(event) => patch(index, { value: event.target.value })} />
+          <button className="grid w-10 place-items-center border border-white/10" onClick={() => patch(index, { is_secret: !env.is_secret })}>
+            {env.is_secret ? <EyeOff size={13} /> : <Eye size={13} />}
+          </button>
+          <button className="grid w-10 place-items-center border border-white/10 text-red-200" onClick={() => onChange(envs.filter((_, position) => position !== index))}>
+            <X size={13} />
+          </button>
+        </div>
+      ))}
+    </div>
+  );
 }
 
-
-export function CreateProjectModal({
-  open, onClose, onSubmit, loading,
-  backendOptions, frontendOptions, dbOptions,
-  tab, onTabChange,
-  name, onNameChange,
-  frontend, onFrontendChange,
-  backend, onBackendChange,
-  db, onDbChange,
-  repoUrl, onRepoUrlChange,
-  selectedTemplate, onTemplateSelect,
-  envs, onEnvsChange,
-}: CreateProjectModalProps) {
-  if (!open) return null;
-
+export function CreateProjectModal(props: ModalProps) {
+  if (!props.open) return null;
+  const stack = [
+    ["Frontend", props.frontend, props.onFrontendChange, props.frontendOptions],
+    ["Backend", props.backend, props.onBackendChange, props.backendOptions],
+    ["Database", props.db, props.onDbChange, props.dbOptions],
+  ] as const;
   return (
-    <div className="dv-modal">
-      <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-lg rounded-2xl ring-1 ring-white/10 shadow-2xl p-6" style={{ backgroundColor: "hsl(220, 13%, 9%)" }}>
-
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-white font-semibold text-xl">New Project</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition">✕</button>
-        </div>
-
-        <div className="flex gap-1 mb-6 bg-gray-800/50 p-1 rounded-lg">
-          {(["blank", "import", "templates"] as const).map((t) => (
-            <button key={t} onClick={() => onTabChange(t)} className={`flex-1 text-sm py-1.5 rounded-md transition-all duration-200 ${tab === t ? "bg-gray-600 text-white" : "text-gray-400 hover:text-white"}`}>
-              {t === "blank" ? "Blank Project" : t === "import" ? "Import Repo" : "Templates"}
-            </button>
+    <div className="fixed inset-0 z-[100] grid place-items-center bg-black/75 p-5 backdrop-blur-lg">
+      <button className="absolute inset-0" onClick={props.onClose} aria-label="Close" />
+      <Panel className="relative z-10 w-full max-w-xl border-white/20 p-6">
+        <header className="mb-6 flex justify-between"><div><span className={ui.micro}>Provision runtime</span><h2 className="mt-2 text-xl font-medium">New project</h2></div><button onClick={props.onClose}><X size={16} /></button></header>
+        <div className="mb-5 grid grid-cols-3 gap-px bg-white/10">
+          {(["blank", "import", "templates"] as const).map((tab) => (
+            <button className={`min-h-9 bg-[var(--dv-surface-inset)] font-mono text-[9px] uppercase ${props.tab === tab ? "text-[var(--dv-accent)]" : "text-white/35"}`} onClick={() => props.onTabChange(tab)} key={tab}>{tab}</button>
           ))}
         </div>
 
-        {tab === "blank" && (
-          <div className="space-y-4">
-            <input type="text" placeholder="Project name" value={name} onChange={(e) => onNameChange(e.target.value)} className="w-full bg-gray-800/60 ring-1 ring-gray-600/30 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none" />
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { label: "Frontend", value: frontend, onChange: onFrontendChange, options: frontendOptions },
-                { label: "Backend", value: backend, onChange: onBackendChange, options: backendOptions },
-                { label: "Database", value: db, onChange: onDbChange, options: dbOptions },
-              ].map(({ label, value, onChange, options }) => (
-                <div key={label} className="flex flex-col gap-1">
-                  <label className="text-xs text-gray-400">{label}</label>
-                  <select value={value} onChange={(e) => onChange(e.target.value)} className="bg-gray-800/60 ring-1 ring-gray-600/30 rounded-lg px-2 py-1.5 text-sm text-white focus:outline-none">
-                    {options.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
-                  </select>
-                </div>
+        {props.tab === "blank" && (
+          <div className="grid gap-4">
+            <input className={ui.field} placeholder="Project name" value={props.name} onChange={(event) => props.onNameChange(event.target.value)} />
+            <div className="grid grid-cols-3 gap-2 max-sm:grid-cols-1">
+              {stack.map(([label, value, onChange, options]) => (
+                <label className="grid gap-2" key={label}><span className={ui.micro}>{label}</span><select className={ui.field} value={value} onChange={(event) => onChange(event.target.value)}>{options.map((option) => <option key={option}>{option}</option>)}</select></label>
               ))}
             </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-xs text-gray-400">Environment Variables</label>
-                <button type="button" onClick={() => onEnvsChange([...envs, { key: "", value: "", is_secret: false }])}
-                 className="text-xs text-gray-400 hover:text-white transition"
-                >
-                  + Add
-                </button>
-              </div>
-                {envs.map((env, i) => (
-                  <div key={i} className="flex gap-2 items-center">
-                    <input placeholder="KEY" value={env.key} onChange={(e) => { const updated = [...envs]; updated[i] = { ...updated[i], key: e.target.value }; onEnvsChange(updated); }}
-                      className="flex-1 bg-gray-800/60 ring-1 ring-gray-600/30 rounded-lg px-2 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none"
-                    />
-      <input
-        placeholder="VALUE"
-        value={env.value}
-        onChange={(e) => {
-          const updated = [...envs];
-          updated[i] = { ...updated[i], value: e.target.value };
-          onEnvsChange(updated);
-        }}
-        className="flex-1 bg-gray-800/60 ring-1 ring-gray-600/30 rounded-lg px-2 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none"
-      />
-      <button
-        type="button"
-        onClick={() => {
-          const updated = [...envs];
-          updated[i] = { ...updated[i], is_secret: !updated[i].is_secret };
-          onEnvsChange(updated);
-        }}
-        className={`text-xs px-2 py-1.5 rounded-lg ring-1 transition ${env.is_secret ? "ring-yellow-500/50 text-yellow-400" : "ring-gray-600/30 text-gray-400 hover:text-white"}`}
-      >
-        {env.is_secret ? "secret" : "plain"}
-      </button>
-      <button
-        type="button"
-        onClick={() => onEnvsChange(envs.filter((_, j) => j !== i))}
-        className="text-gray-500 hover:text-red-400 transition text-xs"
-      >
-        ✕
-      </button>
-    </div>
-  ))}
-</div>
-
-
-
-            <button disabled={loading || !name} onClick={() => onSubmit({ type: "blank", name, frontend, backend, db, envs })} className="w-full py-2 rounded-lg text-sm font-medium text-white bg-gray-700 ring-1 ring-white/10 hover:bg-gray-600 transition disabled:opacity-50 disabled:cursor-not-allowed">
-              {loading ? "Creating..." : "Create Project"}
-            </button>
+            <EnvEditor envs={props.envs} onChange={props.onEnvsChange} />
+            <Action disabled={!props.name || props.loading} onClick={() => props.onSubmit({ type: "blank", name: props.name, frontend: props.frontend, backend: props.backend, db: props.db, envs: props.envs })}>Create runtime</Action>
           </div>
         )}
-
-        {tab === "import" && (
-          <div className="space-y-4">
-            <p className="text-sm text-gray-400">Import a repository from your connected GitHub account.</p>
-            <input type="text" placeholder="https://github.com/you/repo" value={repoUrl} onChange={(e) => onRepoUrlChange(e.target.value)} className="w-full bg-gray-800/60 ring-1 ring-gray-600/30 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none" />
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-xs text-gray-400">Environment Variables</label>
-                <button type="button" onClick={() => onEnvsChange([...envs, { key: "", value: "", is_secret: false }])}
-                 className="text-xs text-gray-400 hover:text-white transition"
-                >
-                  + Add
-                </button>
-              </div>
-                {envs.map((env, i) => (
-                  <div key={i} className="flex gap-2 items-center">
-                    <input placeholder="KEY" value={env.key} onChange={(e) => { const updated = [...envs]; updated[i] = { ...updated[i], key: e.target.value }; onEnvsChange(updated); }}
-                      className="flex-1 bg-gray-800/60 ring-1 ring-gray-600/30 rounded-lg px-2 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none"
-                    />
-      <input
-        placeholder="VALUE"
-        value={env.value}
-        onChange={(e) => {
-          const updated = [...envs];
-          updated[i] = { ...updated[i], value: e.target.value };
-          onEnvsChange(updated);
-        }}
-        className="flex-1 bg-gray-800/60 ring-1 ring-gray-600/30 rounded-lg px-2 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none"
-      />
-      <button
-        type="button"
-        onClick={() => {
-          const updated = [...envs];
-          updated[i] = { ...updated[i], is_secret: !updated[i].is_secret };
-          onEnvsChange(updated);
-        }}
-        className={`text-xs px-2 py-1.5 rounded-lg ring-1 transition ${env.is_secret ? "ring-yellow-500/50 text-yellow-400" : "ring-gray-600/30 text-gray-400 hover:text-white"}`}
-      >
-        {env.is_secret ? "secret" : "plain"}
-      </button>
-      <button
-        type="button"
-        onClick={() => onEnvsChange(envs.filter((_, j) => j !== i))}
-        className="text-gray-500 hover:text-red-400 transition text-xs"
-      >
-        ✕
-      </button>
-    </div>
-  ))}
-</div>
-            <button disabled={loading || !repoUrl} onClick={() => onSubmit({ type: "import", repoUrl, envs })} className="w-full py-2 rounded-lg text-sm font-medium text-white bg-gray-700 ring-1 ring-white/10 hover:bg-gray-600 transition disabled:opacity-50 disabled:cursor-not-allowed">
-              {loading ? "Importing..." : "Import Repository"}
-            </button>
+        {props.tab === "import" && (
+          <div className="grid gap-4">
+            <p className="m-0 text-sm text-white/45">Import from your connected GitHub account.</p>
+            <input className={ui.field} placeholder="https://github.com/you/repo" value={props.repoUrl} onChange={(event) => props.onRepoUrlChange(event.target.value)} />
+            <EnvEditor envs={props.envs} onChange={props.onEnvsChange} />
+            <Action disabled={!props.repoUrl || props.loading} onClick={() => props.onSubmit({ type: "import", repoUrl: props.repoUrl, envs: props.envs })}>Import repository</Action>
           </div>
         )}
-
-        {tab === "templates" && (
-          <div className="space-y-3">
-            <p className="text-sm text-gray-400">Start from a pre-configured stack.</p>
-            <button disabled={loading || !selectedTemplate} onClick={() => onSubmit({ type: "template", templateId: selectedTemplate })} className="w-full py-2 rounded-lg text-sm font-medium text-white bg-gray-700 ring-1 ring-white/10 hover:bg-gray-600 transition disabled:opacity-50 disabled:cursor-not-allowed">
-              {loading ? "Creating..." : "Use Template"}
-            </button>
-          </div>
-        )}
-
-      </div>
+        {props.tab === "templates" && <Empty title="Templates are not configured">Use blank project or repository import.</Empty>}
+      </Panel>
     </div>
   );
 }
 
 export function CreatingOverlay({ step, messages }: { step: number; messages: string[] }) {
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-l" />
-      <div className="relative z-10 bg-white rounded-xl shadow-lg p-6 w-full max-w-sm text-center">
-        <div className="text-lg font-semibold mb-1">Creating your project…</div>
-        <div className="text-sm text-gray-600 dark:text-zinc-300 mb-4">{messages[step]}</div>
-        <div className="w-full h-2 bg-gray-200 rounded overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-blue-600 to-blue-300 transition-all duration-500"
-            style={{ width: `${((step + 1) / messages.length) * 100}%` }}
-          />
-        </div>
-      </div>
+    <div className="fixed inset-0 z-[110] grid place-items-center bg-black/75 backdrop-blur-lg">
+      <Panel className="grid w-full max-w-sm gap-4 p-6 text-center">
+        <Status state="idle">provisioning</Status><h2 className="text-lg font-medium">{messages[step]}</h2>
+        <div className="h-1 bg-white/10"><div className="h-full bg-[var(--dv-accent)] transition-all" style={{ width: `${((step + 1) / messages.length) * 100}%` }} /></div>
+      </Panel>
     </div>
   );
 }
 
-// Project Item
-type ProjectItemProps = {
-  project: { project_id: string; name: string; status: string; services?: { framework: string }[] };
-  onClick: () => void;
-  onDelete: () => void;
-}
-
-export function ProjectItem({ project, onClick, onDelete }: ProjectItemProps) {
-  return (
-    <li className="dv-stack-card">
-      <span className="cursor-pointer" onClick={onClick}>
-        {project.name} {`(Status: ${project.status})`}
-      </span>
-      <div className="text-sm text-gray-600 mt-1">
-        Stack: {project.services?.map((s) => s.framework).join(", ") || "No services"}
-      </div>
-      <button
-        className="text-red-600 font-bold px-2 py-1 rounded hover:bg-red-100"
-        onClick={(e) => { e.stopPropagation(); onDelete(); }}
-      >
-        X
-      </button>
-    </li>
-  );
-}
-
-// Project List
-type ProjectListProps = {
-  projects: ProjectItemProps["project"][];
+export function ProjectList({
+  projects,
+  loading,
+  onProjectClick,
+  onDelete,
+}: {
+  projects: { project_id: string; name: string; status: string; services?: { framework: string }[] }[];
   loading: boolean;
   onProjectClick: (id: string) => void;
   onDelete: (id: string) => void;
-}
-
-export function ProjectList({ projects, loading, onProjectClick, onDelete }: ProjectListProps) {
-  if (loading) return <p>Loading projects...</p>;
-  if (projects.length === 0) return <p>No projects yet.</p>;
-
+}) {
+  if (loading) return <Empty title="Reading projects">Loading registered runtimes.</Empty>;
+  if (!projects.length) return <Empty title="No projects">Import a repository or scaffold a runtime.</Empty>;
   return (
-    <ul className="space-y-2">
+    <div className="grid gap-px border border-white/10 bg-white/10">
       {projects.map((project) => (
-        <ProjectItem
-          key={project.project_id}
-          project={project}
-          onClick={() => onProjectClick(project.project_id)}
-          onDelete={() => onDelete(project.project_id)}
-        />
+        <Panel className="flex min-h-16 items-center justify-between border-0 px-4" key={project.project_id}>
+          <button className="flex-1 text-left" onClick={() => onProjectClick(project.project_id)}>
+            <strong className="text-sm font-medium">{project.name}</strong>
+            <span className="ml-3 font-mono text-[9px] text-white/35">{project.services?.map((service) => service.framework).join(" · ") || "Stack pending"}</span>
+          </button>
+          <Status state={project.status === "running" ? "live" : "offline"}>{project.status}</Status>
+          <button className="ml-4 text-red-200" onClick={() => onDelete(project.project_id)} aria-label={`Delete ${project.name}`}><Trash2 size={13} /></button>
+        </Panel>
       ))}
-    </ul>
+    </div>
   );
 }

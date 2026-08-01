@@ -2,11 +2,11 @@ import { useState, useContext } from "react";
 import { ProjectMetaContext } from "@/app/dashboard/[project]/layout";
 
 export const METHOD_COLORS: Record<string, string> = {
-  GET: "text-emerald-400 bg-emerald-900/30",
-  POST: "text-blue-400 bg-blue-900/30",
-  PUT: "text-yellow-400 bg-yellow-900/30",
-  DELETE: "text-red-400 bg-red-900/30",
-  PATCH: "text-purple-400 bg-purple-900/30",
+  GET: "bg-[var(--dv-success)]/10 text-[#afc3b5]",
+  POST: "bg-white/[.06] text-white/60",
+  PUT: "bg-[var(--dv-warning)]/10 text-[#c1b48f]",
+  DELETE: "bg-[var(--dv-danger)]/10 text-[#cda4a4]",
+  PATCH: "bg-[#9d8fa4]/10 text-[#b5a4bb]",
   ANY: "text-gray-400 bg-gray-800",
 };
 
@@ -28,13 +28,13 @@ export default function RequestFlow() {
 
   const flowSteps = selected ? [
     { label: "Client",    icon: "◎", color: "border-gray-600 text-gray-300" },
-    { label: "Router",    icon: "⊕", color: "border-indigo-600 text-indigo-300" },
-    { label: selected.file, icon: "◆", color: "border-emerald-700 text-emerald-300" },
+    { label: "Router",    icon: "⊕", color: "border-white/30 text-white/65" },
+    { label: selected.file, icon: "◆", color: "border-[var(--dv-success)]/40 text-[#afc3b5]" },
     { label: "Response",  icon: "◎", color: "border-gray-600 text-gray-300" },
   ] : [];
 
   return (
-    <div className="dv-panel-suite">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-[var(--dv-surface-inset)]">
       {/* Toolbar */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-700 flex-shrink-0">
         <span className="text-xs text-gray-500 uppercase tracking-widest mr-1 dark:text-white">Routes</span>
@@ -63,7 +63,7 @@ export default function RequestFlow() {
                 key={i}
                 onClick={() => { setSelectedEndpoint(i); setActiveTab("flow"); }}
                 className={`w-full flex flex-col gap-0.5 px-2 py-2 border-b border-gray-800/60 text-left hover:bg-white/5 transition-colors ${
-                  selectedEndpoint === i ? "bg-white/5 border-l-2 border-l-indigo-500" : ""
+                  selectedEndpoint === i ? "border-l-2 border-l-white/40 bg-white/5" : ""
                 }`}
               >
                 <MethodBadge method={ep.method} />
@@ -96,7 +96,7 @@ export default function RequestFlow() {
                     onClick={() => { setSelectedEndpoint(i); setActiveTab("flow"); }}
                     className={`flex flex-col gap-1 p-2.5 rounded border text-left transition-colors hover:bg-white/5 ${
                       selectedEndpoint === i
-                        ? "border-indigo-500/50 bg-indigo-900/10"
+                        ? "border-white/25 bg-white/[.05]"
                         : "border-gray-700 bg-gray-800/40"
                     }`}
                   >

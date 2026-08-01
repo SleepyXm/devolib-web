@@ -26,8 +26,8 @@ export default function WireframeView() {
 };
 
   return (
-    <div className="flex flex-col w-full p-6 gap-6 h-full text-foreground">
-      <h2 className="text-4xl">Wireframe View</h2>
+    <div className="flex h-full w-full flex-col gap-4 overflow-hidden p-5 text-white">
+      <div><span className="font-mono text-[10px] uppercase tracking-[.12em] text-white/35">Structural model</span><h2 className="mt-2 text-2xl font-medium">System map</h2></div>
 
       {showInput && (
         <CreateModal
@@ -48,7 +48,7 @@ export default function WireframeView() {
         />
       )}
 
-      <div className="dv-wireframe-container-wrapper">
+      <div className="grid min-h-0 flex-1 grid-cols-2 gap-3 overflow-y-auto max-lg:grid-cols-1">
         <SectionPanel title="Pages" onContextMenu={(e) => { setActiveSection("pages"); handleContextMenu(e); }}>
           {pages.length === 0
             ? <p className="text-sm text-muted-foreground">No pages found.</p>
@@ -79,7 +79,7 @@ export default function WireframeView() {
         <>
           <div className="fixed inset-0 z-40" onClick={handleClick} />
           <div
-            className="fixed z-50 bg-[#f8f4ec] border border-[#00000060] rounded shadow-lg py-1"
+            className="fixed z-50 border border-white/20 bg-[var(--dv-surface)] py-1 text-white shadow-2xl"
             style={{ top: contextMenu.y, left: contextMenu.x }}
           >
             {(menuItems[activeSection!] ?? []).map((item) => (

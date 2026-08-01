@@ -50,14 +50,14 @@ export default function TestSuite({ projectWS }: TestSuiteProps) {
   };
 
   return (
-    <div className="dv-panel-suite">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-[var(--dv-surface-inset)]">
       {/* Toolbar */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-700">
         <span className="text-xs text-gray-500 uppercase tracking-widest mr-1 dark:text-white">Tests</span>
         <button
           onClick={generateTests}
           disabled={generating || running || !endpoints.length}
-          className="flex items-center gap-1.5 px-3 py-1 rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs transition-colors"
+          className="flex items-center gap-1.5 rounded bg-zinc-300 px-3 py-1 text-xs text-black transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
         >
           {generating
             ? <span className="animate-spin inline-block w-3 h-3 border border-white border-t-transparent rounded-full" />
@@ -70,7 +70,7 @@ export default function TestSuite({ projectWS }: TestSuiteProps) {
           <button
             onClick={runTests}
             disabled={running || generating || !projectWS}
-            className="flex items-center gap-1.5 px-3 py-1 rounded bg-emerald-700 hover:bg-emerald-600 disabled:opacity-40 text-white text-xs transition-colors"
+            className="flex items-center gap-1.5 rounded border border-[var(--dv-success)]/30 bg-[var(--dv-success)]/15 px-3 py-1 text-xs text-[#afc3b5] transition-colors hover:bg-[var(--dv-success)]/25 disabled:opacity-40"
           >
             {running
               ? <span className="animate-spin inline-block w-3 h-3 border border-white border-t-transparent rounded-full" />

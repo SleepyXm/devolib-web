@@ -29,9 +29,9 @@ export function TableHeader({ name, onAddColumn, onAddRow, onDelete }: {
     <div className="flex justify-between items-center px-4 py-3 border-b border-[#c9bfab] bg-[#f8f4ec] rounded-t-lg">
       <h3 className="font-medium text-sm text-zinc-700">{name}</h3>
       <div className="flex gap-2">
-        <button onClick={onAddColumn} className="text-xs px-2 py-1 rounded bg-[#50c878] text-black border border-[#fff00020] transition-all duration-300s hover:bg-green-600/70 text-sm">+ column</button>
-        <button onClick={onAddRow}    className="text-xs px-2 py-1 rounded bg-[#7050c0] text-white border border-[#afa9ec] transition-all duration-300s hover:bg-purple-900/80 text-sm">+ row</button>
-        <button onClick={onDelete}    className="text-xs px-2 py-1 rounded bg-[#de595f] text-zinc-800 border border-[#f09595] transition-all duration-300s hover:bg-red-500/80">x remove</button>
+        <button onClick={onAddColumn} className="rounded border border-[var(--dv-success)]/30 bg-[var(--dv-success)]/15 px-2 py-1 text-sm text-[#afc3b5] transition hover:bg-[var(--dv-success)]/25">+ column</button>
+        <button onClick={onAddRow} className="rounded border border-white/15 bg-white/[.06] px-2 py-1 text-sm text-white/70 transition hover:bg-white/10">+ row</button>
+        <button onClick={onDelete} className="rounded border border-[var(--dv-danger)]/30 bg-[var(--dv-danger)]/10 px-2 py-1 text-xs text-[#cda4a4] transition hover:bg-[var(--dv-danger)]/20">x remove</button>
       </div>
     </div>
   );

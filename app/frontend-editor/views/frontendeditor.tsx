@@ -188,7 +188,7 @@ export default function FrontendPage() {
 
   return (
     <div className="flex flex-col h-full h-screen">
-      <div className="dv-zone-title">
+      <div className="flex min-h-11 items-center justify-between border-b border-white/10 bg-[var(--dv-surface-inset)] px-4">
         <h2>Frontend Editor</h2>
         <div className="flex gap-2 items-center">
           {iframeMode === "srcDoc" && (
@@ -202,7 +202,7 @@ export default function FrontendPage() {
           {hasUnsavedChanges && (
             <button
               onClick={saveFile}
-              className="px-4 py-2 rounded bg-blue-500 hover:bg-blue-600"
+              className="rounded bg-zinc-300 px-4 py-2 text-black transition hover:bg-white"
             >
               Save Changes
             </button>
@@ -215,7 +215,7 @@ export default function FrontendPage() {
         onContextMenu={iframeMode === "srcDoc" ? handleContextMenu : undefined}
         onClick={handleClick}
       >
-        <div className="dv-folder-panel dv-folder-panel-color">
+        <div className="w-56 shrink-0 overflow-y-auto border-r border-white/10 bg-[var(--dv-surface-inset)]">
           <FileTree
             items={[{ name: "Pages", filepath: "pages-root", children: pages.map(p => ({ name: p.route, filepath: p.file })) }]}
             selected={selectedPage?.route}

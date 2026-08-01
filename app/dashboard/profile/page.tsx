@@ -1,170 +1,76 @@
 "use client";
-import { logout, deleteAccount } from "@/app/handlers/auth";
-import { useState, useEffect } from "react";
-import { useUser } from "@/app/provider/UserProvider";
-import { InfoRow, SidebarTab, TabSection, UserAvatar, SidebarActions, SectionDivider, ConnectionCard, ProjectCard, EmptyState, AuthorisationsCard } from "./profilecomponents";
-import { GithubIcon, RailwayIcon, VercelIcon } from "@/app/components/assets/icons";
-import { listProjects, listGithubRepos } from "@/app/handlers/projects";
-import { GithubRepo } from "@/app/types/projects";
+
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { logout } from "@/app/handlers/auth";
+import { listGithubRepos, listProjects } from "@/app/handlers/projects";
+import { GithubIcon, RailwayIcon, VercelIcon } from "@/app/components/assets/icons";
+import { content, PageHeader, Panel } from "@/app/UI";
+import { useUser } from "@/app/provider/UserProvider";
+import { GithubRepo } from "@/app/types/projects";
+import {
+  AuthorisationsCard, ConnectionCard, EmptyState, InfoRow, ProjectCard,
+  SidebarActions, SidebarTab, TabSection, UserAvatar,
+} from "./profilecomponents";
+
+const tabs = ["account", "connections", "authorisations", "projects", "sessions"] as const;
+type Tab = (typeof tabs)[number];
 
 export default function Profile() {
-  const [activeTab, setActiveTab] = useState("account");
-  const { user } = useUser();
-  const [hydrated, setHydrated] = useState(false);
+  const [active, setActive] = useState<Tab>("account");
   const [projects, setProjects] = useState<any[]>([]);
-  const [authorisations, setAuthorisations] = useState<GithubRepo[]>([]);
+  const [repos, setRepos] = useState<GithubRepo[]>([]);
+  const { user, setUser } = useUser();
   const router = useRouter();
-  
- 
-  useEffect(() => {
-    setHydrated(true);
-  }, []);
 
-  useEffect(() => {
-  if (activeTab === "projects") {
-    listProjects().then(setProjects);
+  useEffect(() => { if (active === "projects") void listProjects().then(setProjects); }, [active]);
+  useEffect(() => { if (active === "authorisations") void listGithubRepos().then(setRepos); }, [active]);
+  if (!user) return <div className="text-sm text-white/40">Loading account…</div>;
+
+  async function signOut() {
+    await logout();
+    setUser(null);
+    router.push("/");
   }
-}, [activeTab]);
 
-useEffect(() => {
-  if (activeTab === "authorisations") {
-    listGithubRepos().then(setAuthorisations);
-  }
-}, [activeTab]);
- 
-  if (!hydrated) return null;
-  if (!user) return <div>Loading...</div>;
- 
-  const { username } = user;
-
-  
- 
-  const sessions: any[] = [];
- 
   return (
-    <div className="min-h-screen flex justify-center items-start py-8 relative text-black dark:text-zinc-200">
-      <div className="dv-glass dv-account">
- 
-        {/* Sidebar */}
-        <div className="w-48 flex flex-col items-center border-r border-black/20 dark:border-white/10 pr-4 gap-6">
-          <UserAvatar username={username} />
-          <div className="flex flex-col w-full gap-2">
-            <SidebarTab
-              label="Account"
-              active={activeTab === "account"}
-              onClick={() => setActiveTab("account")}
-            />
-            <SidebarTab
-              label="Connections"
-              active={activeTab === "connections"}
-              onClick={() => setActiveTab("connections")}
-            />
-            <SidebarTab
-              label="Authorisations"
-              active={activeTab === "authorisations"}
-              onClick={() => setActiveTab("authorisations")}
-            />
-            <SidebarTab
-              label="Projects"
-              active={activeTab === "projects"}
-              onClick={() => setActiveTab("projects")}
-            />
-            <SidebarTab
-              label="Sessions"
-              active={activeTab === "sessions"}
-              onClick={() => setActiveTab("sessions")}
-            />
-            <SidebarTab
-              label="Personalization"
-              active={activeTab === "personalization"}
-              onClick={() => setActiveTab("personalization")}
-            />
-          </div>
-          <SidebarActions onLogout={logout} />
-        </div>
- 
-        {/* Content */}
-        <div className="flex-1 overflow-auto flex flex-col gap-4">
- 
-          {activeTab === "account" && (
-            <TabSection title="Account Information" subtitle="Your personal details and credentials.">
+    <div className="grid gap-8">
+      <PageHeader {...content.profile} />
+      <Panel className="grid min-h-[620px] grid-cols-[190px_1fr] gap-6 p-5 max-lg:grid-cols-1">
+        <aside className="flex flex-col gap-5 border-r border-white/10 pr-5 max-lg:border-b max-lg:border-r-0 max-lg:pb-5 max-lg:pr-0">
+          <UserAvatar username={user.username} />
+          <nav className="grid gap-1">{tabs.map((tab) => <SidebarTab key={tab} label={tab} active={active === tab} onClick={() => setActive(tab)} />)}</nav>
+          <div className="mt-auto"><SidebarActions onLogout={() => void signOut()} /></div>
+        </aside>
+
+        <div className="min-w-0">
+          {active === "account" && (
+            <TabSection title="Account information" subtitle="Identity and credentials.">
               <InfoRow label="Username" value={user.username} />
-              <InfoRow label="Email" value={user.email ?? "No email on file"} action={() => {}} actionLabel="Change" />
-              <InfoRow label="Password" value="••••••••" action={() => {}} actionLabel="Change" />
-              <SectionDivider label="Danger Zone" />
-              <InfoRow label="Delete Account" value="Permanently remove your account and all data." action={async () => { await deleteAccount(); router.push("/");}} actionLabel="Delete" actionVariant="danger" />
+              <InfoRow label="Email" value={user.email ?? "No email on file"} action={() => undefined} actionLabel="Change" />
+              <InfoRow label="Password" value="••••••••" action={() => undefined} actionLabel="Change" />
             </TabSection>
           )}
- 
-          {activeTab === "connections" && (
-            <TabSection title="Connections" subtitle="Manage your linked services and integrations.">
-              <ConnectionCard
-                name="GitHub"
-                icon={<GithubIcon />}
-                connected={!!user.github_id}
-                connectedAs={user.github_id}
-                onConnect={() => (window.location.href = "/api/auth/github")}
-                onDisconnect={() => {/* TODO: disconnect endpoint */}}
-              />
+          {active === "connections" && (
+            <TabSection title="Connections" subtitle="Linked source and deployment providers.">
+              <ConnectionCard name="GitHub" icon={<GithubIcon />} connected={Boolean(user.github_id)} connectedAs={user.github_id} onConnect={() => { window.location.href = "/api/auth/github"; }} />
               <ConnectionCard name="Vercel" icon={<VercelIcon />} comingSoon />
               <ConnectionCard name="Railway" icon={<RailwayIcon />} comingSoon />
             </TabSection>
           )}
- 
-          {activeTab === "projects" && (
-            <TabSection title="Your Projects" subtitle="Projects you've created or imported into Devolib.">
-              {projects.length === 0 ? (
-                <EmptyState message="No projects yet. Create or import one to get started." />
-              ) : (
-                projects.map((p) => (
-                  <ProjectCard key={p.project_id} name={p.name} repo={p?.repo} stack={p.services.map((s: any) => s.name)} lastActive={p.lastOnline} />
-                ))
-              )}
+          {active === "authorisations" && (
+            <TabSection title="GitHub authorisations" subtitle="Repositories available to import.">
+              {repos.length ? repos.map((repo) => <AuthorisationsCard key={repo.id} {...repo} />) : <EmptyState message="No repositories authorised." />}
             </TabSection>
           )}
- 
-          {activeTab === "authorisations" && (
-            <TabSection title="Authorisations" subtitle="Manage your linked services and integrations.">
-              {authorisations.length === 0 ? (
-                <EmptyState message="No authorisations found." />
-              ) : (
-                authorisations.map((a) => (
-                  <AuthorisationsCard
-                    key={a.id}
-                    name={a.name}
-                    full_name={a.full_name}
-                    private={a.private}
-                    default_branch={a.default_branch}
-                    updated_at={a.updated_at}
-                    url={a.url}
-                  />
-                ))
-              )}
+          {active === "projects" && (
+            <TabSection title="Owned projects" subtitle="Runtimes attached to this identity.">
+              {projects.length ? projects.map((project) => <ProjectCard key={project.project_id} name={project.name} repo={project.repo} stack={project.services?.map((service: any) => service.name)} lastActive={project.last_online} />) : <EmptyState message="No projects yet." />}
             </TabSection>
           )}
- 
-          {activeTab === "sessions" && (
-            <TabSection title="Active Sessions" subtitle="Devices and locations currently signed in to your account.">
-              {sessions.length === 0 ? (
-                <EmptyState message="No active sessions found." />
-              ) : (
-                sessions.map((s, i) => (
-                  <InfoRow key={i} label={s.device} value={s.location} action={() => {}} actionLabel="Revoke" actionVariant="danger" />
-                ))
-              )}
-            </TabSection>
-          )}
- 
-          {activeTab === "personalization" && (
-            <TabSection title="Personalization" subtitle="Customize your editor and assistant preferences.">
-              <InfoRow label="Editor Theme" value="Devolib Default" action={() => {}} actionLabel="Change" />
-              <InfoRow label="Design Assistant" value="DeepSeek" action={() => {}} actionLabel="Change" />
-            </TabSection>
-          )}
- 
+          {active === "sessions" && <TabSection title="Active sessions" subtitle="Signed-in devices and locations."><EmptyState message="No active sessions reported." /></TabSection>}
         </div>
-      </div>
+      </Panel>
     </div>
   );
 }
