@@ -63,16 +63,6 @@ func Signup(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		_, err = tx.ExecContext(c,
-			`INSERT INTO user_accounts (id, user_id, account_type, balance, currency, status)
-             VALUES ($1, $2, DEFAULT, DEFAULT, DEFAULT, DEFAULT)`,
-			uuid.New(), userID,
-		)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create account"})
-			return
-		}
-
 		if err = tx.Commit(); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not commit transaction"})
 			return
@@ -230,28 +220,11 @@ func Me(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		var accountType, currency, status string
-		var balance string
-		err = db.QueryRowContext(c,
-			`SELECT account_type, balance, currency, status
-             FROM user_accounts WHERE user_id = $1`, userID,
-		).Scan(&accountType, &balance, &currency, &status)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not load account"})
-			return
-		}
-
 		c.JSON(http.StatusOK, gin.H{
 			"user": gin.H{
 				"username":          username,
 				"email":             email,
 				"subscription_tier": subscriptionTier,
-			},
-			"account": gin.H{
-				"account_type": accountType,
-				"balance":      balance,
-				"currency":     currency,
-				"status":       status,
 			},
 		})
 	}

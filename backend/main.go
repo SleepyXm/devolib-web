@@ -92,6 +92,7 @@ func main() {
 	routes.RegisterProfileRoutes(api.Group("/"), db)
 	routes.RegisterAccountRoutes(api.Group("/account"), db)
 	routes.RegisterProductRoutes(api.Group("/products"), db)
+	routes.RegisterProjectRoutes(api.Group("/projects"), db)
 
 	router.Run(":9000")
 }

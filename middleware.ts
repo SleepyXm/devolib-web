@@ -1,25 +1,53 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+const PROTECTED = ["/dashboard", "/profile", "/products"];
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE2 ?? process.env.NEXT_PUBLIC_API_URL;
+
 export async function middleware(request: NextRequest) {
-  const session = request.cookies.get("access_token");
-  if (!session) {
+  const { pathname } = request.nextUrl;
+  if (!PROTECTED.some(p => pathname.startsWith(p))) {
+    return NextResponse.next();
+  }
+
+  const accessToken = request.cookies.get("access_token");
+
+  if (accessToken) {
+    // Optionally: verify JWT expiry client-side here to avoid a round trip
+    return NextResponse.next();
+  }
+
+  // No access token — try to refresh using the refresh_token cookie
+  const refreshToken = request.cookies.get("refresh_token");
+  if (!refreshToken || !API_BASE) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/auth/me`, {
-    method: "GET",
-    headers: {
-      cookie: request.headers.get("cookie") ?? "",
-    },
-  });
+  try {
+    const refreshRes = await fetch(
+      `${API_BASE}/api/auth/refresh`,
+      {
+        method: "POST",
+        headers: { cookie: request.headers.get("cookie") ?? "" },
+      }
+    );
 
-  if (!res.ok) {
+    if (!refreshRes.ok) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+
+    // Forward the new cookies the Go server set, then continue
+    const response = NextResponse.next();
+    refreshRes.headers.getSetCookie().forEach(cookie => {
+      response.headers.append("Set-Cookie", cookie);
+    });
+    return response;
+
+  } catch {
     return NextResponse.redirect(new URL("/login", request.url));
   }
-
-  return NextResponse.next();
 }
+
 
 export const config = {
   matcher: ["/dashboard/:path*", "/profile/:path*", "/projects/:path*"],

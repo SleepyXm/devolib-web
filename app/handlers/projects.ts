@@ -3,7 +3,7 @@ import { ServiceStatus } from "../dashboard/[project]/layout";
 import { WSAPI_BASE } from "../handlers/auth";
 import { Project, GithubRepo, ProjectMetaData } from "../types/projects";
 
-const project_endpoint = `/projects`;
+const project_endpoint = `/api/projects`;
 
 export async function createProject(user_id: string, name: string, frontend?: string, backend?: string, db?: string, envs?: { key: string; value: string, is_secret: boolean}[]): Promise<Project> {
   const res = await request(`${project_endpoint}/create`, {

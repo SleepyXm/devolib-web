@@ -3,6 +3,7 @@ package middleware
 import (
 	"database/sql"
 	"devolib/utils"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -67,6 +68,11 @@ func AuthMiddleware(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 		if err != nil {
+			slog.Error("auth session lookup failed",
+				"error", err,
+				"userID", userID,
+			)
+
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not verify session"})
 			c.Abort()
 			return

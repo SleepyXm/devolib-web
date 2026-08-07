@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
 import { validateUser, User } from "../handlers/auth";
 
 export interface UserContextType {
@@ -10,15 +10,55 @@ export interface UserContextType {
 
 export const UserContext = createContext<UserContextType | undefined>(undefined);
 
+function getCachedUser(): User | null {
+  try {
+    const cached = localStorage.getItem("user");
+    return cached ? JSON.parse(cached) : null;
+  } catch {
+    return null;
+  }
+}
+
+
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [resolved, setResolved] = useState(false);
+  const didRun = useRef(false);
+
+  const initAuth = async () => {
+    try {
+      const result = await validateUser();
+      setUser(result?.user ?? null);
+      if (!result) {
+        localStorage.removeItem("user");
+      }
+    } catch {
+      setUser(null);
+      localStorage.removeItem("user");
+    } finally {
+      setResolved(true);
+    }
+  };
 
   useEffect(() => {
-    validateUser()
-      .then(setUser)
-      .catch(() => setUser(null))
-      .finally(() => setResolved(true));
+    if (didRun.current) return;
+    didRun.current = true;
+
+    const cachedUser = getCachedUser();
+
+    if (cachedUser) {
+      setUser(cachedUser);
+      setResolved(true);
+    }
+
+    initAuth();
+
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) initAuth();
+    };
+
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
   }, []);
 
   return (

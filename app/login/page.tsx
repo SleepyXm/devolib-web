@@ -34,7 +34,7 @@ export default function Auth() {
         await signup(username, email, password);
         return setSuccess("Account created. Check your email to verify it.");
       }
-      const result = await login(username, password);
+      const result = await login(email, password);
       setUser(result);
       router.push("/dashboard");
     } catch (caught) {
@@ -77,8 +77,8 @@ export default function Auth() {
             className="grid gap-4"
             onSubmit={(event) => { event.preventDefault(); void submit(); }}
           >
-            <AuthInput label="Username" type="text" placeholder="your-handle" value={username} onChange={(event) => setUsername(event.target.value)} />
-            {signUp && <AuthInput label="Email" type="email" placeholder="you@example.com" value={email} onChange={(event) => setEmail(event.target.value)} />}
+            <AuthInput label="Email" type="email" placeholder="you@example.com" value={email} onChange={(event) => setEmail(event.target.value)} />
+            {signUp && <AuthInput label="Username" type="text" placeholder="your-handle" value={username} onChange={(event) => setUsername(event.target.value)} />}
             <AuthInput label="Password" type="password" placeholder="••••••••" value={password} onChange={(event) => setPassword(event.target.value)} />
             {signUp && <AuthInput label="Confirm password" type="password" placeholder="••••••••" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} />}
             <Action type="submit" className="w-full">{signUp ? "Create account" : "Enter workspace"}</Action>
