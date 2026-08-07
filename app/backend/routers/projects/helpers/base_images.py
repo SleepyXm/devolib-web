@@ -3,6 +3,8 @@ import docker
 import shutil
 from helpers.dockerclient import docker_client
 from helpers.structlogger import logger
+import tempfile
+
 
 NETWORK_NAME = "web"
 
@@ -328,14 +330,11 @@ WORKDIR /app/workspace
 CMD ["tail", "-f", "/dev/null"]
 """
     return _build('fullstacktest', dockerfile)
-
 def _build(image_type: str, dockerfile: str):
-    """Build helper."""
     tag = BASE_IMAGES[image_type]['tag']
-    build_dir = Path(f"/tmp/devolib_build_{image_type}")
-    build_dir.mkdir(exist_ok=True)
     
-    try:
+    with tempfile.TemporaryDirectory() as build_dir:
+        build_dir = Path(build_dir)
         (build_dir / "Dockerfile").write_text(dockerfile)
         
         logger.info(f"Building {image_type} base image...")
@@ -349,12 +348,6 @@ def _build(image_type: str, dockerfile: str):
         size_mb = image.attrs['Size'] / 1024 / 1024
         logger.info(f"[✓] Built {tag} ({size_mb:.1f}MB)")
         return image.id
-        
-    except Exception as e:
-        logger.error(f"[✗] Failed to build {image_type}: {e}")
-        raise
-    finally:
-        shutil.rmtree(build_dir, ignore_errors=True)
 
 def build_all():
     """Build all bases in order (minimal first, others depend on it)."""
@@ -385,6 +378,9 @@ def ensure_exists(image_type: str) -> str:
         elif image_type == 'fullstack':
             build_fullstack()
         elif image_type == 'fullstacktest':
+            ensure_exists('python')
+            ensure_exists('node')
+            ensure_exists('minimal')
             build_fullstacktest()
         elif image_type == 'postgres':
             build_postgres()

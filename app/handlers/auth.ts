@@ -47,10 +47,10 @@ export async function signup(username: string, email: string, password: string) 
   });
 }
 
-export async function login(username: string, password: string) {
+export async function login(email: string, password: string) {
   await request("/auth/login", {
     method: "POST",
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ email, password }),
   });
   return validateUser();
 }
