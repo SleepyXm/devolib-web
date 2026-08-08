@@ -26,7 +26,7 @@ SERVICE_ROWS = [
         "category": "frontend",
         "default_start_command": "npm run dev -- --host 0.0.0.0",
         "default_port": 5173,
-        "scaffold_command": "npm create vite@latest {name} -- --template react --no-interactive --no-immediate --eslint --tailwind --src-dir",
+        "scaffold_command": "npm create vite@latest {name} -- --template react --no-interactive --no-immediate --eslint --tailwind --src-dir && cd {name} && npm install",
         "start_flags": "--host 0.0.0.0",
         "default_packages": "[]",
     },
