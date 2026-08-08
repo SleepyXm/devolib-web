@@ -1,19 +1,23 @@
 package routes
 
 import (
+	"database/sql"
+
 	handlers "devolib/handlers/projects"
 	"devolib/middleware"
-
-	//"devolib/middleware"
-	"database/sql"
 
 	"github.com/gin-gonic/gin"
 )
 
 func RegisterProjectRoutes(rg *gin.RouterGroup, db *sql.DB) {
-	rg.GET("/list", middleware.AuthMiddleware(db), handlers.ListProjects(db))
-	//rg.POST("/create", handlers.Login(db, jwtSecret))
-	//rg.GET("/:project_id", middleware.AuthMiddleware(db, jwtSecret), handlers.Me(db))
-	rg.GET("/metadata/:project_id")
-	//rg.DELETE("/delete", handlers.Logout)
+	auth := middleware.AuthMiddleware(db)
+
+	rg.GET("/list", auth, handlers.ListProjects(db))
+	rg.POST("/create", auth, handlers.CreateProject(db))
+	rg.GET("/metadata/:project_id", auth, handlers.GetProjectMetadata(db))
+	rg.PATCH("/metadata/:project_id", auth, handlers.PatchProjectMetadata(db))
+	rg.POST("/start/:project_id", auth, handlers.StartProject(db))
+	rg.POST("/stop/:project_id", auth, handlers.StopProject(db))
+	rg.DELETE("/delete", auth, handlers.DeleteProject(db))
+	rg.GET("/:project_id", auth, handlers.GetProject(db))
 }
