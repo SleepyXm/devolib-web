@@ -203,7 +203,7 @@ func CreateProjectContainer(
 		}
 	} else {
 		fresh, err = scaffoldFresh(
-			ctx, helper, containerResult.ContainerID, cfg.CleanName,
+			ctx, helper, containerResult.ContainerID, projectName,
 			frontendServices, backendServices, dbServices, cfg.ConfigsMap,
 		)
 		if err != nil {
@@ -246,22 +246,15 @@ func CreateProjectContainer(
 			scan.DBFramework,
 		)
 	} else {
-		if len(frontendServices) > 0 {
-			result.FrontendRoot = "/app/workspace/frontend/" + cfg.CleanName
-		}
-		if len(backendServices) > 0 {
-			result.BackendRoot = "/app/workspace/backend"
-		}
-		if len(dbServices) > 0 {
-			result.DBRoot = "/app/workspace/database"
-		}
-
+		result.FrontendRoot = "/app/workspace/frontend/" + projectName
+		result.BackendRoot = "/app/workspace/backend"
+		result.DBRoot = "/app/workspace/database"
 		result.Pages = fresh.Pages
 		result.Endpoints = fresh.Endpoints
 	}
 
 	result.Groups = buildProjectGroups(
-		ctx, helper, containerResult.ContainerID, cfg.CleanName,
+		ctx, helper, containerResult.ContainerID, projectName,
 		frontendServices, backendServices, scan,
 	)
 

@@ -13,6 +13,7 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/errdefs"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -287,6 +288,7 @@ func GetProject(db *sql.DB) gin.HandlerFunc {
 		var (
 			name         string
 			status       string
+			accessToken  string
 			containerID  sql.NullString
 			frontendRoot sql.NullString
 			backendRoot  sql.NullString
@@ -296,13 +298,14 @@ func GetProject(db *sql.DB) gin.HandlerFunc {
 		)
 
 		err := db.QueryRowContext(c.Request.Context(), `
-			SELECT name, status, container_id, frontend_root, backend_root, db_root,
+			SELECT name, status, access_token, container_id, frontend_root, backend_root, db_root,
 			       created_at, last_online
 			FROM projects
 			WHERE project_id = $1 AND user_id = $2
 		`, projectID, userID).Scan(
 			&name,
 			&status,
+			&accessToken,
 			&containerID,
 			&frontendRoot,
 			&backendRoot,
@@ -331,6 +334,7 @@ func GetProject(db *sql.DB) gin.HandlerFunc {
 			"project_id":   projectID,
 			"name":         name,
 			"status":       status,
+			"access_token": accessToken,
 			"container_id": containerID.String,
 			"created_at":   createdAt,
 			"last_online":  lastOnlineValue,
@@ -630,11 +634,19 @@ func StartProject(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		if err := helper.Docker.ContainerStart(
-			ctx,
-			containerID.String,
-			container.StartOptions{},
-		); err != nil {
+		inspect, err := helper.Docker.ContainerInspect(ctx, containerID.String)
+		if errdefs.IsNotFound(err) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Container not found"})
+			return
+		}
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not inspect container"})
+			return
+		}
+		if inspect.State == nil || !inspect.State.Running {
+			err = helper.Docker.ContainerStart(ctx, containerID.String, container.StartOptions{})
+		}
+		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not start container"})
 			return
 		}
@@ -704,20 +716,33 @@ func StopProject(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		if err := helper.StopContainer(ctx, containerID.String); err != nil {
+		inspect, err := helper.Docker.ContainerInspect(ctx, containerID.String)
+		if errdefs.IsNotFound(err) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Container not found"})
+			return
+		}
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not inspect container"})
+			return
+		}
+		if inspect.State != nil && inspect.State.Running {
+			err = helper.StopContainer(ctx, containerID.String)
+		}
+		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not stop container"})
 			return
 		}
 
 		if _, err := db.ExecContext(
 			ctx,
-			`UPDATE projects SET status = 'stopped' WHERE project_id = $1`,
+			`UPDATE projects SET status = 'stopped', last_online = NOW() WHERE project_id = $1`,
 			projectID,
 		); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not update project status"})
 			return
 		}
 
+		notifyProjectStopped(ctx, projectID)
 		c.JSON(http.StatusOK, gin.H{
 			"ok":           true,
 			"container_id": containerID.String,

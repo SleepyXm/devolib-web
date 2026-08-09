@@ -559,16 +559,13 @@ func ScanProject(ctx context.Context, helper *ContainerHelper, containerID, repo
 
 	case detectFlask(ctx, helper, containerID, repoPath):
 		result.BackendFramework = "Flask"
-		result.BackendRoot = repoPath
 
 	case detectExpress(ctx, helper, containerID, repoPath):
 		result.BackendFramework = "Express"
-		result.BackendRoot = findBackendRoot(ctx, helper, containerID, repoPath, "Express")
 		result.Endpoints = scanEndpoints(ctx, helper, containerID, repoPath, "Express")
 
 	case detectRustActix(ctx, helper, containerID, repoPath):
 		result.BackendFramework = "Actix"
-		result.BackendRoot = repoPath
 	}
 
 	if result.BackendFramework != "" {

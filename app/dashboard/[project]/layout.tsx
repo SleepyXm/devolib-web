@@ -112,6 +112,8 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
         setAccessToken(project.access_token);
         setProjectName(project.name);
         setRoots(project.roots);
+        setIsRunning(project.status === "running");
+        setServiceStatus((current) => ({ ...current, container: project.status === "running" }));
       });
       fetchMeta();
     }

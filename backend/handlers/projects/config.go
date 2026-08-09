@@ -42,11 +42,15 @@ func ProjectServicesConfig(
 	allServices := append(append(backendServices, frontendServices...), dbServices...)
 
 	if len(allServices) == 0 {
+		baseTag, err := builder.EnsureExists(ctx, "fullstacktest")
+		if err != nil {
+			return nil, fmt.Errorf("ensuring base image fullstacktest: %w", err)
+		}
 		return &ProjectConfig{
 			ConfigsMap:   map[string]ServiceConfig{},
 			FrontendPort: 3000,
 			BaseType:     "fullstacktest",
-			BaseTag:      "devolib_fullstacktest:latest",
+			BaseTag:      baseTag,
 			CleanName:    CleanName(projectName),
 		}, nil
 	}
@@ -60,7 +64,7 @@ func ProjectServicesConfig(
 	}
 
 	query := fmt.Sprintf(`
-		SELECT framework, default_port, scaffold_command, start_flags, default_packages
+		SELECT framework, COALESCE(default_port, 0), scaffold_command, start_flags, default_packages
 		FROM services
 		WHERE framework IN (%s)
 	`, strings.Join(placeholders, ", "))

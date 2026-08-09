@@ -1,7 +1,7 @@
 """Add subscription tier to users.
 
 Revision ID: 002_adding_missing
-Revises: 20260730_0001
+Revises: 001_adding_initial_schema
 Create Date: 2026-08-07
 """
 
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 revision: str = "002_adding_missing"
-down_revision: Union[str, Sequence[str], None] = "20260730_0001"
+down_revision: Union[str, Sequence[str], None] = "001_adding_initial_schema"
 branch_labels = None
 depends_on = None
 

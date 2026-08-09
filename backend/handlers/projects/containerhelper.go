@@ -9,7 +9,6 @@ import (
 	"log/slog"
 	"os"
 	"sort"
-	"strconv"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -20,7 +19,6 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/errdefs"
 	"github.com/docker/docker/pkg/stdcopy"
-	"github.com/docker/go-connections/nat"
 )
 
 type TemplateFile struct {
@@ -120,37 +118,27 @@ func (h *ContainerHelper) CreateAndStartContainer(
 		return nil, fmt.Errorf("creating project volume: %w", err)
 	}
 
+	labels := TraefikLabels(projectID, cleanName, frontendPort)
+	for key, value := range DevolibLabels(projectID, projectName, baseType, backendServices, frontendServices, dbServices) {
+		labels[key] = value
+	}
 	config := &container.Config{
-		Image:     baseTag,
-		Tty:       true,
-		OpenStdin: true,
-		Env:       envMapToSlice(env),
-		Cmd:       []string{"sh", "-c", "tail -f /dev/null"},
+		Image:  baseTag,
+		Env:    envMapToSlice(env),
+		Labels: labels,
 	}
 
 	hostConfig := &container.HostConfig{
 		NetworkMode: container.NetworkMode("web"),
+		Resources: container.Resources{
+			Memory:   1024 * 1024 * 1024,
+			CPUQuota: 50000,
+		},
 		Mounts: []mount.Mount{{
 			Type:   mount.TypeVolume,
 			Source: volumeName,
 			Target: "/app/workspace",
 		}},
-	}
-
-	var exposedPort nat.Port
-
-	if frontendPort > 0 {
-		var err error
-
-		exposedPort, err = nat.NewPort("tcp", strconv.Itoa(frontendPort))
-		if err != nil {
-			return nil, fmt.Errorf("creating frontend port: %w", err)
-		}
-
-		config.ExposedPorts = nat.PortSet{exposedPort: struct{}{}}
-		hostConfig.PortBindings = nat.PortMap{
-			exposedPort: []nat.PortBinding{{HostIP: "127.0.0.1", HostPort: ""}},
-		}
 	}
 
 	resp, err := h.Docker.ContainerCreate(ctx, config, hostConfig, nil, nil, containerName)
@@ -173,27 +161,7 @@ func (h *ContainerHelper) CreateAndStartContainer(
 		return nil, fmt.Errorf("creating workspace directories: %w", err)
 	}
 
-	result := &ContainerCreateResult{
-		ContainerID: resp.ID,
-	}
-
-	if frontendPort > 0 {
-		inspect, err := h.Docker.ContainerInspect(ctx, resp.ID)
-		if err != nil {
-			return nil, fmt.Errorf("inspecting created container: %w", err)
-		}
-
-		if inspect.NetworkSettings != nil {
-			bindings := inspect.NetworkSettings.Ports[exposedPort]
-
-			if len(bindings) > 0 && bindings[0].HostPort != "" {
-				result.Port, _ = strconv.Atoi(bindings[0].HostPort)
-				result.URL = "http://localhost:" + bindings[0].HostPort
-			}
-		}
-	}
-
-	return result, nil
+	return &ContainerCreateResult{ContainerID: resp.ID, Port: frontendPort, URL: "http://" + cleanName + ".localhost"}, nil
 }
 
 func (h *ContainerHelper) ExecInContainer(ctx context.Context, containerID, command string) (string, error) {
