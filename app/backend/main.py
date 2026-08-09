@@ -1,9 +1,6 @@
-from datetime import datetime
-
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers.auth import auth
-from routers.projects import router
 from routers.payments import payment
 from routers.products import products
 from routers.llm import llm
@@ -31,7 +28,6 @@ app.add_middleware(
 )
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
-app.include_router(router.project_router, prefix="/projects", tags=["projects"])
 app.include_router(payment.router, prefix="/payment", tags=["payment"])
 app.include_router(products.router, prefix="/products", tags=["products"])
 app.include_router(llm.router, prefix="/llm", tags=["llm"])
@@ -41,31 +37,14 @@ app.include_router(llm.router, prefix="/llm", tags=["llm"])
 async def root():
     return {"message": "Welcome to your API"}
 
-@app.middleware("http")
-async def track_activity(request: Request, call_next):
-    response = await call_next(request)
-    project_id = request.path_params.get("project_id")
-    if project_id:
-        await database.execute(
-            "UPDATE projects SET last_online = NOW() WHERE project_id = :project_id",
-            {"project_id": project_id}
-        )
-    return response
-
 @app.on_event("startup")
 async def startup():
     await database.connect()
-    await database.execute(
-        "UPDATE projects SET status = 'stopped' WHERE status = 'running'"
-    )
     scheduler.start()
 
 
 @app.on_event("shutdown")
 async def shutdown():
-    await database.execute(
-        "UPDATE projects SET status = 'stopped' WHERE status = 'running'"
-    )
     await database.disconnect()
 
 

@@ -25,7 +25,7 @@ DATABASE_CREATED_AT = datetime(2026, 1, 26, 10, 29, 46, 255453)
 
 SERVICE_ROWS = [
     {"id": "b3b466a1-d7bc-4398-abc3-44b3a4ba36b2", "name": "PostgreSQL", "default_start_command": "su - postgres -c 'pg_ctl -D /var/lib/postgresql/data start'", "created_at": DATABASE_CREATED_AT,
-     "framework": "PostgreSQL", "default_port": 5432, "packages": ["postgresql", "postgresql-client"], "scaffold_command": 'su - postgres -c "pg_ctl -D /var/lib/postgresql/data start -w && psql -c \'CREATE DATABASE {name}:\'"', "start_flags": None, "category": "database", "default_packages": "[]"},
+     "framework": "PostgreSQL", "default_port": 5432, "packages": ["postgresql", "postgresql-client"], "scaffold_command": 'su - postgres -c "pg_ctl -D /var/lib/postgresql/data start -w && psql -c \'CREATE DATABASE {name}\'"', "start_flags": None, "category": "database", "default_packages": "[]"},
     {"id": "fb28141f-c577-4928-91bf-c177b68c191a", "name": "Next.js App", "default_start_command": "bun run dev", "created_at": FRONTEND_CREATED_AT,
      "framework": "Next.js", "default_port": 3000, "packages": ["nodejs", "npm"], "scaffold_command": 'npx create-next-app {name} --typescript --tailwind --app --eslint --no-git --import-alias "@/*" --no-src-dir --no-react-compiler --turbopack', "start_flags": ["-H", "0.0.0.0", "-p", "3000"], "category": "frontend", "default_packages": "[]"},
     {"id": "abb815a3-0633-4738-8545-f4163124b987", "name": "React App", "default_start_command": "bun run dev -- --host 0.0.0.0", "created_at": FRONTEND_CREATED_AT,
