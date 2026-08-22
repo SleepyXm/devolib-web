@@ -6,63 +6,54 @@ import { Project, GithubRepo, ProjectMetaData } from "../types/projects";
 const project_endpoint = `/api/projects`;
 
 export async function createProject(user_id: string, name: string, frontend?: string, backend?: string, db?: string, envs?: { key: string; value: string, is_secret: boolean}[]): Promise<Project> {
-  const res = await request(`${project_endpoint}/create`, {
+  return request<Project>(`${project_endpoint}/create`, {
     method: "POST",
     body: JSON.stringify({ user_id, name, frontend, backend, db, envs }),
   });
-  return res;
 }
 
 export async function listProjects(): Promise<Project[]> {
-  const res = await request(`${project_endpoint}/list`, { method: "GET" });
+  const res = await request<{ projects: Project[] }>(`${project_endpoint}/list`, { method: "GET" });
   return res.projects;
 }
 
 export async function listGithubRepos(): Promise<GithubRepo[]> {
-  const res = await request(`${project_endpoint}/repos`, { method: "GET" });
+  const res = await request<{ projects: GithubRepo[] }>(`${project_endpoint}/repos`, { method: "GET" });
   return res.projects;
 }
 
 
 export async function getProject(id: string): Promise<Project> {
-  const res = await request(`${project_endpoint}/${id}`, { method: "GET" });
-  return res;
+  return request<Project>(`${project_endpoint}/${id}`, { method: "GET" });
 }
 
 export async function getProjectMetadata(id: string): Promise<ProjectMetaData> {
-  const res = await request(`${project_endpoint}/metadata/${id}`, { method: "GET" });
-  return res; 
+  return request<ProjectMetaData>(`${project_endpoint}/metadata/${id}`, { method: "GET" });
 }
 
 export async function patchProjectMetadata(id: string, metadata: Partial<ProjectMetaData>): Promise<ProjectMetaData> {
-  const res = await request(`${project_endpoint}/metadata/${id}`, {
+  return request<ProjectMetaData>(`${project_endpoint}/metadata/${id}`, {
     method: "PATCH",
     body: JSON.stringify(metadata),
   });
-  return res; 
 }
 
 
 export async function editProject(id: string, updates: Partial<Project>): Promise<Project> {
-  const res = await request(`${project_endpoint}/edit/${id}`, {
+  return request<Project>(`${project_endpoint}/edit/${id}`, {
     method: "PUT",
     body: JSON.stringify(updates),
   });
-  return res;
 }
 
 
 export async function deleteProject(id: string): Promise<{ success: boolean }> {
-  const res = await request(`${project_endpoint}/delete`, {
+  return request<{ success: boolean }>(`${project_endpoint}/delete`, {
     method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ project_id: id }),
   });
-  return res;
 }
-
 
 export const handleCreateProject = async (name: string, projectname: string, frontend?: string, backend?: string, db?: string,  envs?: { key: string; value: string; is_secret: boolean }[] ) => {
   const res = await createProject(name, projectname, frontend, backend, db, envs);
@@ -80,22 +71,19 @@ export async function handleImportProject(repoUrl: string ,  envs?: { key: strin
 
 
 export async function startProject(project_id: string): Promise<{ ok: boolean; container_id: string; status: string }> {
-  const res = await request(`${project_endpoint}/start/${project_id}`, {
+  return request<{ ok: boolean; container_id: string; status: string }>(`${project_endpoint}/start/${project_id}`, {
     method: "POST",
   });
-  return res;
 }
 
 export async function stopProject(project_id: string): Promise<{ ok: boolean; container_id: string; status: string }> {
-  const res = await request(`${project_endpoint}/stop/${project_id}`, {
+  return request<{ ok: boolean; container_id: string; status: string }>(`${project_endpoint}/stop/${project_id}`, {
     method: "POST",
   });
-  return res;
 }
 
 export async function fetchProjectDetails(project_id: string): Promise<Project & { access_token: string }> {
-  const res = await request(`${project_endpoint}/${project_id}`, { method: "GET" });
-  return res;
+  return request<Project & { access_token: string }>(`${project_endpoint}/${project_id}`, { method: "GET" });
 }
 
 export type ProjectWS = {

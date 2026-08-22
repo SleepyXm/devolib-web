@@ -35,7 +35,8 @@ export default function Auth() {
         return setSuccess("Account created. Check your email to verify it.");
       }
       const result = await login(email, password);
-      setUser(result);
+      if (!result) return setError("Login failed.");
+      setUser(result.user);
       router.push("/dashboard");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Something went wrong.");

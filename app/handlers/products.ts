@@ -8,6 +8,6 @@ export interface ProductProps {
 }
 
 export async function getProducts(): Promise<ProductProps[]> {
-  const res = await request("/products/products", { method: "GET" });
+  const res = await request("/products/products", { method: "GET" }) as { products: ProductProps[] };
   return res.products;
 }

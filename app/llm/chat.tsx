@@ -38,7 +38,7 @@ export default function Chat({ setCode }: ChatProps) {
     setInput("");
     setLoading(true);
     try {
-      const data = await sendMessage(input);
+      const data = await sendMessage(input) as { code?: string; response: string };
 
       if (data.code) {
         setCode(data.code);

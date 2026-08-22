@@ -233,7 +233,7 @@ export const useTableManager = (projectWS: any) => {
     setInserting(true);
     try {
       const schema = Object.fromEntries(tables.map(t => [t.name, t.columns.map(c => ({ column: c.name, type: c.type, nullable: true }))]));
-      const result = await gen_test_data(schema);
+      const result = await gen_test_data(schema) as { sql: string };
       projectWS?.sendCommand(JSON.stringify(DBCommandBuilder.build("INSERT_TEST_DATA", "", undefined, result.sql)));
     } finally {
       setInserting(false);

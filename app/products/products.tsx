@@ -29,7 +29,7 @@ export default function Products() {
           </div>
           <Action
             onClick={async () => {
-              const { url } = await request("/payment/create-checkout-session", {
+              const { url } = await request<{ url: string }>("/payment/create-checkout-session", {
                 method: "POST",
                 body: JSON.stringify({ price_id: product.stripe_price_id }),
               });

@@ -150,10 +150,10 @@ export function loginWithGitHub() {
   window.location.href = `${API_BASE}/auth/github`;
 }
 
-export async function handleGitHubCallback() {
-  const user = await validateUser();
-  if (!user) throw new Error("Authentication failed");
-  return { user };
+export async function handleGitHubCallback(): Promise<User> {
+  const result = await validateUser();
+  if (!result) throw new Error("Authentication failed");
+  return result.user;
 }
 
 

@@ -12,7 +12,7 @@ export default function AuthCallback() {
 
   useEffect(() => {
     handleGitHubCallback()
-      .then(({ user }) => { setUser(user); router.push("/dashboard"); })
+      .then((user) => { setUser(user); router.push("/dashboard"); })
       .catch(() => router.push("/login?error=oauth_failed"));
   }, [router, setUser]);
 
