@@ -33,6 +33,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${display.variable} ${mono.variable}`}>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "Devolib LIDE",
+            "applicationCategory": "DeveloperApplication",
+            "description": "Platform for Live interactive development in a cloud environment. Import a full-stack project, LIDE discovers how it is built, starts it inside an isolated runtime, and exposes the working parts in one interface.",
+            "url": "https://devolib.com",
+            "offers": { "@type": "Offer", "priceCurrency": "USD" }
+          })}}
+        />
+      </head>
       <body>
         <UserProvider>
           <DotGrid />

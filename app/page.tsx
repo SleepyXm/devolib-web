@@ -1,5 +1,6 @@
 import { ArrowRight, Container, ScanSearch, TerminalSquare } from "lucide-react";
 import { Action, content, Eyebrow, ProductPreview, ui } from "./UI";
+import { Metadata } from "next";
 
 const icons = [ScanSearch, Container, TerminalSquare];
 
@@ -48,3 +49,8 @@ export default function Home() {
     </main>
   );
 }
+
+export const metadata: Metadata = {
+  title: "Devolib LIDE — A platform for Live interactive development in an environment",
+  description: "Import a full-stack project. LIDE discovers how it's built, starts it inside an isolated runtime, and exposes the working parts in one interface.",
+};

@@ -1,5 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import { Action, content, PageHeader, Panel, Status, ui } from "@/app/UI";
+import { Metadata } from "next";
 
 export default function ArchitecturePage() {
   const { architecture } = content;
@@ -51,3 +52,8 @@ export default function ArchitecturePage() {
     </main>
   );
 }
+
+export const metadata: Metadata = {
+  title: "How Devolib LIDE works — architecture",
+  description: "Import, scan, isolate, control. How LIDE turns a repository into an operable runtime.",
+};
