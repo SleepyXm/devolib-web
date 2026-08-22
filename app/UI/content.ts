@@ -30,7 +30,7 @@ export const content = {
   },
   architecture: {
     eyebrow: "Under the interface",
-    title: "A repository becomes an operable runtime.",
+    title: "On Devolib, a repository becomes an operable runtime.",
     description:
       "Import, scan, isolate, then control. These are implemented boundaries, not a simulated editor workflow.",
     stages: [
@@ -58,7 +58,7 @@ export const content = {
   },
   products: {
     eyebrow: "Runtime plans",
-    title: "Choose the capacity, not a different product.",
+    title: "Using Devolib, you choose the capacity, not a different product.",
     description: "Every plan uses the same LIDE workspace and project model.",
   },
   projects: {
