@@ -7,7 +7,7 @@ export const content = {
   ],
   landing: {
     eyebrow: "Container-native development environment",
-    title: ["Your repository,", "running as a system."],
+    title: ["Devolib LIDE — your repository,", "running as a system."],
     description:
       "Import a full-stack project. LIDE discovers how it is built, starts it inside an isolated runtime, and exposes the working parts in one interface.",
     facts: ["Per-project container", "Automatic stack detection", "Live source model"],

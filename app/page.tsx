@@ -9,7 +9,7 @@ export default function Home() {
     <main className={ui.page}>
       <section className="min-h-screen py-[clamp(5rem,9vw,8rem)]">
         <div className={ui.container}>
-          <div className="grid max-w-4xl gap-6">
+          <div className="grid max-w-6xl gap-6">
             <Eyebrow>{landing.eyebrow}</Eyebrow>
             <h1 className="m-0 text-[clamp(3rem,7vw,6.4rem)] font-medium leading-[.94] tracking-[-.055em]">
               {landing.title.map((line) => <span className="block" key={line}>{line}</span>)}
