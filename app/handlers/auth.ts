@@ -85,6 +85,8 @@ export async function request<T = unknown>(path: string, options: RequestInit, i
 export type User = {
   username: string;
   email: string;
+  github_id?: string;
+  
   subscription_tier?: SubscriptionTier;
 };
 
