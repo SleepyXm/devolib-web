@@ -42,7 +42,7 @@ export const useTestSuiteManager = (projectWS: any) => {
     setGenerating(true);
     setTests([]);
     try {
-      const data = await gen_tests(endpoints);
+      const data = await gen_tests(endpoints) as { tests: any[] };
       setTests(data.tests.map((t: any) => ({ ...t, status: "idle" as TestStatus })));
     } catch (e) {
       console.error(e);
